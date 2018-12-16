@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="Test.h" />
+    <ClInclude Include="BTree.h" />
+    <ClInclude Include="Blob.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="InnerNode.h" />
+    <ClInclude Include="Leaf.h" />
+    <ClInclude Include="PageManager.h" />
+    <ClInclude Include="FileTable.h" />
+    <ClInclude Include="LRUCache.h" />
+    <ClInclude Include="IntervalSequence.h" />
+    <ClInclude Include="File.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TestDriver.cpp" />
+    <ClCompile Include="TestNode.cpp" />
+    <ClCompile Include="TestBTree.cpp" />
+    <ClCompile Include="BTree.cpp" />
+    <ClCompile Include="PageManager.cpp" />
+    <ClCompile Include="TestFileTable.cpp" />
+    <ClCompile Include="TestIntervalSequence.cpp" />
+    <ClCompile Include="TestFile.cpp" />
+  </ItemGroup>
+</Project>
