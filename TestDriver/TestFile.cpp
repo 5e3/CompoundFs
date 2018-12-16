@@ -224,7 +224,7 @@ TEST(RawFileWriter, LargeSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, 10*str.size() / 4096 +1));
+    CHECK(is.front() == IntervalSequence::Interval(0, uint32_t (10*str.size() / 4096 +1)));
 }
 
 TEST(RawFileWriter, LargeSizeWritesMultiFiles)
@@ -248,7 +248,7 @@ TEST(RawFileWriter, LargeSizeWritesMultiFiles)
     auto fileTablePage2 = pageManager->loadFileTable(fd2.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, str.size() / 4096 + 1));
+    CHECK(is.front() == IntervalSequence::Interval(0, uint32_t(str.size() / 4096 + 1)));
 
     IntervalSequence is2;
     fileTablePage2.first->insertInto(is2);
@@ -305,24 +305,9 @@ std::vector<uint8_t> makeRandomVector(size_t size)
 {
     std::vector<uint8_t> v(size);
     for (size_t i = 0; i < size; i++)
-        v[i] = i;
+        v[i] = uint8_t(i);
     std::random_shuffle(v.begin(), v.end());
     return v;
-}
-
-std::vector<uint8_t> makeVector(size_t size)
-{
-    std::vector<uint8_t> v(size);
-    for (size_t i = 0; i < size; i++)
-        v[i] = i % 251;
-    return v;
-}
-
-FileDescriptor writeFile(const std::vector<uint8_t>& v, std::shared_ptr<PageManager> pageManager)
-{
-    RawFileWriter fr(pageManager);
-    fr.writeIterator(v.begin(), v.end());
-    return fr.close();
 }
 
 FileDescriptor writeFragmentedFile(const std::vector<uint8_t>& v, std::shared_ptr<PageManager> pageManager)
@@ -343,10 +328,25 @@ FileDescriptor writeFragmentedFile(const std::vector<uint8_t>& v, std::shared_pt
     return fr.close();
 }
 
+std::vector<uint8_t> makeVector(size_t size)
+{
+    std::vector<uint8_t> v(size);
+    for (size_t i = 0; i < size; i++)
+        v[i] = i % 251;
+    return v;
+}
+
+FileDescriptor writeFile(const std::vector<uint8_t>& v, std::shared_ptr<PageManager> pageManager)
+{
+    RawFileWriter fr(pageManager);
+    fr.writeIterator(v.begin(), v.end());
+    return fr.close();
+}
+
 uint8_t* readFile(FileDescriptor fd, std::vector<uint8_t>& v, std::shared_ptr<PageManager> pageManager, size_t sizes)
 {
     RawFileReader fr(pageManager);
-    fr.openRead(fd);
+    fr.open(fd);
     uint8_t* begin = &v[0];
     while (fr.bytesLeft())
     {

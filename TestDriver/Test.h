@@ -3,7 +3,6 @@
 #include <vector>
 #include <sstream>
 #include <exception>
-#include <iostream>
 
 class TestResult
 {
@@ -82,7 +81,6 @@ public:
 			Test& test = *m_tests[i];
 			try
 			{
-        std::cout << ".";  \
 				test.Run_(result);
 			}
 			catch (const std::exception& e)
@@ -124,7 +122,6 @@ void testFixture##testName##TestFixture::Run_(TestResult& result_, const char* m
 	if (!(CONDITION)) \
 	{ \
 		result_.AddFailure (m_testName_, __FILE__,__LINE__, #CONDITION); \
-    std::cout << ".";  \
 		return; \
 	} \
 }

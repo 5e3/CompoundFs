@@ -68,12 +68,12 @@ namespace CompFs
             return iv;
         }
 
-        Interval popFront(size_t maxSize)
+        Interval popFront(uint32_t maxSize)
         {
             assert(!empty());
             Node::Id id = m_intervals.front().first;
 
-            size_t size = std::min(maxSize, m_intervals.front().second - m_intervals.front().first);
+            Node::Id size = std::min(maxSize, m_intervals.front().second - m_intervals.front().first);
             m_intervals.front().first += size;
             if (m_intervals.front().first == m_intervals.front().second)
                 m_intervals.pop_front();

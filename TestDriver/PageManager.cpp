@@ -17,21 +17,21 @@ PageManager::LeafPage PageManager::newLeaf(Node::Id prev, Node::Id next)
 {
     std::shared_ptr<Leaf> leaf(new Leaf(prev, next));
     m_file.push_back(leaf);
-    return std::make_pair(leaf, m_file.size() - 1);
+    return std::make_pair(leaf, (uint32_t)m_file.size() - 1);
 }
 
 PageManager::InnerPage PageManager::newInner()
 {
     std::shared_ptr<InnerNode> inner(new InnerNode);
     m_file.push_back(inner);
-    return std::make_pair(inner, m_file.size() - 1);
+    return std::make_pair(inner, (uint32_t) m_file.size() - 1);
 }
 
 PageManager::InnerPage PageManager::newRoot(const Blob& key, Node::Id left, Node::Id right)
 {
     std::shared_ptr<InnerNode> root(new InnerNode(key, left, right));
     m_file.push_back(root);
-    return std::make_pair(root, m_file.size() - 1);
+    return std::make_pair(root, (uint32_t) m_file.size() - 1);
 }
 
 void PageManager::pageDirty(Node::Id id)
@@ -52,12 +52,12 @@ PageManager::FileTablePage PageManager::newFileTable()
 {
     std::shared_ptr<FileTable> fileTable(new FileTable);
     m_file.push_back(fileTable);
-    return std::make_pair(fileTable, m_file.size() - 1);
+    return std::make_pair(fileTable, (uint32_t) m_file.size() - 1);
 }
 
 IntervalSequence::Interval PageManager::newInterval(size_t maxPages)
 {
-    return IntervalSequence::Interval(m_file.size(), m_file.size() + std::min(maxPages, size_t(3)));
+    return IntervalSequence::Interval(uint32_t (m_file.size()), uint32_t(m_file.size() + std::min(maxPages, size_t(3))));
 }
 
 

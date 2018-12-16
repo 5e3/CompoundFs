@@ -36,7 +36,7 @@ TEST(FileTable, transferBackAndForth)
 TEST(FileTable, transferNotEnoughSpace)
 {
     IntervalSequence is;
-    for (size_t i = 0; i < 1500; i++)
+    for (uint32_t i = 0; i < 1500; i++)
         is.pushBack(IntervalSequence::Interval(i * 2, i * 2 + 1));
 
     IntervalSequence is2 = is;
@@ -55,7 +55,7 @@ TEST(FileTable, transferNotEnoughSpace)
 TEST(FileTable, transferNotEnoughSpace2)
 {
     IntervalSequence is;
-    for (size_t i = 0; i < 500; i++)
+    for (uint32_t i = 0; i < 500; i++)
         is.pushBack(IntervalSequence::Interval(i * 3, i * 3 + 2));
 
     IntervalSequence is2 = is;
@@ -74,7 +74,7 @@ TEST(FileTable, transferNotEnoughSpace2)
 TEST(FileTable, transferNotEnoughSpace3)
 {
     std::vector<IntervalSequence::Interval> ivect;
-    for (size_t i = 0; i < 2000; i++)
+    for (uint32_t i = 0; i < 2000; i++)
         ivect.push_back(IntervalSequence::Interval(i * 3, i * 3 + i%2 +1));
 
     std::random_shuffle(ivect.begin(), ivect.end());

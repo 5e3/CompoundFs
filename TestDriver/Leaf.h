@@ -126,7 +126,7 @@ namespace CompFs
             uint16_t index = *it;
             // copy what comes after to this place
             Blob ventry(kentry.end());
-            size_t size = kentry.size() + ventry.size();
+            uint16_t size = kentry.size() + ventry.size();
             std::copy(ventry.end(), &m_data[m_begin], kentry.begin());
             m_begin -= size;
 
@@ -175,7 +175,7 @@ namespace CompFs
         void fill(const Leaf& leaf, const uint16_t* begin, const uint16_t* end)
         {
             m_begin = 0;
-            m_end = sizeof(m_data) - sizeof(uint16_t) * (end - begin);
+            m_end = uint16_t (sizeof(m_data) - sizeof(uint16_t) * (end - begin));
             uint16_t* destTable = beginTable();
             uint8_t* data = (uint8_t*)leaf.m_data;
             for (const uint16_t* it = begin; it < end; ++it)
