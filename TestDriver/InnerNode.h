@@ -140,7 +140,7 @@ namespace CompFs
             Blob kentry(m_data + *it);
             uint16_t index = *it;
             // copy what comes after to this place
-            size_t size = kentry.size() + sizeof(Id);;
+            uint16_t size = kentry.size() + sizeof(Id);;
             std::copy(m_data + *it + size, m_data + m_begin, kentry.begin());
             m_begin -= size;
 
@@ -207,7 +207,7 @@ namespace CompFs
         void fill(const InnerNode& node, const uint16_t* begin, const uint16_t* end)
         {
             m_begin = 0;
-            m_end = sizeof(m_data) - sizeof(uint16_t) * (end - begin);
+            m_end = uint16_t (sizeof(m_data) - sizeof(uint16_t) * (end - begin));
             uint16_t* destTable = beginTable();
             const uint8_t* data = node.m_data;
             for (const uint16_t* it = begin; it < end; ++it)

@@ -25,7 +25,7 @@ namespace CompFs
             , m_data(&m_container[0])
         {
             assert(m_container.size() <= UINT8_MAX);
-            m_container[0] = m_container.size() - 1;
+            m_container[0] = uint8_t(m_container.size() - 1);
             for (size_t i = 1; i < m_container.size(); i++)
                 m_container[i] = (uint8_t)str[i - 1];
         }
@@ -58,7 +58,7 @@ namespace CompFs
             m_data = &m_container[0];
         }
 
-        size_t size() const { return *m_data + 1; }
+        uint8_t size() const { return *m_data + 1; }
         const uint8_t* begin() const { return m_data; }
         const uint8_t* end() const { return begin() + size(); }
         bool operator==(const Blob& lhs) const

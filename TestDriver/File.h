@@ -58,13 +58,6 @@ namespace CompFs
             m_fileTable.first->insertInto(m_pageSequence);
         }
 
-        void openRead(FileDescriptor fileId)
-        {
-            m_fileDescriptor = fileId;
-            m_fileTable = m_pageManager->loadFileTable(fileId.m_first);
-            m_fileTable.first->insertInto(m_pageSequence);
-        }
-
         FileDescriptor close()
         {
             pushFileTable();
@@ -180,7 +173,7 @@ namespace CompFs
         {
         }
 
-        void openRead(FileDescriptor fileId)
+        void open(FileDescriptor fileId)
         {
             assert(fileId != FileDescriptor());
             m_curFilePos = 0;
@@ -190,7 +183,7 @@ namespace CompFs
             m_nextFileTable = fileTable.first->getNext();
         }
 
-        IntervalSequence::Interval nextInterval(size_t maxSize)
+        IntervalSequence::Interval nextInterval(uint32_t maxSize)
         {
             if (m_pageSequence.empty())
             {
@@ -235,7 +228,7 @@ namespace CompFs
             size_t pages = (end - begin) / 4096;  
             while (pages > 0)
             {
-                IntervalSequence::Interval iv = nextInterval(pages);
+                IntervalSequence::Interval iv = nextInterval((uint32_t)pages);
                 begin = m_pageManager->readPages(begin, iv);
                 pages -= iv.second - iv.first;
             }
