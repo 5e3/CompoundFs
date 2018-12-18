@@ -14,6 +14,7 @@
     <ClInclude Include="LRUCache.h" />
     <ClInclude Include="IntervalSequence.h" />
     <ClInclude Include="File.h" />
+    <ClInclude Include="Interval.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />

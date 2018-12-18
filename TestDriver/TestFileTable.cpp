@@ -20,9 +20,9 @@ TEST(FileTable, Empty)
 TEST(FileTable, transferBackAndForth)
 {
     IntervalSequence is;
-    is.pushBack(IntervalSequence::Interval(0, 10));
-    is.pushBack(IntervalSequence::Interval(11, 20));
-    is.pushBack(IntervalSequence::Interval(21, 30));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(11, 20));
+    is.pushBack(Interval(21, 30));
 
     IntervalSequence is2 = is;
     FileTable ft;
@@ -37,7 +37,7 @@ TEST(FileTable, transferNotEnoughSpace)
 {
     IntervalSequence is;
     for (uint32_t i = 0; i < 1500; i++)
-        is.pushBack(IntervalSequence::Interval(i * 2, i * 2 + 1));
+        is.pushBack(Interval(i * 2, i * 2 + 1));
 
     IntervalSequence is2 = is;
     FileTable ft;
@@ -56,7 +56,7 @@ TEST(FileTable, transferNotEnoughSpace2)
 {
     IntervalSequence is;
     for (uint32_t i = 0; i < 500; i++)
-        is.pushBack(IntervalSequence::Interval(i * 3, i * 3 + 2));
+        is.pushBack(Interval(i * 3, i * 3 + 2));
 
     IntervalSequence is2 = is;
     FileTable ft;
@@ -73,9 +73,9 @@ TEST(FileTable, transferNotEnoughSpace2)
 
 TEST(FileTable, transferNotEnoughSpace3)
 {
-    std::vector<IntervalSequence::Interval> ivect;
+    std::vector<Interval> ivect;
     for (uint32_t i = 0; i < 2000; i++)
-        ivect.push_back(IntervalSequence::Interval(i * 3, i * 3 + i%2 +1));
+        ivect.push_back(Interval(i * 3, i * 3 + i%2 +1));
 
     std::random_shuffle(ivect.begin(), ivect.end());
     IntervalSequence is;

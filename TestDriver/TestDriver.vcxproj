@@ -144,6 +144,7 @@
     <ClInclude Include="File.h" />
     <ClInclude Include="FileTable.h" />
     <ClInclude Include="InnerNode.h" />
+    <ClInclude Include="Interval.h" />
     <ClInclude Include="IntervalSequence.h" />
     <ClInclude Include="Leaf.h" />
     <ClInclude Include="LRUCache.h" />

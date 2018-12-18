@@ -10,65 +10,65 @@ TEST(IntervalSequence, PushBackIsNotEmpty)
 {
     IntervalSequence is;
     CHECK(is.empty());
-    is.pushBack(std::make_pair(0, 10));
+    is.pushBack(Interval(0, 10));
     CHECK(!is.empty());
 }
 
 TEST(IntervalSequence, FillIntervals)
 {
     IntervalSequence is;
-    is.pushBack(std::make_pair(0, 10));
-    is.pushBack(std::make_pair(11, 20));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(11, 20));
 
-    IntervalSequence::Interval iv = is.popFront();
-    CHECK(iv == IntervalSequence::Interval(0, 10));
+    Interval iv = is.popFront();
+    CHECK(iv == Interval(0, 10));
 
     iv = is.popFront();
-    CHECK(iv == IntervalSequence::Interval(11, 20));
+    CHECK(iv == Interval(11, 20));
     CHECK(is.empty());
 }
 
 TEST(IntervalSequence, FrontDoesntRemove)
 {
     IntervalSequence is;
-    is.pushBack(std::make_pair(0, 10));
-    is.pushBack(std::make_pair(11, 20));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(11, 20));
 
-    IntervalSequence::Interval iv = is.front();
-    CHECK(iv == IntervalSequence::Interval(0, 10));
+    Interval iv = is.front();
+    CHECK(iv == Interval(0, 10));
 
     iv = is.front();
-    CHECK(iv == IntervalSequence::Interval(0, 10));
+    CHECK(iv == Interval(0, 10));
 
     is.popFront();
     iv = is.front();
-    CHECK(iv == IntervalSequence::Interval(11, 20));
+    CHECK(iv == Interval(11, 20));
 }
 
 TEST(IntervalSequence, MergeIntervals)
 {
     IntervalSequence is;
-    is.pushBack(std::make_pair(0, 10));
-    is.pushBack(std::make_pair(10, 20));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(10, 20));
 
-    IntervalSequence::Interval iv = is.front();
-    CHECK(iv == IntervalSequence::Interval(0, 20));
+    Interval iv = is.front();
+    CHECK(iv == Interval(0, 20));
 }
 
 TEST(IntervalSequence, SplitIntervals)
 {
     IntervalSequence is;
-    is.pushBack(std::make_pair(0, 10));
-    is.pushBack(std::make_pair(10, 20));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(10, 20));
 
-    IntervalSequence::Interval iv = is.popFront(5);
-    CHECK(iv == IntervalSequence::Interval(0, 5));
+    Interval iv = is.popFront(5);
+    CHECK(iv == Interval(0, 5));
 
     iv = is.popFront(5);
-    CHECK(iv == IntervalSequence::Interval(5, 10));
+    CHECK(iv == Interval(5, 10));
 
     iv = is.popFront(20);
-    CHECK(iv == IntervalSequence::Interval(10, 20));
+    CHECK(iv == Interval(10, 20));
     CHECK(is.empty());
 }
 
@@ -76,13 +76,13 @@ TEST(IntervalSequence, IterateOneByOne)
 {
     IntervalSequence is;
     for (int i=0; i<20; i+=3)
-        is.pushBack(std::make_pair(i, i+2));
+        is.pushBack(Interval(i, i+2));
 
     int j = 0;
     while (!is.empty())
     {
-        IntervalSequence::Interval iv = is.popFront(1);
-        CHECK(iv == IntervalSequence::Interval(j, j+1));
+        Interval iv = is.popFront(1);
+        CHECK(iv == Interval(j, j+1));
         j++;
         if (((j+1) % 3) == 0)
             j++;
@@ -93,7 +93,7 @@ TEST(IntervalSequence, TotalLength)
 {
     IntervalSequence is;
     for (int i = 0; i < 100; i += 10)
-        is.pushBack(std::make_pair(i, i + 5));
+        is.pushBack(Interval(i, i + 5));
 
     CHECK(is.totalLength() == 50);
 }
@@ -101,22 +101,22 @@ TEST(IntervalSequence, TotalLength)
 TEST(IntervalSequence, Sort)
 {
     IntervalSequence is;
-    is.pushBack(std::make_pair(10, 20));
-    is.pushBack(std::make_pair(0, 10));
-    is.pushBack(std::make_pair(20, 30));
+    is.pushBack(Interval(10, 20));
+    is.pushBack(Interval(0, 10));
+    is.pushBack(Interval(20, 30));
 
     is.sort();
-    IntervalSequence::Interval iv = is.front();
-    CHECK(iv == IntervalSequence::Interval(0, 30));
+    Interval iv = is.front();
+    CHECK(iv == Interval(0, 30));
 
     iv = is.popFront(10);
-    CHECK(iv == IntervalSequence::Interval(0, 10));
+    CHECK(iv == Interval(0, 10));
 
     iv = is.popFront(10);
-    CHECK(iv == IntervalSequence::Interval(10, 20));
+    CHECK(iv == Interval(10, 20));
 
     iv = is.popFront(10);
-    CHECK(iv == IntervalSequence::Interval(20, 30));
+    CHECK(iv == Interval(20, 30));
 
 }
 
@@ -133,13 +133,13 @@ TEST(IntervalSequence, Sort2)
 
     IntervalSequence is;
     for (auto it = v.begin(); it < v.end(); ++it)
-        is.pushBack(IntervalSequence::Interval(*it, (*it) + 1));
+        is.pushBack(Interval(*it, (*it) + 1));
 
     size_t totalLen = is.totalLength();
     is.sort();
     CHECK(totalLen == is.totalLength());
 
-    IntervalSequence::Interval iv = is.popFront();
-    CHECK(iv == IntervalSequence::Interval(0, 50));
+    Interval iv = is.popFront();
+    CHECK(iv == Interval(0, 50));
 }
 

@@ -45,7 +45,7 @@ TEST(RawFileWriter, WriteCloseCreatesFileTablePage)
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
     CHECK(is.size() == 1);
-    CHECK(is.front() == IntervalSequence::Interval(0, 1));
+    CHECK(is.front() == Interval(0, 1));
 
 }
 
@@ -103,7 +103,7 @@ TEST(RawFileWriter, SmallWritesOverPageBoundery)
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
     CHECK(is.size() == 1);
-    CHECK(is.front() == IntervalSequence::Interval(0, 2));
+    CHECK(is.front() == Interval(0, 2));
 
 }
 
@@ -133,8 +133,8 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
     CHECK(is.size() == 2);
-    CHECK(is.front() == IntervalSequence::Interval(0, 2));
-    CHECK(is.back() == IntervalSequence::Interval(3, 4));
+    CHECK(is.front() == Interval(0, 2));
+    CHECK(is.back() == Interval(3, 4));
 }
 
 TEST(RawFileWriter, PageSizeWrites)
@@ -152,7 +152,7 @@ TEST(RawFileWriter, PageSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, 10));
+    CHECK(is.front() == Interval(0, 10));
 }
 
 TEST(RawFileWriter, OverPageSizeWrites)
@@ -170,7 +170,7 @@ TEST(RawFileWriter, OverPageSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, 11));
+    CHECK(is.front() == Interval(0, 11));
 }
 
 TEST(RawFileWriter, UnderPageSizeWrites)
@@ -188,7 +188,7 @@ TEST(RawFileWriter, UnderPageSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, 10));
+    CHECK(is.front() == Interval(0, 10));
 }
 
 TEST(RawFileWriter, LargePageSizeWrites)
@@ -206,7 +206,7 @@ TEST(RawFileWriter, LargePageSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, 20));
+    CHECK(is.front() == Interval(0, 20));
 }
 
 TEST(RawFileWriter, LargeSizeWrites)
@@ -224,7 +224,7 @@ TEST(RawFileWriter, LargeSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, uint32_t (10*str.size() / 4096 +1)));
+    CHECK(is.front() == Interval(0, uint32_t (10*str.size() / 4096 +1)));
 }
 
 TEST(RawFileWriter, LargeSizeWritesMultiFiles)
@@ -248,7 +248,7 @@ TEST(RawFileWriter, LargeSizeWritesMultiFiles)
     auto fileTablePage2 = pageManager->loadFileTable(fd2.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == IntervalSequence::Interval(0, uint32_t(str.size() / 4096 + 1)));
+    CHECK(is.front() == Interval(0, uint32_t(str.size() / 4096 + 1)));
 
     IntervalSequence is2;
     fileTablePage2.first->insertInto(is2);
