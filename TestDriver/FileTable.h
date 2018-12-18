@@ -37,21 +37,21 @@ namespace CompFs
             m_end = sizeof(m_data);
             while (!is.empty())
             {
-                IntervalSequence::Interval iv = is.front();
+                Interval iv = is.front();
                 if (!hasSpace(iv))
                     break;
-                if ((iv.second - iv.first) > 1)
+                if (iv.length() > 1)
                 {
                     m_end -= sizeof(uint16_t);
                     *beginTable() = m_begin / sizeof(Id);
-                    *endIds() = iv.first;
+                    *endIds() = iv.begin();
                     m_begin += sizeof(Id);
-                    *endIds() = iv.second;
+                    *endIds() = iv.end();
                     m_begin += sizeof(Id);
                 }
                 else
                 {
-                    *endIds() = iv.first;
+                    *endIds() = iv.begin();
                     m_begin += sizeof(Id);
                 }
                 is.popFront();
@@ -67,14 +67,14 @@ namespace CompFs
                 if (it != end && *it == i)
                 {
                     assert((i + 1) < m_begin / sizeof(Id));
-                    IntervalSequence::Interval iv(*(beginIds() + i), *(beginIds() + i + 1));
+                    Interval iv(*(beginIds() + i), *(beginIds() + i + 1));
                     is.pushBack(iv);
                     ++i;
                     ++it;
                 }
                 else
                 {
-                    IntervalSequence::Interval iv(*(beginIds() + i), *(beginIds() + i) + 1);
+                    Interval iv(*(beginIds() + i), *(beginIds() + i) + 1);
                     is.pushBack(iv);
                 }
             }
@@ -87,10 +87,10 @@ namespace CompFs
         uint16_t* endTable() const { return (uint16_t*)(m_data + sizeof(m_data)); }
         Id* beginIds() const { return (Id*)m_data; }
         Id* endIds() const { return (Id*)(m_data + m_begin); }
-        bool hasSpace(IntervalSequence::Interval iv) const
+        bool hasSpace(Interval iv) const
         {
-            assert(iv.first < iv.second);
-            return size_t(m_end - m_begin) >= ((iv.second - iv.first) > 1 ? 2U * sizeof(Id) + sizeof(uint16_t) : sizeof(Id));
+            assert(iv.begin() < iv.end());
+            return size_t(m_end - m_begin) >= ((iv.length()) > 1 ? 2U * sizeof(Id) + sizeof(uint16_t) : sizeof(Id));
         }
     };
 

@@ -6,6 +6,7 @@
 #define PAGEMANAGER_H
 
 #include "Node.h"
+#include "Interval.h"
 #include <utility>
 #include <memory>
 #include <vector>
@@ -40,16 +41,16 @@ namespace CompFs
         InnerPage newInner();
         InnerPage newRoot(const Blob& key, Node::Id left, Node::Id right);
         void pageDirty(Node::Id id);
-        std::pair<Node::Id, Node::Id> newInterval(size_t maxPages);
+        Interval newInterval(size_t maxPages);
 
         // raw write 
         void writePage(const uint8_t* begin, const uint8_t* end, Node::Id page, size_t pageOffset);
-        void writePages(const uint8_t* begin, std::pair<Node::Id, Node::Id> interval);
+        void writePages(const uint8_t* begin, Interval interval);
         void finalWritePage(const uint8_t* begin, const uint8_t* end, Node::Id page);
 
         // raw read
         uint8_t* readPage(uint8_t* begin, uint8_t* end, Node::Id page, size_t pageOffset);
-        uint8_t* readPages(uint8_t* begin, std::pair<Node::Id, Node::Id> interval);
+        uint8_t* readPages(uint8_t* begin, Interval interval);
 
     private:
         std::vector<std::shared_ptr<Node>> m_file;

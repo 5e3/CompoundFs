@@ -78,7 +78,7 @@ namespace CompFs
             {
                 size_t pageOffset = size_t(m_fileDescriptor.m_fileSize % 4096);
                 const uint8_t* newEndInPage = begin + std::min(4096 - pageOffset, blockSize);
-                m_pageManager->writePage(begin, newEndInPage, m_pageSequence.back().second - 1, pageOffset);
+                m_pageManager->writePage(begin, newEndInPage, m_pageSequence.back().end() - 1, pageOffset);
                 begin = newEndInPage;
             }
 
@@ -86,19 +86,19 @@ namespace CompFs
             size_t pages = (end - begin) / 4096;
             while (pages > 0)
             {
-                IntervalSequence::Interval iv = m_pageManager->newInterval(pages);
+                Interval iv = m_pageManager->newInterval(pages);
                 m_pageSequence.pushBack(iv);
                 m_pageManager->writePages(begin, iv);
-                begin += (iv.second - iv.first) * 4096;
-                pages -= iv.second - iv.first;
+                begin += iv.length() * 4096;
+                pages -= iv.length();
             }
 
             // write remaining bytes to partially filled page
             if (end - begin)
             {
-                IntervalSequence::Interval iv = m_pageManager->newInterval(1);
+                Interval iv = m_pageManager->newInterval(1);
                 m_pageSequence.pushBack(iv);
-                m_pageManager->finalWritePage(begin, end, iv.second - 1);
+                m_pageManager->finalWritePage(begin, end, iv.end() - 1);
             }
             m_fileDescriptor.m_fileSize += blockSize;
 
@@ -183,12 +183,12 @@ namespace CompFs
             m_nextFileTable = fileTable.first->getNext();
         }
 
-        IntervalSequence::Interval nextInterval(uint32_t maxSize)
+        Interval nextInterval(uint32_t maxSize)
         {
             if (m_pageSequence.empty())
             {
                 if (m_nextFileTable == Node::INVALID_NODE)
-                    return IntervalSequence::Interval(Node::INVALID_NODE, Node::INVALID_NODE);
+                    return Interval(Node::INVALID_NODE, Node::INVALID_NODE);
 
                 PageManager::FileTablePage fileTable = m_pageManager->loadFileTable(m_nextFileTable);
                 fileTable.first->insertInto(m_pageSequence);
@@ -212,7 +212,7 @@ namespace CompFs
             if (m_curFilePos % 4096)
             {
                 size_t pageOffset = size_t(m_curFilePos % 4096);
-                Node::Id pageId = m_pageSequence.front().first;
+                Node::Id pageId = m_pageSequence.front().begin();
                 if ((pageOffset + blockSize) >= 4096)
                 {
                     begin = m_pageManager->readPage(begin, begin + (4096 - pageOffset), pageId, pageOffset);
@@ -228,15 +228,15 @@ namespace CompFs
             size_t pages = (end - begin) / 4096;  
             while (pages > 0)
             {
-                IntervalSequence::Interval iv = nextInterval((uint32_t)pages);
+                Interval iv = nextInterval((uint32_t)pages);
                 begin = m_pageManager->readPages(begin, iv);
-                pages -= iv.second - iv.first;
+                pages -= iv.length();
             }
 
             // partially read the next page
             if (end - begin)
             {
-                Node::Id pageId = nextInterval(0).first;
+                Node::Id pageId = nextInterval(0).begin();
                 begin = m_pageManager->readPage(begin, end, pageId, 0);
             }
 

@@ -5,6 +5,7 @@
 #define INTERVALSEQUENCE_H
 
 #include "Node.h"
+#include "Interval.h"
 #include <deque>
 #include <utility>
 #include <algorithm>
@@ -13,23 +14,24 @@
 
 namespace CompFs
 {
+
     class IntervalSequence
     {
     public:
-        typedef std::pair<Node::Id, Node::Id> Interval;
+        //typedef Interval Interval;
 
     public:
         void pushBack(Interval iv)
         {
-            assert(iv.first < iv.second);
+            assert(!iv.empty());
             if (m_intervals.empty())
             {
                 m_intervals.push_back(iv);
                 return;
             }
 
-            if (m_intervals.back().second == iv.first) // merge?
-                m_intervals.back().second = iv.second;
+            if (m_intervals.back().end() == iv.begin()) // merge?
+                m_intervals.back().end() = iv.end();
             else
                 m_intervals.push_back(iv);
         }
@@ -48,15 +50,14 @@ namespace CompFs
 
         size_t frontLength() const
         {
-            Interval iv = front();
-            return iv.second - iv.first;
+          return front().length();
         }
 
         size_t totalLength() const
         {
             size_t len = 0;
             for (auto it = m_intervals.begin(); it != m_intervals.end(); ++it)
-                len += it->second - it->first;
+                len += it->length();
             return len;
         }
 
@@ -71,15 +72,17 @@ namespace CompFs
         Interval popFront(uint32_t maxSize)
         {
             assert(!empty());
-            Node::Id id = m_intervals.front().first;
+            Node::Id id = m_intervals.front().begin();
 
-            Node::Id size = std::min(maxSize, m_intervals.front().second - m_intervals.front().first);
-            m_intervals.front().first += size;
-            if (m_intervals.front().first == m_intervals.front().second)
+            Node::Id size = std::min(maxSize, m_intervals.front().length());
+            m_intervals.front().begin() += size;
+            if (m_intervals.front().empty())
                 m_intervals.pop_front();
 
             return Interval(id, id + size);
         }
+
+        void clear() { m_intervals.clear(); }
 
         bool empty() const
         {
@@ -95,9 +98,9 @@ namespace CompFs
             size_t i2 = i--;
             for (; i2 != 0; --i)
             {
-                if (m_intervals[i].second == m_intervals[i2].first)
+                if (m_intervals[i].end() == m_intervals[i2].begin())
                 {
-                    m_intervals[i].second = m_intervals[i2].second;
+                    m_intervals[i].end() = m_intervals[i2].end();
                     m_intervals.erase(m_intervals.begin()+i2);
                 }
                 i2 = i;
