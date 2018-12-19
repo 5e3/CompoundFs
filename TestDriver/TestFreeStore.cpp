@@ -7,18 +7,6 @@
 
 using namespace CompFs;
 
-
-TEST(FreeStore, closeReturnsCorrectFileDescriptor)
-{
-    std::shared_ptr<PageManager> pm(new PageManager);
-    auto freeStorePage = pm->newFileTable();
-
-    FileDescriptor fsfd(freeStorePage.second);
-    FreeStore fs(pm, fsfd);
-
-    CHECK(fs.close() == fsfd);
-}
-
 FileDescriptor createFile(std::shared_ptr<PageManager> pm)
 {
     RawFileWriter rfw(pm);
@@ -40,7 +28,20 @@ IntervalSequence readAllFreeStorePages(std::shared_ptr<PageManager> pm, Node::Id
     return is;
 }
 
-TEST(FreeStore, deleteOneFile)
+///////////////////////////////////////////////////////////////////////////////
+
+TEST(FreeStore, closeReturnsCorrectFileDescriptor)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+
+    FileDescriptor fsfd(freeStorePage.second);
+    FreeStore fs(pm, fsfd);
+
+    CHECK(fs.close() == fsfd);
+}
+
+TEST(FreeStore, deleteOneFileIsIncludedInFileDescriptor)
 {
     std::shared_ptr<PageManager> pm(new PageManager);
     auto freeStorePage = pm->newFileTable();
@@ -69,7 +70,9 @@ TEST(FreeStore, forEveryDeletedFileThereIsAFreePage)
     for (auto& fd : fileDescriptors)
         fs.deleteFile(fd);
 
-    auto is = readAllFreeStorePages(pm, fs.close().m_first);
+    fsfd = fs.close();
+    auto is = readAllFreeStorePages(pm, fsfd.m_first);
     CHECK(is.totalLength() == 50);
+    CHECK(fsfd.m_fileSize == 50*4096);
 }
 
