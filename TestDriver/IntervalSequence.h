@@ -111,6 +111,9 @@ namespace CompFs
 
         bool operator==(const IntervalSequence& lhs) const { return m_intervals == lhs.m_intervals; }
 
+        std::deque<Interval>::const_iterator begin() const { return m_intervals.begin(); }
+        std::deque<Interval>::const_iterator end() const { return m_intervals.end(); }
+
 
     private:
         std::deque<Interval> m_intervals;
