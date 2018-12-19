@@ -19,6 +19,13 @@ namespace CompFs
         {
         }
 
+        explicit FileDescriptor(Node::Id singlePage)
+            : m_first(singlePage)
+            , m_last(singlePage)
+            , m_fileSize(0)
+        {
+        }
+
         bool operator==(const FileDescriptor& rhs) const
         {
             return m_first == rhs.m_first
