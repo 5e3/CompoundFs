@@ -28,5 +28,6 @@
     <ClCompile Include="TestFileTable.cpp" />
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestFile.cpp" />
+    <ClCompile Include="TestFreeStore.cpp" />
   </ItemGroup>
 </Project>

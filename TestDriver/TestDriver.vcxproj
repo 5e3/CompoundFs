@@ -164,6 +164,7 @@
     <ClCompile Include="TestDriver.cpp" />
     <ClCompile Include="TestFile.cpp" />
     <ClCompile Include="TestFileTable.cpp" />
+    <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestNode.cpp" />
   </ItemGroup>
