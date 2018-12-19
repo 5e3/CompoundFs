@@ -33,20 +33,20 @@ namespace CompFs
         void compact();
         FileDescriptor close()
         {
-            finalizeDeleteFile();
+            finalizeDeleteFiles();
             return m_fileDescriptor;
         }
 
     private:
-        void finalizeDeleteFile()
+        void finalizeDeleteFiles()
         {
             FileDescriptor cur = m_fileDescriptor;
-            for (auto it = m_filesToDelete.begin(); it != m_filesToDelete.end(); ++it)
-                cur = chainDeletedFiles(cur, *it);
+            for (auto& fd: m_filesToDelete)
+                cur = chainFiles(cur, fd);
             m_fileDescriptor = cur;
         }
 
-        FileDescriptor chainDeletedFiles(FileDescriptor prev, FileDescriptor next)
+        FileDescriptor chainFiles(FileDescriptor prev, FileDescriptor next)
         {
             PageManager::FileTablePage ft = m_pageManager->loadFileTable(prev.m_last);
             assert(ft.first->getNext() == Node::INVALID_NODE);
