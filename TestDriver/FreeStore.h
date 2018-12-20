@@ -27,15 +27,17 @@ namespace CompFs
                 loadCurrentIntervals();
 
             auto next = m_pinnedPage->getNext();
-            while (next != Node::INVALID_NODE && m_current.empty())
+            while (next != Node::INVALID_NODE && m_current.totalLength() < maxPages)
             {
                 m_freePageTables.insert(next);
                 next = loadFileTablePage(next, m_current);
-                m_current.sort();
             }
+            m_current.sort();
             m_pinnedPage->setNext(next);
 
-            return  m_current.empty() ? Interval() : m_current.popFront(maxPages);
+            auto iv = m_current.empty() ? Interval() : m_current.popFront(maxPages);
+            m_fileDescriptor.m_fileSize -= iv.length() * 4096;
+            return iv;
         }
 
         void deallocate(uint32_t page)
