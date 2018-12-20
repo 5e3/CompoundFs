@@ -107,6 +107,13 @@ namespace CompFs
             }
         }
 
+        void moveTo(IntervalSequence& is)
+        {
+            for (auto iv : m_intervals)
+                is.pushBack(iv);
+            clear();
+        }
+
         size_t size() const { return m_intervals.size(); }
 
         bool operator==(const IntervalSequence& lhs) const { return m_intervals == lhs.m_intervals; }
