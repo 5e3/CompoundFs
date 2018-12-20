@@ -58,13 +58,6 @@ namespace CompFs
             }
         }
 
-        static uint32_t calcPagesNeeded(const IntervalSequence& is)
-        {
-            for (auto iv: is)
-            {
-            }
-        }
-
         void insertInto(IntervalSequence& is) const
         {
             std::reverse_iterator<uint16_t*> it(endTable());
