@@ -49,9 +49,8 @@ IntervalSequence readAllFreeStorePages(std::shared_ptr<PageManager> pm, Node::Id
 TEST(FreeStore, closeReturnsCorrectFileDescriptor)
 {
     std::shared_ptr<PageManager> pm(new PageManager);
-    auto freeStorePage = pm->newFileTable();
 
-    FileDescriptor fsfd(freeStorePage.second);
+    FileDescriptor fsfd(1000); // not supposed to access it => crash
     FreeStore fs(pm, fsfd);
 
     CHECK(fs.close() == fsfd);
@@ -167,8 +166,16 @@ TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
         CHECK(fs.allocate(1) == Interval()); // available after close
         fsfd = fs.close();
     }
+    {
+        FreeStore fs(pm, fsfd);
+        CHECK(fs.allocate(2).length() == 2); 
+        CHECK(fs.allocate(1).length() == 0);
+    
+        fsfd = fs.close();
+        CHECK(fsfd.m_fileSize == 0);
+    }
+
     FreeStore fs(pm, fsfd);
-    CHECK(fs.allocate(2).length() == 2); 
     CHECK(fs.allocate(1).length() == 0);
     
     fsfd = fs.close();
@@ -190,12 +197,111 @@ TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
         fsfd = fs.close();
     }
 
+    {
+        FreeStore fs(pm, fsfd);
+        CHECK(fs.allocate(5).length() == 5); 
+        CHECK(fs.allocate(5).length() == 5); 
+        CHECK(fs.allocate(5).length() == 0); 
+    
+        fsfd = fs.close();
+        CHECK(fsfd.m_fileSize == 0);
+    }
+
     FreeStore fs(pm, fsfd);
-    CHECK(fs.allocate(5).length() == 5); 
-    CHECK(fs.allocate(5).length() == 5); 
     CHECK(fs.allocate(5).length() == 0); 
     
     fsfd = fs.close();
     CHECK(fsfd.m_fileSize == 0);
 }
 
+TEST(FreeStore, singlePageConsumed)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+    
+    FileDescriptor fsfd(freeStorePage.second);
+    {
+        FreeStore fs(pm, fsfd);
+        fs.deallocate(pm->newFileTable().second);
+        fsfd = fs.close();
+    }
+
+    {
+        FreeStore fs(pm, fsfd);
+        CHECK(fs.allocate(1).length() == 1);     
+        fsfd = fs.close();
+        CHECK(fsfd.m_fileSize == 0);
+    }
+
+    FreeStore fs(pm, fsfd);
+    CHECK(fs.allocate(1).length() == 0); 
+    fsfd = fs.close();
+    CHECK(fsfd.m_fileSize == 0);
+}
+
+//TEST(FreeStore, singlePageConsumed)
+//{
+//    std::shared_ptr<PageManager> pm(new PageManager);
+//    auto freeStorePage = pm->newFileTable();
+//    
+//    FileDescriptor fsfd(freeStorePage.second);
+//    {
+//        FreeStore fs(pm, fsfd);
+//        fs.deallocate(pm->newFileTable().second);
+//        fsfd = fs.close();
+//    }
+//
+//    {
+//        FreeStore fs(pm, fsfd);
+//        CHECK(fs.allocate(1).length() == 1);     
+//        fsfd = fs.close();
+//        CHECK(fsfd.m_fileSize == 0);
+//    }
+//
+//    FreeStore fs(pm, fsfd);
+//    CHECK(fs.allocate(1).length() == 0); 
+//    fsfd = fs.close();
+//    CHECK(fsfd.m_fileSize == 0);
+//}
+
+TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+    FileDescriptor fsfd(freeStorePage.second);
+    {
+        FreeStore fs(pm, fsfd);
+
+        std::vector<FileDescriptor> fileDescriptors = createFiles(pm, 1500, 1);
+        for (auto& large: createFiles(pm, 3, 2200))
+            fileDescriptors.push_back(large);
+
+        std::random_shuffle(fileDescriptors.begin(), fileDescriptors.end());
+
+        for (auto& fd : fileDescriptors)
+            fs.deleteFile(fd);
+
+        fsfd = fs.close();
+    }
+    {
+        FreeStore fs(pm, fsfd);
+        while (fs.allocate(2000).length());
+        fsfd = fs.close();
+    }
+    {
+        FreeStore fs(pm, fsfd);
+        while (fs.allocate(2000).length());
+        fsfd = fs.close();
+        CHECK(fsfd.m_fileSize == 0);
+        CHECK(fsfd.m_first == freeStorePage.second);
+        CHECK(fsfd.m_last == fsfd.m_first);
+    }
+    FreeStore fs(pm, fsfd);
+    CHECK(fs.allocate(1).length() == 0); 
+    fsfd = fs.close();
+    CHECK(fsfd.m_fileSize == 0);
+    CHECK(fsfd.m_first == freeStorePage.second);
+    CHECK(fsfd.m_last == fsfd.m_first);
+
+
+}

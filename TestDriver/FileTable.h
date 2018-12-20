@@ -30,11 +30,15 @@ namespace CompFs
 
         void setNext(Id next) { m_next = next; }
         Id getNext() const { return m_next; }
-
-        void transferFrom(IntervalSequence& is)
+        void clear() 
         {
             m_begin = 0;
             m_end = sizeof(m_data);
+        }
+
+        void transferFrom(IntervalSequence& is)
+        {
+            clear();
             while (!is.empty())
             {
                 Interval iv = is.front();
