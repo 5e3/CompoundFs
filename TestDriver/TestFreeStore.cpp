@@ -150,6 +150,9 @@ TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
     FreeStore fs(pm, fsfd);
 
     CHECK(fs.allocate(1) == Interval());
+    
+    fsfd = fs.close();
+    CHECK(fsfd.m_fileSize == 0);
 }
 
 TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
@@ -166,7 +169,10 @@ TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
     }
     FreeStore fs(pm, fsfd);
     CHECK(fs.allocate(2).length() == 2); 
-    CHECK(fs.allocate(1).length() == 0); 
+    CHECK(fs.allocate(1).length() == 0);
+    
+    fsfd = fs.close();
+    CHECK(fsfd.m_fileSize == 0);
 }
 
 TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
@@ -188,5 +194,8 @@ TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
     CHECK(fs.allocate(5).length() == 5); 
     CHECK(fs.allocate(5).length() == 5); 
     CHECK(fs.allocate(5).length() == 0); 
+    
+    fsfd = fs.close();
+    CHECK(fsfd.m_fileSize == 0);
 }
 
