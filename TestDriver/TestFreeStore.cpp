@@ -141,3 +141,52 @@ TEST(FreeStore, deleteBigAndSmallFiles)
     CHECK(fsfd.m_fileSize == is.totalLength() * 4096);
 }
 
+TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+
+    FileDescriptor fsfd(freeStorePage.second);
+    FreeStore fs(pm, fsfd);
+
+    CHECK(fs.allocate(1) == Interval());
+}
+
+TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+    
+    FileDescriptor fsfd(freeStorePage.second);
+    {
+        FreeStore fs(pm, fsfd);
+        fs.deleteFile(createFile(pm));
+        CHECK(fs.allocate(1) == Interval()); // available after close
+        fsfd = fs.close();
+    }
+    FreeStore fs(pm, fsfd);
+    CHECK(fs.allocate(2).length() == 2); 
+    CHECK(fs.allocate(1).length() == 0); 
+}
+
+TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
+{
+    std::shared_ptr<PageManager> pm(new PageManager);
+    auto freeStorePage = pm->newFileTable();
+    
+    FileDescriptor fsfd(freeStorePage.second);
+    {
+        FreeStore fs(pm, fsfd);
+        for (int i=0; i<10; i++)
+            fs.deallocate(pm->newFileTable().second);
+
+        CHECK(fs.allocate(1) == Interval()); // available after close
+        fsfd = fs.close();
+    }
+
+    FreeStore fs(pm, fsfd);
+    CHECK(fs.allocate(5).length() == 5); 
+    CHECK(fs.allocate(5).length() == 5); 
+    CHECK(fs.allocate(5).length() == 0); 
+}
+

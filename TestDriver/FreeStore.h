@@ -23,40 +23,24 @@ namespace CompFs
 
         Interval allocate(uint32_t maxPages)
         {
-            assert(maxPages > 0);
-            //if (!m_pinnedPage)
-            //    loadCurrentIntervals();
+            if (!m_pinnedPage)
+                loadCurrentIntervals();
 
-            //auto next = m_pinnedPage->getNext();
-            //while (next != Node::INVALID_NODE)
-            //{
-
-            //}
-            //while (m_current.empty())
-            //{
-            //    else
-            //    {
-            //        auto next = loadFileTablePage(m_pinnedPage->getNext(), m_current);
-            //        m_pinnedPage->setNext(next);
-            //        m_current.sort();
-            //    }
-            //}
-
-            //return m_current.popFront(maxPages);
-
-            if (m_current.empty())
+            auto next = m_pinnedPage->getNext();
+            while (next != Node::INVALID_NODE && m_current.empty())
             {
-                if (!m_pinnedPage)
-                    loadCurrentIntervals();
-                else
-                {
-                    auto next = loadFileTablePage(m_pinnedPage->getNext(), m_current);
-                    m_pinnedPage->setNext(next);
-                    m_current.sort();
-                }
+                m_freePageTables.insert(next);
+                next = loadFileTablePage(next, m_current);
+                m_current.sort();
             }
+            m_pinnedPage->setNext(next);
 
-            return  m_current.empty() ? Interval(Node::INVALID_NODE) : m_current.popFront(maxPages);
+            return  m_current.empty() ? Interval() : m_current.popFront(maxPages);
+        }
+
+        void deallocate(uint32_t page)
+        {
+            m_freePageTables.insert(page);
         }
 
         void deleteFile(FileDescriptor fd)
@@ -137,7 +121,7 @@ namespace CompFs
             m_fileDescriptor.m_fileSize -= m_current.totalLength() * 4096;
             m_current.moveTo(is);
 
-            // good chance that we can make this shorter
+            // good chance that we can make this shorter by sorting
             is.sort();
             m_fileDescriptor.m_fileSize += is.totalLength() * 4096;
             return is;
