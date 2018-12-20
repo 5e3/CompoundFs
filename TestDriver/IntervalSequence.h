@@ -18,9 +18,6 @@ namespace CompFs
     class IntervalSequence
     {
     public:
-        //typedef Interval Interval;
-
-    public:
         void pushBack(Interval iv)
         {
             assert(!iv.empty());
@@ -50,6 +47,7 @@ namespace CompFs
 
         size_t frontLength() const
         {
+          assert(!empty());
           return front().length();
         }
 
