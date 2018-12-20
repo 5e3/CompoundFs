@@ -16,18 +16,17 @@ namespace CompFs
       }
 
       Interval(Node::Id begin, Node::Id end)
-        : m_begin(begin)
-        , m_end(end)
+          : m_begin(begin)
+          , m_end(end)
       {
-        assert(m_begin <= m_end);
+          assert(m_begin <= m_end);
       }
 
-      //Interval(std::pair<Node::Id, Node::Id> p)
-      //  : m_begin(p.first)
-      //  , m_end(p.second)
-      //{
-      //  assert(m_begin <= m_end);
-      //}
+      explicit Interval(Node::Id begin)
+          : m_begin(begin)
+          , m_end(begin+1)
+      {
+      }
 
       bool operator==(Interval rhs) const { return m_begin == rhs.m_begin && m_end == rhs.m_end; }
       bool operator!=(Interval rhs) const { return !(operator==(rhs)); }
