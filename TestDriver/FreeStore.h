@@ -17,6 +17,7 @@ namespace CompFs
         FreeStore(std::shared_ptr<PageManager> pageManager, FileDescriptor fd)
             : m_pageManager(pageManager)
             , m_fileDescriptor(fd)
+            , m_pinnedPageDirty(false)
         {
             assert(fd != FileDescriptor());
         }
@@ -31,12 +32,15 @@ namespace CompFs
             {
                 m_freePageTables.insert(next);
                 next = loadFileTablePage(next, m_current);
+                if (next == m_fileDescriptor.m_last)
+                    m_fileDescriptor.m_last = m_fileDescriptor.m_first;
+                m_current.sort();
             }
-            m_current.sort();
             m_pinnedPage->setNext(next);
 
             auto iv = m_current.empty() ? Interval() : m_current.popFront(maxPages);
             m_fileDescriptor.m_fileSize -= iv.length() * 4096;
+            m_pinnedPageDirty |= iv.length() > 0;
             return iv;
         }
 
@@ -57,6 +61,11 @@ namespace CompFs
         void compact();
         FileDescriptor close()
         {
+            if (m_pinnedPageDirty)
+            {
+                m_pinnedPage->clear();
+                m_pageManager->pageDirty(m_fileDescriptor.m_first);
+            }
             finalize();
             FileDescriptor fd;
             std::swap(fd, m_fileDescriptor);
@@ -192,6 +201,7 @@ namespace CompFs
         std::unordered_set<Node::Id> m_freePageTables;
         IntervalSequence m_current;
         std::shared_ptr<FileTable> m_pinnedPage;
+        bool m_pinnedPageDirty;
 
 
     };
