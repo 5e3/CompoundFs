@@ -101,7 +101,7 @@ TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
     FileDescriptor fsfd(freeStorePage.second);
     FreeStore fs(pm, fsfd);
 
-    std::vector<FileDescriptor> fileDescriptors = createFiles(pm, 1500, 1);
+    std::vector<FileDescriptor> fileDescriptors = createFiles(pm, 1500, 5);
 
     std::random_shuffle(fileDescriptors.begin(), fileDescriptors.end());
 
@@ -125,7 +125,7 @@ TEST(FreeStore, deleteBigAndSmallFiles)
     FileDescriptor fsfd(freeStorePage.second);
     FreeStore fs(pm, fsfd);
 
-    std::vector<FileDescriptor> fileDescriptors = createFiles(pm, 1500, 1);
+    std::vector<FileDescriptor> fileDescriptors = createFiles(pm, 1500, 5);
     for (auto& large: createFiles(pm, 3, 2200))
         fileDescriptors.push_back(large);
 
@@ -143,9 +143,8 @@ TEST(FreeStore, deleteBigAndSmallFiles)
 TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
 {
     std::shared_ptr<PageManager> pm(new PageManager);
-    auto freeStorePage = pm->newFileTable();
 
-    FileDescriptor fsfd(freeStorePage.second);
+    FileDescriptor fsfd(1000); // crashes if accessed
     FreeStore fs(pm, fsfd);
 
     CHECK(fs.allocate(1) == Interval());
@@ -239,31 +238,6 @@ TEST(FreeStore, singlePageConsumed)
     CHECK(fsfd.m_fileSize == 0);
 }
 
-//TEST(FreeStore, singlePageConsumed)
-//{
-//    std::shared_ptr<PageManager> pm(new PageManager);
-//    auto freeStorePage = pm->newFileTable();
-//    
-//    FileDescriptor fsfd(freeStorePage.second);
-//    {
-//        FreeStore fs(pm, fsfd);
-//        fs.deallocate(pm->newFileTable().second);
-//        fsfd = fs.close();
-//    }
-//
-//    {
-//        FreeStore fs(pm, fsfd);
-//        CHECK(fs.allocate(1).length() == 1);     
-//        fsfd = fs.close();
-//        CHECK(fsfd.m_fileSize == 0);
-//    }
-//
-//    FreeStore fs(pm, fsfd);
-//    CHECK(fs.allocate(1).length() == 0); 
-//    fsfd = fs.close();
-//    CHECK(fsfd.m_fileSize == 0);
-//}
-
 TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
 {
     std::shared_ptr<PageManager> pm(new PageManager);
@@ -285,7 +259,7 @@ TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
     }
     {
         FreeStore fs(pm, fsfd);
-        while (fs.allocate(2000).length());
+        while (fs.allocate(5).length());
         fsfd = fs.close();
     }
     {

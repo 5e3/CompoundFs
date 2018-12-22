@@ -17,13 +17,16 @@ namespace CompFs
         FreeStore(std::shared_ptr<PageManager> pageManager, FileDescriptor fd)
             : m_pageManager(pageManager)
             , m_fileDescriptor(fd)
-            , m_pinnedPageDirty(false)
+            , m_currentFileSize(fd.m_fileSize)
         {
             assert(fd != FileDescriptor());
         }
 
         Interval allocate(uint32_t maxPages)
         {
+            if (m_currentFileSize == 0)
+                return Interval();
+
             if (!m_pinnedPage)
                 loadCurrentIntervals();
 
@@ -32,15 +35,16 @@ namespace CompFs
             {
                 m_freePageTables.insert(next);
                 next = loadFileTablePage(next, m_current);
-                if (next == m_fileDescriptor.m_last)
-                    m_fileDescriptor.m_last = m_fileDescriptor.m_first;
+            }
+            
+            if (next != m_pinnedPage->getNext())
+            {
+                m_pinnedPage->setNext(next);
                 m_current.sort();
             }
-            m_pinnedPage->setNext(next);
 
-            auto iv = m_current.empty() ? Interval() : m_current.popFront(maxPages);
-            m_fileDescriptor.m_fileSize -= iv.length() * 4096;
-            m_pinnedPageDirty |= iv.length() > 0;
+            auto iv = m_current.popFront(maxPages);
+            m_currentFileSize -= iv.length() * 4096;
             return iv;
         }
 
@@ -61,11 +65,15 @@ namespace CompFs
         void compact();
         FileDescriptor close()
         {
-            if (m_pinnedPageDirty)
+            if (m_fileDescriptor.m_fileSize != m_currentFileSize)
             {
+                if (m_pinnedPage->getNext() == Node::INVALID_NODE)
+                    m_fileDescriptor.m_last = m_fileDescriptor.m_first;
                 m_pinnedPage->clear();
                 m_pageManager->pageDirty(m_fileDescriptor.m_first);
+                m_fileDescriptor.m_fileSize = m_currentFileSize;
             }
+
             finalize();
             FileDescriptor fd;
             std::swap(fd, m_fileDescriptor);
@@ -129,12 +137,10 @@ namespace CompFs
             // if by now we have anything add m_current intervals to the IntervalSequence
             if (!is.empty())
                 loadCurrentIntervals();
-            m_fileDescriptor.m_fileSize -= m_current.totalLength() * 4096;
             m_current.moveTo(is);
 
             // good chance that we can make this shorter by sorting
             is.sort();
-            m_fileDescriptor.m_fileSize += is.totalLength() * 4096;
             return is;
         }
 
@@ -146,32 +152,33 @@ namespace CompFs
 
             PageManager::FileTablePage cur = PageManager::FileTablePage(m_pinnedPage, fd.m_first);
             m_pageManager->pageDirty(cur.second);
-            while(true)
+            cur.first->transferFrom(is);
+            while (!is.empty())
             {
-                cur.first->transferFrom(is);
-                if (is.empty())
-                    break;
-
                 // let's use one of our pages as a FileTable
                 auto pageId = is.popFront(1).begin();
-                fd.m_fileSize -= 4096;
-                auto next = m_pageManager->loadFileTable(pageId);
+                auto next = m_pageManager->loadFileTable(pageId);  //!! 
                 if (m_freePageTables.count(pageId))
                     m_pageManager->pageDirty(pageId);
                 next.first->setNext(cur.first->getNext());
                 cur.first->setNext(pageId);
                 cur = next;
+                cur.first->transferFrom(is);
             }
 
-            if (fd.m_first == fd.m_last)                
+            if (fd.m_first == fd.m_last)
                 fd.m_last = cur.second;
- 
+
             return fd;
         }
 
         void finalize()
         {
+            for (auto& fd : m_filesToDelete)
+                m_fileDescriptor.m_fileSize += fd.m_fileSize;
+
             auto is = onePageOptimization();
+            m_fileDescriptor.m_fileSize += m_freePageTables.size() * 4096;
 
             FileDescriptor cur = pushFileTables(is);
             for (auto& fd : m_filesToDelete)
@@ -189,7 +196,6 @@ namespace CompFs
 
             assert(prev.m_fileSize % 4096 == 0);
             assert(next.m_fileSize % 4096 == 0);
-            prev.m_fileSize += next.m_fileSize;
             prev.m_last = next.m_last;
             return prev;
         }
@@ -197,11 +203,11 @@ namespace CompFs
     private:
         std::shared_ptr<PageManager> m_pageManager;
         FileDescriptor m_fileDescriptor;
+        uint64_t m_currentFileSize;
         std::vector<FileDescriptor> m_filesToDelete;
         std::unordered_set<Node::Id> m_freePageTables;
         IntervalSequence m_current;
         std::shared_ptr<FileTable> m_pinnedPage;
-        bool m_pinnedPageDirty;
 
 
     };
