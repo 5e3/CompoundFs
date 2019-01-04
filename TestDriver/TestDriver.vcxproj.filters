@@ -17,6 +17,8 @@
     <ClInclude Include="Interval.h" />
     <ClInclude Include="FreeStore.h" />
     <ClInclude Include="FileDescriptor.h" />
+    <ClInclude Include="PageAllocator.h" />
+    <ClInclude Include="CacheManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
@@ -29,5 +31,7 @@
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestFile.cpp" />
     <ClCompile Include="TestFreeStore.cpp" />
+    <ClCompile Include="PageAllocator.cpp" />
+    <ClCompile Include="TestPageAllocator.cpp" />
   </ItemGroup>
 </Project>
