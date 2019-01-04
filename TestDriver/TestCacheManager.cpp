@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "CacheManager.h"
+#include <algorithm>
 
 
 using namespace CompFs;
@@ -12,7 +13,7 @@ struct SimpleFile : RawFileInterface
 
     virtual Node::Id newPage()
     {
-        Node::Id id = m_file.size();
+        Node::Id id = (Node::Id) m_file.size();
         m_file.push_back(m_allocator.allocate());
         return id;
     }
@@ -33,7 +34,7 @@ struct SimpleFile : RawFileInterface
     PageAllocator m_allocator;
 };
 
-
+///////////////////////////////////////////////////////////////////////////////
 
 TEST(CacheManager, newPageIsCachedButNotWritten)
 {
@@ -198,6 +199,63 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
         auto p = cm.getPage(i);
         CHECK(*p == i+10);
     }
+}
+
+TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
+{
+    SimpleFile sf;
+    {
+        CacheManager cm(&sf);
+        for(int i=0; i<10; i++)
+        {    
+            auto p = cm.newPage().first;
+            *p = i+1;
+        }
+        cm.trim(0);
+    }
+
+    CacheManager cm(&sf);
+    for(int i=0; i<10; i++)
+    {    
+        auto p = cm.getPage(i);
+        *p = i+10;
+        cm.pageDirty(i);
+    }
+    cm.trim(0);
+
+    for(int i=0; i<10; i++)
+    {    
+        auto p = cm.getPage(i);
+        *p = i+20;
+        cm.pageDirty(i);
+    }
+    cm.trim(0);
+    CHECK(sf.m_file.size() == 20);
+
+    for(int i=0; i<10; i++)
+    {    
+        auto p = cm.getPage(i);
+        CHECK(*p == i+20);
+    }
+}
+
+TEST(PageSortItem, sortOrder)
+{
+    std::vector<CacheManager::PageSortItem> psis;
+    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 5, 0, 0);
+    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 3, 5, 1);
+    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 3, 4, 2);
+    psis.emplace_back(CacheManager::PageSortItem::New, 0, 5, 3);
+    psis.emplace_back(CacheManager::PageSortItem::New, 0, 4, 4);
+    psis.emplace_back(CacheManager::PageSortItem::New, 0, 0, 5);
+    psis.emplace_back(CacheManager::PageSortItem::Read, 3, 1, 6);
+    psis.emplace_back(CacheManager::PageSortItem::Read, 3, 0, 7);
+    psis.emplace_back(CacheManager::PageSortItem::Read, 2, 10, 8);
+
+    auto psis2 = psis;
+    std::random_shuffle(psis2.begin(), psis2.end());
+    std::sort(psis2.begin(), psis2.end());
+    CHECK(psis2 == psis);
 }
 
 

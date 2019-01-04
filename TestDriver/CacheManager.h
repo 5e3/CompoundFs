@@ -53,6 +53,7 @@ namespace CompFs
             }
         };
 
+    public:
         struct PageSortItem : PageMetaData
         {
             Node::Id m_id;
@@ -60,6 +61,13 @@ namespace CompFs
                 : PageMetaData(pmd)
                 , m_id(id)
             {
+            }
+
+            PageSortItem(int type, int usageCount, int priority, Node::Id id)
+                : PageMetaData(type, priority)
+                , m_id(id)
+            {
+                m_usageCount = usageCount;
             }
 
             bool operator<(PageSortItem rhs) const
@@ -70,10 +78,17 @@ namespace CompFs
                     return m_usageCount > rhs.m_usageCount;
                 return m_priority > rhs.m_priority;
             }
+
+            bool operator==(PageSortItem rhs) const
+            {
+                return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount 
+                    && m_priority == rhs.m_priority && m_id == rhs.m_id;
+            }
+
         };
 
     public:
-        CacheManager(RawFileInterface* rfi, uint32_t maxPages=512);
+        CacheManager(RawFileInterface* rfi, uint32_t maxPages=256);
 
         Page newPage();
         std::shared_ptr<uint8_t> getPage(Node::Id id);
@@ -84,6 +99,7 @@ namespace CompFs
         Node::Id redirectPage(Node::Id id) const;
         std::vector<PageSortItem> getUnpinnedPages() const;
 
+        void trimCheck();
         void evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
         void evictNewPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
         void removeFromCache(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
