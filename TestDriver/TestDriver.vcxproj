@@ -141,10 +141,12 @@
   <ItemGroup>
     <ClInclude Include="Blob.h" />
     <ClInclude Include="BTree.h" />
+    <ClInclude Include="CacheManager.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="FileDescriptor.h" />
     <ClInclude Include="FileTable.h" />
     <ClInclude Include="FreeStore.h" />
+    <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="InnerNode.h" />
     <ClInclude Include="Interval.h" />
     <ClInclude Include="IntervalSequence.h" />
@@ -158,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
+    <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="PageManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestBTree.cpp" />
@@ -167,6 +170,7 @@
     <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestNode.cpp" />
+    <ClCompile Include="TestPageAllocator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
