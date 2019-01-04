@@ -87,7 +87,7 @@ void PageAllocator::free(std::shared_ptr<uint8_t> block, uint8_t* page)
 std::shared_ptr<uint8_t> PageAllocator::makePage(std::shared_ptr<uint8_t> block, uint8_t* page)
 {
     return std::shared_ptr<uint8_t>(page, [this,block] (uint8_t* page) { this->free(block, page); });
- }
+}
 
 
 
