@@ -33,5 +33,7 @@
     <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="TestPageAllocator.cpp" />
+    <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="TestCacheManager.cpp" />
   </ItemGroup>
 </Project>

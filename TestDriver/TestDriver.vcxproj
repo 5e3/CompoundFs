@@ -160,10 +160,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
+    <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="PageManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestBTree.cpp" />
+    <ClCompile Include="TestCacheManager.cpp" />
     <ClCompile Include="TestDriver.cpp" />
     <ClCompile Include="TestFile.cpp" />
     <ClCompile Include="TestFileTable.cpp" />
