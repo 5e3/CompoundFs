@@ -10,7 +10,7 @@ using namespace CompFs;
 
 PageAllocator::PageAllocator(size_t pagesPerBlock)
     : m_blocksAllocated(0)
-    , m_pagesPerBlock(pagesPerBlock)
+    , m_pagesPerBlock(max(pagesPerBlock, 16))
     , m_block(allocBlock())
     , m_currentPosInBlock(m_block.get())
 {
