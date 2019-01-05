@@ -35,56 +35,27 @@ namespace CompFs
             unsigned int m_type : 2;
             unsigned int m_usageCount : 24;
             unsigned int m_priority : 6;
-            PageMetaData(int type, int priority)
-                : m_type(type)
-                , m_usageCount(0)
-                , m_priority(priority)
-            {
-            }
+            
+            PageMetaData(int type, int priority);
         };
 
         struct CachedPage : PageMetaData
         {
             std::shared_ptr<uint8_t> m_page;
-            CachedPage(const std::shared_ptr<uint8_t>& page, int type, int priority=0)
-                : PageMetaData(type, priority)
-                , m_page(page)
-            {
-            }
+            
+            CachedPage(const std::shared_ptr<uint8_t>& page, int type, int priority=0);
         };
 
     public:
         struct PageSortItem : PageMetaData
         {
             Node::Id m_id;
-            PageSortItem(const PageMetaData& pmd, Node::Id id)
-                : PageMetaData(pmd)
-                , m_id(id)
-            {
-            }
 
-            PageSortItem(int type, int usageCount, int priority, Node::Id id)
-                : PageMetaData(type, priority)
-                , m_id(id)
-            {
-                m_usageCount = usageCount;
-            }
+            PageSortItem(const PageMetaData& pmd, Node::Id id);
+            PageSortItem(int type, int usageCount, int priority, Node::Id id);
 
-            bool operator<(PageSortItem rhs) const
-            {
-                if (m_type != rhs.m_type)
-                    return m_type > rhs.m_type;
-                if (m_usageCount != rhs.m_usageCount)
-                    return m_usageCount > rhs.m_usageCount;
-                return m_priority > rhs.m_priority;
-            }
-
-            bool operator==(PageSortItem rhs) const
-            {
-                return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount 
-                    && m_priority == rhs.m_priority && m_id == rhs.m_id;
-            }
-
+            bool operator<(PageSortItem rhs) const;
+            bool operator==(PageSortItem rhs) const;
         };
 
     public:

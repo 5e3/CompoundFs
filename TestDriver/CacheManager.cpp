@@ -121,4 +121,50 @@ void CacheManager::removeFromCache(std::vector<PageSortItem>::iterator begin, st
         m_cache.erase(it->m_id);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+CacheManager::PageMetaData::PageMetaData(int type, int priority)
+    : m_type(type)
+    , m_usageCount(0)
+    , m_priority(priority)
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page, int type, int priority)
+    : PageMetaData(type, priority)
+    , m_page(page)
+{
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, Node::Id id)
+    : PageMetaData(pmd)
+    , m_id(id)
+{
+}
+
+CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, Node::Id id)
+    : PageMetaData(type, priority)
+    , m_id(id)
+{
+    m_usageCount = usageCount;
+}
+
+bool CacheManager::PageSortItem::operator<(PageSortItem rhs) const
+{
+    if (m_type != rhs.m_type)
+        return m_type > rhs.m_type;
+    if (m_usageCount != rhs.m_usageCount)
+        return m_usageCount > rhs.m_usageCount;
+    return m_priority > rhs.m_priority;
+}
+
+bool CacheManager::PageSortItem::operator==(PageSortItem rhs) const
+{
+    return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount 
+        && m_priority == rhs.m_priority && m_id == rhs.m_id;
+}
 
