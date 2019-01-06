@@ -151,7 +151,6 @@
     <ClInclude Include="Interval.h" />
     <ClInclude Include="IntervalSequence.h" />
     <ClInclude Include="Leaf.h" />
-    <ClInclude Include="LRUCache.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageManager.h" />
     <ClInclude Include="stdafx.h" />
