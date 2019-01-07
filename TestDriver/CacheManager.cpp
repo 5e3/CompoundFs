@@ -15,10 +15,10 @@ CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
 
 CacheManager::Page CacheManager::newPage()
 {
-    trimCheck();
     auto page = m_pageAllocator.allocate();
     auto id = m_rawFileInterface->newPage();
     m_cache.insert(std::make_pair(id, CachedPage(page, CachedPage::New)));
+    trimCheck();
     return Page(page, id);
 }
 
@@ -28,10 +28,10 @@ std::shared_ptr<uint8_t> CacheManager::getPage(Node::Id id)
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
-        trimCheck();
         auto page = m_pageAllocator.allocate();
         m_rawFileInterface->readPage(id, page);
         m_cache.insert(std::make_pair(id, CachedPage(page, CachedPage::Read)));
+        trimCheck();
         return page;
     }
     
