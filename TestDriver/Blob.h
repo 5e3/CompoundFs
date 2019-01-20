@@ -58,7 +58,7 @@ public:
         m_data = &m_container[0];
     }
 
-    uint8_t size() const { return *m_data + 1; }
+    uint16_t size() const { return *m_data + 1; }
     const uint8_t* begin() const { return m_data; }
     const uint8_t* end() const { return begin() + size(); }
     bool operator==(const Blob& lhs) const { return std::equal(begin(), end(), lhs.begin()); }
@@ -86,20 +86,20 @@ public:
         : m_data(data)
     {}
 
-    bool operator()(uint16_t left, uint16_t right)
+    bool operator()(uint16_t left, uint16_t right) const
     {
         Blob l(m_data + left);
         Blob r(m_data + right);
         return l < r;
     }
 
-    bool operator()(uint16_t left, const Blob& right)
+    bool operator()(uint16_t left, const Blob& right) const
     {
         Blob l(m_data + left);
         return l < right;
     }
 
-    bool operator()(const Blob& left, uint16_t right)
+    bool operator()(const Blob& left, uint16_t right) const
     {
         Blob r(m_data + right);
         return left < r;
