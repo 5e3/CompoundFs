@@ -60,7 +60,7 @@ TEST(RawFileWriter, MultipleWritesCreatesDescOfAppropriateSize)
     FileDescriptor fd = f.close();
 
     CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 10 * data.size());
+    CHECK(fd.m_fileSize == 10 * static_cast<size_t>(data.size()));
     CHECK(fd.m_first == fd.m_last);
 }
 
@@ -81,7 +81,7 @@ TEST(RawFileWriter, MultipleOpenCreatesDescOfAppropriateSize)
     fd = f.close();
 
     CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 20 * data.size());
+    CHECK(fd.m_fileSize == 20 * static_cast<size_t>(data.size()));
     CHECK(fd.m_first == fd.m_last);
 }
 
@@ -95,7 +95,7 @@ TEST(RawFileWriter, SmallWritesOverPageBoundery)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000 * data.size());
+    CHECK(fd.m_fileSize == 1000 * static_cast<size_t>(data.size()));
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     CHECK(fileTablePage.second == fd.m_last);
@@ -117,7 +117,7 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000 * data.size());
+    CHECK(fd.m_fileSize == 1000 * static_cast<size_t>(data.size()));
 
     f.openAppend(fd);
     for (int i = 0; i < 1000; i++)
@@ -125,7 +125,7 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
 
     fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 2000 * data.size());
+    CHECK(fd.m_fileSize == 2000 * static_cast<size_t>(data.size()));
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     CHECK(fileTablePage.second == fd.m_last);

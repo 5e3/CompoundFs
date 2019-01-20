@@ -53,7 +53,7 @@ namespace CompFs
 
         void assign(const uint8_t* data)
         {
-            m_container.resize(*data + 1);
+            m_container.resize(static_cast<size_t>(*data) + 1);
             std::copy(data, data + *data + 1, m_container.begin());
             m_data = &m_container[0];
         }

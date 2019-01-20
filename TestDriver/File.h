@@ -65,7 +65,7 @@ namespace CompFs
                 Interval iv = m_pageManager->newInterval(pages);
                 m_pageSequence.pushBack(iv);
                 m_pageManager->writePages(begin, iv);
-                begin += iv.length() * 4096;
+                begin += static_cast<size_t>(iv.length()) * 4096;
                 pages -= iv.length();
             }
 
