@@ -21,7 +21,7 @@ TEST(PageAllocator, CanAllocateManyPages)
 {
     PageAllocator alloc(16);
     std::vector<std::shared_ptr<uint8_t>> pages;
-    for (int i=0; i<64; i++)
+    for (int i = 0; i < 64; i++)
         pages.push_back(alloc.allocate());
 
     std::unordered_set<std::shared_ptr<uint8_t>> pset;
@@ -36,7 +36,7 @@ TEST(PageAllocator, allocReusesMemory)
     std::unordered_set<uint8_t*> pset;
     {
         std::vector<std::shared_ptr<uint8_t>> pages;
-        for (int i=0; i<70; i++)
+        for (int i = 0; i < 70; i++)
         {
             pages.push_back(alloc.allocate());
             pset.insert(pages.back().get());
@@ -44,7 +44,7 @@ TEST(PageAllocator, allocReusesMemory)
     }
 
     std::vector<std::shared_ptr<uint8_t>> pages;
-    for (int i=0; i<70; i++)
+    for (int i = 0; i < 70; i++)
     {
         pages.push_back(alloc.allocate());
         CHECK(pset.count(pages.back().get()) != 0);
@@ -57,7 +57,7 @@ TEST(PageAllocator, trimFreesAllButOnePageWithoutOutstandingReferences)
 
     {
         std::vector<std::shared_ptr<uint8_t>> pages;
-        for (int i=0; i<200; i++)
+        for (int i = 0; i < 200; i++)
             pages.push_back(alloc.allocate());
         std::random_shuffle(pages.begin(), pages.end());
     }
@@ -70,11 +70,11 @@ TEST(PageAllocator, trimFreesAllButOnePageWithoutOutstandingReferences)
 TEST(PageAllocator, trimFreesWhatIsUsefull)
 {
     PageAllocator alloc(16);
-    auto p = alloc.allocate();  // hold the first page
+    auto p = alloc.allocate(); // hold the first page
 
     {
         std::vector<std::shared_ptr<uint8_t>> pages;
-        for (int i=0; i<200; i++)
+        for (int i = 0; i < 200; i++)
             pages.push_back(alloc.allocate());
         std::random_shuffle(pages.begin(), pages.end());
     }
@@ -96,7 +96,7 @@ TEST(PageAllocator, stressTest)
 
     {
         std::vector<std::shared_ptr<uint8_t>> pages;
-        for (int i=0; i<5120; i++)
+        for (int i = 0; i < 5120; i++)
             pages.push_back(alloc.allocate());
         std::random_shuffle(pages.begin(), pages.end());
     }
@@ -104,5 +104,4 @@ TEST(PageAllocator, stressTest)
     auto statistic = alloc.trim();
     CHECK(statistic.first == 1);
     CHECK(statistic.second < 16);
-
 }

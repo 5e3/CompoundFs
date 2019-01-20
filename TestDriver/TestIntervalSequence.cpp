@@ -75,16 +75,16 @@ TEST(IntervalSequence, SplitIntervals)
 TEST(IntervalSequence, IterateOneByOne)
 {
     IntervalSequence is;
-    for (int i=0; i<20; i+=3)
-        is.pushBack(Interval(i, i+2));
+    for (int i = 0; i < 20; i += 3)
+        is.pushBack(Interval(i, i + 2));
 
     int j = 0;
     while (!is.empty())
     {
         Interval iv = is.popFront(1);
-        CHECK(iv == Interval(j, j+1));
+        CHECK(iv == Interval(j, j + 1));
         j++;
-        if (((j+1) % 3) == 0)
+        if (((j + 1) % 3) == 0)
             j++;
     }
 }
@@ -117,7 +117,6 @@ TEST(IntervalSequence, Sort)
 
     iv = is.popFront(10);
     CHECK(iv == Interval(20, 30));
-
 }
 
 TEST(IntervalSequence, Sort2)
@@ -142,4 +141,3 @@ TEST(IntervalSequence, Sort2)
     Interval iv = is.popFront();
     CHECK(iv == Interval(0, 50));
 }
-

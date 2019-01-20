@@ -6,7 +6,6 @@
 
 using namespace CompFs;
 
-
 TEST(RawFileWriter, CtorCreatesEmptyFileDesc)
 {
     RawFileWriter f(std::shared_ptr<PageManager>(new PageManager));
@@ -46,7 +45,6 @@ TEST(RawFileWriter, WriteCloseCreatesFileTablePage)
     fileTablePage.first->insertInto(is);
     CHECK(is.size() == 1);
     CHECK(is.front() == Interval(0, 1));
-
 }
 
 TEST(RawFileWriter, MultipleWritesCreatesDescOfAppropriateSize)
@@ -104,7 +102,6 @@ TEST(RawFileWriter, SmallWritesOverPageBoundery)
     fileTablePage.first->insertInto(is);
     CHECK(is.size() == 1);
     CHECK(is.front() == Interval(0, 2));
-
 }
 
 TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
@@ -143,7 +140,7 @@ TEST(RawFileWriter, PageSizeWrites)
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     RawFileWriter f(pageManager);
     for (int i = 0; i < 10; i++)
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -161,7 +158,7 @@ TEST(RawFileWriter, OverPageSizeWrites)
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     RawFileWriter f(pageManager);
     for (int i = 0; i < 10; i++)
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -179,7 +176,7 @@ TEST(RawFileWriter, UnderPageSizeWrites)
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     RawFileWriter f(pageManager);
     for (int i = 0; i < 10; i++)
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -197,7 +194,7 @@ TEST(RawFileWriter, LargePageSizeWrites)
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     RawFileWriter f(pageManager);
     for (int i = 0; i < 10; i++)
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -215,7 +212,7 @@ TEST(RawFileWriter, LargeSizeWrites)
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     RawFileWriter f(pageManager);
     for (int i = 0; i < 10; i++)
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -224,7 +221,7 @@ TEST(RawFileWriter, LargeSizeWrites)
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
     fileTablePage.first->insertInto(is);
-    CHECK(is.front() == Interval(0, uint32_t (10*str.size() / 4096 +1)));
+    CHECK(is.front() == Interval(0, uint32_t(10 * str.size() / 4096 + 1)));
 }
 
 TEST(RawFileWriter, LargeSizeWritesMultiFiles)
@@ -235,8 +232,8 @@ TEST(RawFileWriter, LargeSizeWritesMultiFiles)
     RawFileWriter f2(pageManager);
     for (int i = 0; i < 10; i++)
     {
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
-        f2.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
+        f2.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
     }
 
     FileDescriptor fd = f.close();
@@ -263,8 +260,8 @@ TEST(RawFileWriter, FillPageTable)
     RawFileWriter f2(pageManager);
     for (int i = 0; i < 2000; i++)
     {
-        f.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
-        f2.write((const uint8_t*)str.c_str(), (const uint8_t*)str.c_str() + str.size());
+        f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
+        f2.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
     }
 
     FileDescriptor fd = f.close();
@@ -297,7 +294,7 @@ TEST(RawPageReader, ReadNullFile)
     CHECK(f.read(0, 0) == 0);
 
     uint8_t buf;
-    CHECK(f.read(&buf, &buf+1) == &buf);
+    CHECK(f.read(&buf, &buf + 1) == &buf);
     CHECK(f.bytesLeft() == 0);
 }
 
@@ -316,14 +313,14 @@ FileDescriptor writeFragmentedFile(const std::vector<uint8_t>& v, std::shared_pt
     RawFileWriter fr2(pageManager);
     size_t s = (v.size() / 4096) * 4096;
     auto it = v.begin();
-    for (auto it = v.begin(); it<(v.begin()+s); it += 4096)
+    for (auto it = v.begin(); it < (v.begin() + s); it += 4096)
     {
-      fr.writeIterator(it, it+4096);
-      fr2.writeIterator(it, it+4096);
+        fr.writeIterator(it, it + 4096);
+        fr2.writeIterator(it, it + 4096);
     }
 
-    fr.writeIterator(v.begin()+s, v.end());
-    fr2.writeIterator(v.begin()+s, v.end());
+    fr.writeIterator(v.begin() + s, v.end());
+    fr2.writeIterator(v.begin() + s, v.end());
     fr2.close();
     return fr.close();
 }
@@ -474,7 +471,7 @@ TEST(RawFileReader, ReadBigFile)
 
 TEST(RawFileReader, ReadFragmentedFile)
 {
-     std::vector<uint8_t> v = makeVector(2200 * 4097);   // => 3 filetable pages
+    std::vector<uint8_t> v = makeVector(2200 * 4097); // => 3 filetable pages
     auto pageManager = std::shared_ptr<PageManager>(new PageManager);
     FileDescriptor fd = writeFragmentedFile(v, pageManager);
     {
@@ -514,4 +511,3 @@ TEST(RawFileReader, ReadFragmentedFile)
         CHECK(res == v);
     }
 }
-

@@ -13,8 +13,7 @@ PageAllocator::PageAllocator(size_t pagesPerBlock)
     , m_pagesPerBlock(max(pagesPerBlock, 16))
     , m_block(allocBlock())
     , m_currentPosInBlock(m_block.get())
-{
-}
+{}
 
 std::shared_ptr<uint8_t> PageAllocator::allocate()
 {
@@ -27,7 +26,7 @@ std::shared_ptr<uint8_t> PageAllocator::allocate()
 
     auto page = makePage(m_block, m_currentPosInBlock);
     m_currentPosInBlock += 4096;
-    if ((m_block.get() + m_pagesPerBlock*4096) != m_currentPosInBlock)
+    if ((m_block.get() + m_pagesPerBlock * 4096) != m_currentPosInBlock)
         return page;
 
     m_block = allocBlock();
@@ -35,7 +34,7 @@ std::shared_ptr<uint8_t> PageAllocator::allocate()
     return page;
 }
 
-std::pair<size_t,size_t> PageAllocator::trim()
+std::pair<size_t, size_t> PageAllocator::trim()
 {
     std::unordered_map<std::shared_ptr<uint8_t>, std::vector<uint8_t*>> blockToPage;
     blockToPage.reserve(m_blocksAllocated);
@@ -52,7 +51,7 @@ std::pair<size_t,size_t> PageAllocator::trim()
 
     m_freePages.clear();
     m_blocksAllocated -= blockToPage.size();
-    for(auto it: blockToPage)
+    for (auto it: blockToPage)
     {
         if (it.second.size() != m_pagesPerBlock)
         {
@@ -73,10 +72,7 @@ std::shared_ptr<uint8_t> PageAllocator::allocBlock()
         throw std::bad_alloc();
 
     m_blocksAllocated++;
-    return std::shared_ptr<uint8_t>(block, [] (uint8_t* b) 
-    { 
-        ::VirtualFree(b, 0, MEM_RELEASE); 
-    });
+    return std::shared_ptr<uint8_t>(block, [](uint8_t* b) { ::VirtualFree(b, 0, MEM_RELEASE); });
 }
 
 void PageAllocator::free(std::shared_ptr<uint8_t> block, uint8_t* page)
@@ -86,8 +82,5 @@ void PageAllocator::free(std::shared_ptr<uint8_t> block, uint8_t* page)
 
 std::shared_ptr<uint8_t> PageAllocator::makePage(std::shared_ptr<uint8_t> block, uint8_t* page)
 {
-    return std::shared_ptr<uint8_t>(page, [this,block] (uint8_t* page) { this->free(block, page); });
+    return std::shared_ptr<uint8_t>(page, [this, block](uint8_t* page) { this->free(block, page); });
 }
-
-
-
