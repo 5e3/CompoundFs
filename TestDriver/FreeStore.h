@@ -44,7 +44,7 @@ namespace CompFs
             }
 
             auto iv = m_current.popFront(maxPages);
-            m_currentFileSize -= iv.length() * 4096;
+            m_currentFileSize -= static_cast<size_t>(iv.length()) * 4096;
             return iv;
         }
 

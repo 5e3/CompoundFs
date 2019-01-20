@@ -50,7 +50,7 @@ namespace CompFs
 
         bool hasSpace(const Blob& key, const Blob& value) const
         {
-            size_t size = key.size() + value.size() + sizeof(uint16_t);
+            size_t size = static_cast<size_t>(key.size()) + value.size() + sizeof(uint16_t);
             return size <= bytesLeft();
         }
 
