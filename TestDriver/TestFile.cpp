@@ -60,7 +60,7 @@ TEST(RawFileWriter, MultipleWritesCreatesDescOfAppropriateSize)
     FileDescriptor fd = f.close();
 
     CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 10 * static_cast<size_t>(data.size()));
+    CHECK(fd.m_fileSize == 10ULL * data.size());
     CHECK(fd.m_first == fd.m_last);
 }
 
@@ -81,7 +81,7 @@ TEST(RawFileWriter, MultipleOpenCreatesDescOfAppropriateSize)
     fd = f.close();
 
     CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 20 * static_cast<size_t>(data.size()));
+    CHECK(fd.m_fileSize == 20ULL * data.size());
     CHECK(fd.m_first == fd.m_last);
 }
 
@@ -95,7 +95,7 @@ TEST(RawFileWriter, SmallWritesOverPageBoundery)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000 * static_cast<size_t>(data.size()));
+    CHECK(fd.m_fileSize == 1000ULL * data.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     CHECK(fileTablePage.second == fd.m_last);
@@ -117,7 +117,7 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000 * static_cast<size_t>(data.size()));
+    CHECK(fd.m_fileSize == 1000ULL * data.size());
 
     f.openAppend(fd);
     for (int i = 0; i < 1000; i++)
@@ -125,7 +125,7 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
 
     fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 2000 * static_cast<size_t>(data.size()));
+    CHECK(fd.m_fileSize == 2000ULL * data.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     CHECK(fileTablePage.second == fd.m_last);
@@ -147,7 +147,7 @@ TEST(RawFileWriter, PageSizeWrites)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
@@ -165,7 +165,7 @@ TEST(RawFileWriter, OverPageSizeWrites)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
@@ -183,7 +183,7 @@ TEST(RawFileWriter, UnderPageSizeWrites)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
@@ -201,7 +201,7 @@ TEST(RawFileWriter, LargePageSizeWrites)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
@@ -219,7 +219,7 @@ TEST(RawFileWriter, LargeSizeWrites)
 
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     IntervalSequence is;
@@ -241,8 +241,8 @@ TEST(RawFileWriter, LargeSizeWritesMultiFiles)
 
     FileDescriptor fd = f.close();
     FileDescriptor fd2 = f2.close();
-    CHECK(fd.m_fileSize == 10 * str.size());
-    CHECK(fd2.m_fileSize == 10 * str.size());
+    CHECK(fd.m_fileSize == 10ULL * str.size());
+    CHECK(fd2.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_last);
     auto fileTablePage2 = pageManager->loadFileTable(fd2.m_last);
@@ -269,10 +269,10 @@ TEST(RawFileWriter, FillPageTable)
 
     FileDescriptor fd = f.close();
     FileDescriptor fd2 = f2.close();
-    CHECK(fd.m_fileSize == 2000 * str.size());
+    CHECK(fd.m_fileSize == 2000ULL * str.size());
     CHECK(fd.m_first != fd.m_last);
 
-    CHECK(fd2.m_fileSize == 2000 * str.size());
+    CHECK(fd2.m_fileSize == 2000ULL * str.size());
     CHECK(fd2.m_first != fd2.m_last);
 
     auto fileTablePage = pageManager->loadFileTable(fd.m_first);

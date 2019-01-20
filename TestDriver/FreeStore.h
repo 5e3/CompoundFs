@@ -44,7 +44,7 @@ namespace CompFs
             }
 
             auto iv = m_current.popFront(maxPages);
-            m_currentFileSize -= static_cast<size_t>(iv.length()) * 4096;
+            m_currentFileSize -= iv.length() * 4096ULL;
             return iv;
         }
 
@@ -178,7 +178,7 @@ namespace CompFs
                 m_fileDescriptor.m_fileSize += fd.m_fileSize;
 
             auto is = onePageOptimization();
-            m_fileDescriptor.m_fileSize += m_freePageTables.size() * 4096;
+            m_fileDescriptor.m_fileSize += m_freePageTables.size() * 4096ULL;
 
             FileDescriptor cur = pushFileTables(is);
             for (auto& fd : m_filesToDelete)

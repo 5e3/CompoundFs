@@ -26,6 +26,8 @@ namespace CompFs
             : Node(0, sizeof(m_data), NodeType::FileTable)
             , m_next(INVALID_NODE)
         {
+			m_unused[0] = 0;
+			m_data[0] = 0;
         }
 
         void setNext(Id next) { m_next = next; }
