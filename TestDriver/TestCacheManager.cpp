@@ -99,7 +99,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
         CHECK(*sf.m_file.at(i) == i+1);
 }
 
-TEST(CacheManager, pinnedPageDoNetGetWrittenToFileOnTrim)
+TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
 {
     SimpleFile sf;
     CacheManager cm(&sf);
