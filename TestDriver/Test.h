@@ -81,6 +81,7 @@ public:
 			Test& test = *m_tests[i];
 			try
 			{
+				printf(".");
 				test.Run_(result);
 			}
 			catch (const std::exception& e)
