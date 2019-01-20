@@ -75,7 +75,7 @@ TEST(FileTable, transferNotEnoughSpace3)
 {
     std::vector<Interval> ivect;
     for (uint32_t i = 0; i < 2000; i++)
-        ivect.push_back(Interval(i * 3, i * 3 + i%2 +1));
+        ivect.push_back(Interval(i * 3, i * 3 + i % 2 + 1));
 
     std::random_shuffle(ivect.begin(), ivect.end());
     IntervalSequence is;
@@ -97,4 +97,3 @@ TEST(FileTable, transferNotEnoughSpace3)
 
     CHECK(is3 == is2);
 }
-

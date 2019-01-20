@@ -4,12 +4,13 @@
 #include "CacheManager.h"
 #include <algorithm>
 
-
 using namespace CompFs;
 
 struct SimpleFile : RawFileInterface
 {
-    SimpleFile() : m_allocator(512) {}
+    SimpleFile()
+        : m_allocator(512)
+    {}
 
     virtual Node::Id newPage()
     {
@@ -21,13 +22,13 @@ struct SimpleFile : RawFileInterface
     virtual void writePage(Node::Id id, std::shared_ptr<uint8_t> page)
     {
         auto p = m_file.at(id);
-        std::copy(page.get(), page.get()+4096, p.get());
+        std::copy(page.get(), page.get() + 4096, p.get());
     }
 
     virtual void readPage(Node::Id id, std::shared_ptr<uint8_t> page) const
     {
         auto p = m_file.at(id);
-        std::copy(p.get(), p.get()+4096, page.get());
+        std::copy(p.get(), p.get() + 4096, page.get());
     }
 
     std::vector<std::shared_ptr<uint8_t>> m_file;
@@ -50,7 +51,7 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     p.first.reset();
     auto p2 = cm.getPage(p.second);
     CHECK(*p2 == 0xaa);
-    CHECK (*sf.m_file.at(p.second) != *p2);
+    CHECK(*sf.m_file.at(p.second) != *p2);
 }
 
 TEST(CacheManager, getPageIsCachedButNotWritten)
@@ -73,7 +74,7 @@ TEST(CacheManager, trimReducesSizeOfCache)
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    for(int i=0; i<10; i++)
+    for (int i = 0; i < 10; i++)
         auto page = cm.newPage();
 
     CHECK(cm.trim(20) == 10);
@@ -82,21 +83,20 @@ TEST(CacheManager, trimReducesSizeOfCache)
     CHECK(cm.trim(0) == 0);
 }
 
-
 TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 {
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.newPage().first;
-        *p = i+1;
+        *p = i + 1;
     }
 
     cm.trim(0);
-    for(int i=0; i<10; i++)
-        CHECK(*sf.m_file.at(i) == i+1);
+    for (int i = 0; i < 10; i++)
+        CHECK(*sf.m_file.at(i) == i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
@@ -104,19 +104,19 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.newPage().first;
-        *p = i+1;
+        *p = i + 1;
     }
     auto p1 = cm.getPage(0);
     auto p2 = cm.getPage(9);
 
     CHECK(cm.trim(0) == 2);
 
-    for(int i=1; i<9; i++)
-        CHECK(*sf.m_file.at(i) == i+1);
-    
+    for (int i = 1; i < 9; i++)
+        CHECK(*sf.m_file.at(i) == i + 1);
+
     CHECK(*sf.m_file.at(0) != *p1);
     CHECK(*sf.m_file.at(9) != *p2);
 }
@@ -126,25 +126,25 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.newPage().first;
-        *p = i+1;
+        *p = i + 1;
     }
 
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        *p = i+10;
+        *p = i + 10;
         cm.pageDirty(i);
     }
 
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-        CHECK(*sf.m_file.at(i) == i+10);
+    for (int i = 0; i < 10; i++)
+        CHECK(*sf.m_file.at(i) == i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
@@ -152,24 +152,24 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.newPage().first;
-        *p = i+1;
+        *p = i + 1;
     }
 
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        *p = i+10;  // change page but no pageDirty()
+        *p = i + 10; // change page but no pageDirty()
     }
 
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-        CHECK(*sf.m_file.at(i) == i+1);
+    for (int i = 0; i < 10; i++)
+        CHECK(*sf.m_file.at(i) == i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
@@ -177,27 +177,27 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     SimpleFile sf;
     {
         CacheManager cm(&sf);
-        for(int i=0; i<10; i++)
-        {    
+        for (int i = 0; i < 10; i++)
+        {
             auto p = cm.newPage().first;
-            *p = i+1;
+            *p = i + 1;
         }
         cm.trim(0);
     }
 
     CacheManager cm(&sf);
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        *p = i+10;
+        *p = i + 10;
         cm.pageDirty(i);
     }
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        CHECK(*p == i+10);
+        CHECK(*p == i + 10);
     }
 }
 
@@ -206,36 +206,36 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     SimpleFile sf;
     {
         CacheManager cm(&sf);
-        for(int i=0; i<10; i++)
-        {    
+        for (int i = 0; i < 10; i++)
+        {
             auto p = cm.newPage().first;
-            *p = i+1;
+            *p = i + 1;
         }
         cm.trim(0);
     }
 
     CacheManager cm(&sf);
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        *p = i+10;
+        *p = i + 10;
         cm.pageDirty(i);
     }
     cm.trim(0);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        *p = i+20;
+        *p = i + 20;
         cm.pageDirty(i);
     }
     cm.trim(0);
     CHECK(sf.m_file.size() == 20);
 
-    for(int i=0; i<10; i++)
-    {    
+    for (int i = 0; i < 10; i++)
+    {
         auto p = cm.getPage(i);
-        CHECK(*p == i+20);
+        CHECK(*p == i + 20);
     }
 }
 
@@ -257,5 +257,3 @@ TEST(PageSortItem, sortOrder)
     std::sort(psis2.begin(), psis2.end());
     CHECK(psis2 == psis);
 }
-
-

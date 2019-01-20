@@ -7,9 +7,8 @@
 int _tmain(int argc, _TCHAR* argv[])
 {
 
-  TestResult result;
-  TestRegistry::Instance().Run(result);
+    TestResult result;
+    TestRegistry::Instance().Run(result);
 
-	return 0;
+    return 0;
 }
-

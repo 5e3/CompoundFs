@@ -27,7 +27,6 @@ TEST(BTree, insert)
     Blob value;
     for (size_t i = 0; i < MANYITERATION; i++)
         CHECK(bt.find(std::to_string(i).c_str(), value));
-
 }
 
 TEST(BTree, insertReplacesOriginal)
@@ -48,10 +47,9 @@ TEST(BTree, insertReplacesOriginal)
     CHECK(bt.find("33", res));
     CHECK(value == res);
 
-    //value has different size => remove, add
+    // value has different size => remove, add
     value = Blob("Data");
     bt.insert("22", value);
     CHECK(bt.find("22", res));
     CHECK(value == res);
 }
-

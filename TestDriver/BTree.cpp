@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <assert.h>
 
-
 using namespace CompFs;
 
 BTree::BTree(std::shared_ptr<PageManager> pageManager, Node::Id root)
@@ -26,8 +25,8 @@ void BTree::insert(const Blob& key, const Blob& value)
     m_pageManager->pageDirty(leafPage.second);
     auto it = leafPage.first->find(key);
     if (it != leafPage.first->endTable())
-    {   
-        //there is already an entry for that key
+    {
+        // there is already an entry for that key
         Blob ventry = leafPage.first->getValue(it);
         if (ventry.size() == value.size())
         {
@@ -101,5 +100,3 @@ void BTree::propagate(InnerPageStack& stack, const Blob& keyToInsert, Node::Id l
     InnerPage root = m_pageManager->newRoot(key, left, right);
     m_root = root.second;
 }
-
-

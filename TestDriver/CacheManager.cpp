@@ -10,8 +10,7 @@ CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
     : m_rawFileInterface(rfi)
     , m_pageAllocator(maxPages)
     , m_maxPages(maxPages)
-{
-}
+{}
 
 CacheManager::Page CacheManager::newPage()
 {
@@ -34,7 +33,7 @@ std::shared_ptr<uint8_t> CacheManager::getPage(Node::Id id)
         trimCheck();
         return page;
     }
-    
+
     it->second.m_usageCount++;
     return it->second.m_page;
 }
@@ -59,11 +58,13 @@ size_t CacheManager::trim(uint32_t maxPages)
 {
     auto pageSortItems = getUnpinnedPages();
     maxPages = std::min(maxPages, (uint32_t) pageSortItems.size());
-    auto beginEvictSet = pageSortItems.begin()+maxPages;
+    auto beginEvictSet = pageSortItems.begin() + maxPages;
 
     std::nth_element(pageSortItems.begin(), beginEvictSet, pageSortItems.end());
-    auto beginNewPageSet = std::partition(beginEvictSet, pageSortItems.end(), [] (PageSortItem psi) {return psi.m_type == PageMetaData::DirtyRead;});
-    auto endNewPageSet = std::partition(beginNewPageSet, pageSortItems.end(), [] (PageSortItem psi) {return psi.m_type == PageMetaData::New;});
+    auto beginNewPageSet = std::partition(beginEvictSet, pageSortItems.end(),
+                                          [](PageSortItem psi) { return psi.m_type == PageMetaData::DirtyRead; });
+    auto endNewPageSet = std::partition(beginNewPageSet, pageSortItems.end(),
+                                        [](PageSortItem psi) { return psi.m_type == PageMetaData::New; });
 
     evictDirtyPages(beginEvictSet, beginNewPageSet);
     evictNewPages(beginNewPageSet, endNewPageSet);
@@ -91,7 +92,7 @@ std::vector<CacheManager::PageSortItem> CacheManager::getUnpinnedPages() const
 
 void CacheManager::evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
 {
-    for(auto it=begin; it!=end; ++it)
+    for (auto it = begin; it != end; ++it)
     {
         assert(it->m_type == PageMetaData::DirtyRead);
         auto p = m_cache.find(it->m_id);
@@ -105,7 +106,7 @@ void CacheManager::evictDirtyPages(std::vector<PageSortItem>::iterator begin, st
 
 void CacheManager::evictNewPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
 {
-    for(auto it=begin; it!=end; ++it)
+    for (auto it = begin; it != end; ++it)
     {
         assert(it->m_type == PageMetaData::New);
         auto p = m_cache.find(it->m_id);
@@ -117,7 +118,7 @@ void CacheManager::evictNewPages(std::vector<PageSortItem>::iterator begin, std:
 
 void CacheManager::removeFromCache(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
 {
-    for(auto it=begin; it!=end; ++it)
+    for (auto it = begin; it != end; ++it)
         m_cache.erase(it->m_id);
 }
 
@@ -127,24 +128,21 @@ CacheManager::PageMetaData::PageMetaData(int type, int priority)
     : m_type(type)
     , m_usageCount(0)
     , m_priority(priority)
-{
-}
+{}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page, int type, int priority)
     : PageMetaData(type, priority)
     , m_page(page)
-{
-}
+{}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, Node::Id id)
     : PageMetaData(pmd)
     , m_id(id)
-{
-}
+{}
 
 CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, Node::Id id)
     : PageMetaData(type, priority)
@@ -164,7 +162,5 @@ bool CacheManager::PageSortItem::operator<(PageSortItem rhs) const
 
 bool CacheManager::PageSortItem::operator==(PageSortItem rhs) const
 {
-    return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount 
-        && m_priority == rhs.m_priority && m_id == rhs.m_id;
+    return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount && m_priority == rhs.m_priority && m_id == rhs.m_id;
 }
-
