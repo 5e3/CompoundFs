@@ -74,7 +74,7 @@ TEST(CacheManager, trimReducesSizeOfCache)
     CacheManager cm(&sf);
 
     for(int i=0; i<10; i++)
-        cm.newPage();
+        auto page = cm.newPage();
 
     CHECK(cm.trim(20) == 10);
     CHECK(cm.trim(9) == 9);

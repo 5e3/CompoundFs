@@ -25,7 +25,9 @@ namespace CompFs
     public:
         InnerNode()
             : Node(0, sizeof(m_data), NodeType::Inner)
+			, m_leftMost(INVALID_NODE)
         {
+			m_data[0] = 0;
         }
 
         InnerNode(const Blob& key, Id left, Id right)

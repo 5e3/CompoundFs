@@ -114,7 +114,7 @@ TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
 
     auto is = readAllFreeStorePages(pm, fsfd.m_first);
     CHECK(is.size() == 1);
-    CHECK(fsfd.m_fileSize == is.totalLength() * 4096);
+    CHECK(fsfd.m_fileSize == is.totalLength() * 4096ULL);
 }
 
 TEST(FreeStore, deleteBigAndSmallFiles)
@@ -137,7 +137,7 @@ TEST(FreeStore, deleteBigAndSmallFiles)
     fsfd = fs.close();
     auto is = readAllFreeStorePages(pm, fsfd.m_first);
     CHECK(is.size() == 3*2200 + 1);
-    CHECK(fsfd.m_fileSize == is.totalLength() * 4096);
+    CHECK(fsfd.m_fileSize == is.totalLength() * 4096ULL);
 }
 
 TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)

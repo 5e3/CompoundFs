@@ -26,6 +26,11 @@ namespace CompFs
         struct Data : Node 
         {
             uint8_t m_data[4091];
+			
+			Data() 
+			{
+				m_data[0] = 0; // make the compiler happy
+			}
         };
 
         typedef std::pair<std::shared_ptr<Data>, Node::Id> DataPage;

@@ -32,7 +32,8 @@ namespace CompFs
             , m_prev(prev)
             , m_next(next)
         {
-        }
+			m_data[0] = 0; // make the compiler happy
+		}
 
         Id getNext() const { return m_next; }
         void setNext(Id next) { m_next = next; }
@@ -50,7 +51,7 @@ namespace CompFs
 
         bool hasSpace(const Blob& key, const Blob& value) const
         {
-            size_t size = static_cast<size_t>(key.size()) + value.size() + sizeof(uint16_t);
+            size_t size = sizeof(uint16_t) + key.size() + value.size();
             return size <= bytesLeft();
         }
 
