@@ -79,8 +79,8 @@ TEST(FileTable, transferNotEnoughSpace3)
 
     std::random_shuffle(ivect.begin(), ivect.end());
     IntervalSequence is;
-    for (auto it = ivect.begin(); it < ivect.end(); ++it)
-        is.pushBack(*it);
+    for (auto& iv: is)
+        is.pushBack(iv);
 
     IntervalSequence is2 = is;
     std::list<FileTable> fts;
@@ -92,8 +92,8 @@ TEST(FileTable, transferNotEnoughSpace3)
     }
 
     IntervalSequence is3;
-    for (auto it = fts.begin(); it != fts.end(); ++it)
-        it->insertInto(is3);
+    for (auto& ft: fts)
+        ft.insertInto(is3);
 
     CHECK(is3 == is2);
 }

@@ -131,8 +131,8 @@ TEST(IntervalSequence, Sort2)
     std::random_shuffle(v.begin(), v.end());
 
     IntervalSequence is;
-    for (auto it = v.begin(); it < v.end(); ++it)
-        is.pushBack(Interval(*it, (*it) + 1));
+    for (auto& id: v)
+        is.pushBack(Interval(id, id + 1));
 
     size_t totalLen = is.totalLength();
     is.sort();
