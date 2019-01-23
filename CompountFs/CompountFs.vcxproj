@@ -18,15 +18,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="BTree.h" />
-    <ClInclude Include="InMemoryIoManager.h" />
-    <ClInclude Include="IoManagerInterface.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="InMemoryIoManager.cpp" />
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{72185D7D-E827-4AC6-AF48-11BA654C2006}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
