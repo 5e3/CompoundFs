@@ -77,7 +77,7 @@ public:
     Id getRight(const uint16_t* it) const
     {
         assert(it != endTable());
-        return getPage(getKey(it).end());
+        return getPageId(getKey(it).end());
     }
 
     void insert(const Blob& key, Id right)
@@ -170,7 +170,7 @@ public:
     }
 
 private:
-    Id getPage(const uint8_t* src) const
+    Id getPageId(const uint8_t* src) const
     {
         Id res;
         uint8_t* dest = (uint8_t*) &res;
