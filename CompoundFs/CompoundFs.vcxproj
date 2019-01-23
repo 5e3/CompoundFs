@@ -18,6 +18,28 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Blob.h" />
+    <ClInclude Include="BTree.h" />
+    <ClInclude Include="CacheManager.h" />
+    <ClInclude Include="File.h" />
+    <ClInclude Include="FileDescriptor.h" />
+    <ClInclude Include="FileTable.h" />
+    <ClInclude Include="FreeStore.h" />
+    <ClInclude Include="InnerNode.h" />
+    <ClInclude Include="Interval.h" />
+    <ClInclude Include="IntervalSequence.h" />
+    <ClInclude Include="Leaf.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="PageAllocator.h" />
+    <ClInclude Include="PageManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BTree.cpp" />
+    <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="PageAllocator.cpp" />
+    <ClCompile Include="PageManager.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{72185D7D-E827-4AC6-AF48-11BA654C2006}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
