@@ -156,6 +156,11 @@
     <ClCompile Include="TestNode.cpp" />
     <ClCompile Include="TestPageAllocator.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CompoundFs\CompoundFs.vcxproj">
+      <Project>{72185d7d-e827-4ac6-af48-11ba654c2006}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

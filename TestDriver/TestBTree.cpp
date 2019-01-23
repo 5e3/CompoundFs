@@ -2,8 +2,8 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "BTree.h"
-#include "Blob.h"
+#include "../CompoundFs/BTree.h"
+#include "../CompoundFs/Blob.h"
 
 using namespace TxFs;
 

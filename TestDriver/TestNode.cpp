@@ -1,8 +1,8 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "Leaf.h"
-#include "InnerNode.h"
+#include "../CompoundFs/Leaf.h"
+#include "../CompoundFs/InnerNode.h"
 
 using namespace TxFs;
 

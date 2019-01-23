@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "IntervalSequence.h"
+#include "../CompoundFs/IntervalSequence.h"
 
 using namespace TxFs;
 

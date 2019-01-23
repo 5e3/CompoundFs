@@ -1,5 +1,4 @@
 
-#include "stdafx.h"
 #include "CacheManager.h"
 #include <assert.h>
 #include <algorithm>

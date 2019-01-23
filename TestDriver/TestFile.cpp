@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Test.h"
-#include "File.h"
-#include "Blob.h"
+#include "../CompoundFs/File.h"
+#include "../CompoundFs/Blob.h"
 #include <string>
 
 using namespace TxFs;

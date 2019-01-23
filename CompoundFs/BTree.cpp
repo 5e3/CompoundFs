@@ -1,6 +1,5 @@
 
 
-#include "stdafx.h"
 #include "Leaf.h"
 #include "InnerNode.h"
 #include "BTree.h"
