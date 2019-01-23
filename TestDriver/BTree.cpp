@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <assert.h>
 
-using namespace CompFs;
+using namespace TxFs;
 
 BTree::BTree(std::shared_ptr<PageManager> pageManager, Node::Id root)
     : m_pageManager(pageManager)

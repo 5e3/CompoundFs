@@ -8,7 +8,7 @@
 #include "PageManager.h"
 #include <algorithm>
 
-namespace CompFs
+namespace TxFs
 {
 
 class RawFileWriter

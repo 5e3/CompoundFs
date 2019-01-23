@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <algorithm>
 
-using namespace CompFs;
+using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
     : m_rawFileInterface(rfi)

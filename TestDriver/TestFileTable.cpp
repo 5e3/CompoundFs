@@ -5,7 +5,7 @@
 #include "FileTable.h"
 #include <list>
 
-using namespace CompFs;
+using namespace TxFs;
 
 TEST(FileTable, Empty)
 {

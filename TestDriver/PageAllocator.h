@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace CompFs
+namespace TxFs
 {
 class PageAllocator
 {

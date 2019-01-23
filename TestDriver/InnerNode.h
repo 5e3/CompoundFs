@@ -10,7 +10,7 @@
 #include "Node.h"
 #include "Blob.h"
 
-namespace CompFs
+namespace TxFs
 {
 #pragma pack(push)
 #pragma pack(1)

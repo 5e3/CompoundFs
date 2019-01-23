@@ -4,7 +4,7 @@
 #include "CacheManager.h"
 #include <algorithm>
 
-using namespace CompFs;
+using namespace TxFs;
 
 struct SimpleFile : RawFileInterface
 {

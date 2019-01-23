@@ -5,7 +5,7 @@
 #include "BTree.h"
 #include "Blob.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 #ifdef _DEBUG
 #define MANYITERATION 3000

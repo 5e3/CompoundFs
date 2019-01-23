@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="InnerNode.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="PageManager.cpp" />
     <ClCompile Include="stdafx.cpp" />
