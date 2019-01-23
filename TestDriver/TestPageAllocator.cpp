@@ -8,7 +8,7 @@
 #include "Test.h"
 #include "PageAllocator.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 TEST(PageAllocator, allocReturnsWritableMemory)
 {

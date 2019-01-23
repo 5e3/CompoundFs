@@ -4,7 +4,7 @@
 #include "Blob.h"
 #include <string>
 
-using namespace CompFs;
+using namespace TxFs;
 
 TEST(RawFileWriter, CtorCreatesEmptyFileDesc)
 {

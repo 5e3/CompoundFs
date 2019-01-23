@@ -4,7 +4,7 @@
 #include "Test.h"
 #include "IntervalSequence.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 TEST(IntervalSequence, PushBackIsNotEmpty)
 {

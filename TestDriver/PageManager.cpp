@@ -6,7 +6,7 @@
 #include "InnerNode.h"
 #include "FileTable.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 std::shared_ptr<Node> PageManager::readNode(Node::Id id)
 {

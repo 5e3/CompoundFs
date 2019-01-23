@@ -3,7 +3,7 @@
 
 #include "Node.h"
 
-namespace CompFs
+namespace TxFs
 {
 
 struct FileDescriptor

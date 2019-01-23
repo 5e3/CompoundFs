@@ -5,7 +5,7 @@
 #include "File.h"
 #include "Blob.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 FileDescriptor createFile(std::shared_ptr<PageManager> pm)
 {

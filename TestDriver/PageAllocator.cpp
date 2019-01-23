@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <windows.h>
 
-using namespace CompFs;
+using namespace TxFs;
 
 PageAllocator::PageAllocator(size_t pagesPerBlock)
     : m_blocksAllocated(0)

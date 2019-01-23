@@ -4,7 +4,7 @@
 #include "Node.h"
 #include <assert.h>
 
-namespace CompFs
+namespace TxFs
 {
 class Interval
 {

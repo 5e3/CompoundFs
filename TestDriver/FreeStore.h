@@ -8,7 +8,7 @@
 #include <unordered_set>
 #include <assert.h>
 
-namespace CompFs
+namespace TxFs
 {
 
 class FreeStore

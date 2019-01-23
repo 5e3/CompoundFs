@@ -6,7 +6,7 @@
 
 #include <cstdint>
 
-namespace CompFs
+namespace TxFs
 {
 struct NodeType
 {

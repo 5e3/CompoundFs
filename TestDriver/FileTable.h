@@ -8,7 +8,7 @@
 #include "IntervalSequence.h"
 #include <iterator>
 
-namespace CompFs
+namespace TxFs
 {
 
 class FileTable : public Node

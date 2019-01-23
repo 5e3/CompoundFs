@@ -34,5 +34,6 @@
     <ClCompile Include="TestPageAllocator.cpp" />
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
+    <ClCompile Include="InnerNode.cpp" />
   </ItemGroup>
 </Project>

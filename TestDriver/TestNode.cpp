@@ -4,7 +4,7 @@
 #include "Leaf.h"
 #include "InnerNode.h"
 
-using namespace CompFs;
+using namespace TxFs;
 
 TEST(Blob, Ctor)
 {

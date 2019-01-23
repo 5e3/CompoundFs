@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <assert.h>
 
-namespace CompFs
+namespace TxFs
 {
 
 class IntervalSequence

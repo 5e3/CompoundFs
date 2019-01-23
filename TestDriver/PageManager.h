@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-namespace CompFs
+namespace TxFs
 {
 class InnerNode;
 class Leaf;
