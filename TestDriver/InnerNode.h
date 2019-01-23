@@ -33,7 +33,7 @@ public:
     {
         std::copy(key.begin(), key.end(), m_data + m_begin);
         m_leftMost = left;
-        setPage(m_data + m_begin + key.size(), right);
+        setPageId(m_data + m_begin + key.size(), right);
         m_end -= sizeof(uint16_t);
         *beginTable() = m_begin;
         m_begin += key.size() + sizeof(Id);
@@ -86,7 +86,7 @@ public:
 
         uint16_t begin = m_begin;
         std::copy(key.begin(), key.end(), m_data + m_begin);
-        setPage(m_data + m_begin + key.size(), right);
+        setPageId(m_data + m_begin + key.size(), right);
         m_begin += key.size() + sizeof(Id);
 
         KeyCmp keyCmp(m_data);
@@ -178,7 +178,7 @@ private:
         return res;
     }
 
-    void setPage(uint8_t* dest, Id page)
+    void setPageId(uint8_t* dest, Id page)
     {
         const uint8_t* src = (uint8_t*) &page;
         std::copy(src, src + sizeof(Id), dest);
