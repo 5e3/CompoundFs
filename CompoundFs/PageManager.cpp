@@ -1,6 +1,5 @@
 
 
-#include "stdafx.h"
 #include "PageManager.h"
 #include "Leaf.h"
 #include "InnerNode.h"

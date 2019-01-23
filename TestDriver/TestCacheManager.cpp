@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "CacheManager.h"
+#include "../CompoundFs/CacheManager.h"
 #include <algorithm>
 
 using namespace TxFs;

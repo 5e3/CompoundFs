@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include "Test.h"
-#include "PageAllocator.h"
+#include "../CompoundFs/PageAllocator.h"
 
 using namespace TxFs;
 

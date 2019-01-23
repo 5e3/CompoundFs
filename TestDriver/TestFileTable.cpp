@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "FileTable.h"
+#include "../CompoundFs/FileTable.h"
 #include <list>
 
 using namespace TxFs;

@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "FreeStore.h"
-#include "File.h"
-#include "Blob.h"
+#include "../CompoundFs/FreeStore.h"
+#include "../CompoundFs/File.h"
+#include "../CompoundFs/Blob.h"
 
 using namespace TxFs;
 
