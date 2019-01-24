@@ -20,7 +20,7 @@ CacheManager::Page CacheManager::newPage()
     return Page(page, id);
 }
 
-std::shared_ptr<uint8_t> CacheManager::getPage(PageIndex id)
+std::shared_ptr<uint8_t> CacheManager::loadPage(PageIndex id)
 {
     id = redirectPage(id);
     auto it = m_cache.find(id);
