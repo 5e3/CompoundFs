@@ -23,7 +23,7 @@ class InnerNode : public Node
 public:
     InnerNode()
         : Node(0, sizeof(m_data), NodeType::Inner)
-        , m_leftMost(INVALID_NODE)
+        , m_leftMost(PageIdx::INVALID)
     {
         m_data[0] = 0;
     }

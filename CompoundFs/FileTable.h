@@ -20,7 +20,7 @@ class FileTable : public Node
 public:
     FileTable()
         : Node(0, sizeof(m_data), NodeType::FileTable)
-        , m_next(INVALID_NODE)
+        , m_next(PageIdx::INVALID)
     {
         m_unused[0] = 0;
         m_data[0] = 0;
