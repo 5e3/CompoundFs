@@ -4,6 +4,7 @@
 
 #include "Node.h"
 #include "PageAllocator.h"
+#include "PageDef.h"
 #include <utility>
 #include <memory>
 #include <unordered_map>
@@ -60,8 +61,8 @@ public:
 public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
 
-    Page newPage();
-    std::shared_ptr<uint8_t> loadPage(PageIndex id);
+    PageDef<uint8_t> newPage();
+    ConstPageDef<uint8_t> loadPage(PageIndex id);
     void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
 

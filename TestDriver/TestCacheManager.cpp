@@ -42,19 +42,22 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     SimpleFile sf;
     CacheManager cm(&sf);
 
-    auto p = cm.newPage();
+    PageIndex idx;
     {
-        auto p2 = cm.loadPage(p.second);
-        CHECK(p.first == p2);
-        *p2 = 0xaa;
+        auto p = cm.newPage();
+        idx = p.m_index;
+        {
+            auto p2 = cm.loadPage(p.m_index);
+            CHECK(p == p2);
+            *p.m_page = 0xaa;
+        }
     }
-    p.first.reset();
-    auto p2 = cm.loadPage(p.second);
-    CHECK(*p2 == 0xaa);
-    CHECK(*sf.m_file.at(p.second) != *p2);
+    auto p2 = cm.loadPage(idx);
+    CHECK(*p2.m_page == 0xaa);
+    CHECK(*sf.m_file.at(idx) != *p2.m_page);
 }
 
-TEST(CacheManager, getPageIsCachedButNotWritten)
+TEST(CacheManager, loadPageIsCachedButNotWritten)
 {
     SimpleFile sf;
     auto id = sf.newPage();
@@ -65,7 +68,7 @@ TEST(CacheManager, getPageIsCachedButNotWritten)
     auto p2 = cm.loadPage(id);
     CHECK(p == p2);
 
-    *p = 99;
+    //*p = 99; //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     CHECK(*sf.m_file.at(id) == 42);
 }
 
@@ -90,7 +93,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.newPage().first;
+        auto p = cm.newPage().m_page;
         *p = i + 1;
     }
 
@@ -106,7 +109,7 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.newPage().first;
+        auto p = cm.newPage().m_page;
         *p = i + 1;
     }
     auto p1 = cm.loadPage(0);
@@ -117,8 +120,8 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     for (int i = 1; i < 9; i++)
         CHECK(*sf.m_file.at(i) == i + 1);
 
-    CHECK(*sf.m_file.at(0) != *p1);
-    CHECK(*sf.m_file.at(9) != *p2);
+    CHECK(*sf.m_file.at(0) != *p1.m_page);
+    CHECK(*sf.m_file.at(9) != *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
@@ -128,7 +131,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.newPage().first;
+        auto p = cm.newPage().m_page;
         *p = i + 1;
     }
 
@@ -136,7 +139,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = std::const_pointer_cast<uint8_t>(cm.loadPage(i).m_page); // don't do that! !!!!!!!!!!!!!!!
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -154,7 +157,7 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.newPage().first;
+        auto p = cm.newPage().m_page;
         *p = i + 1;
     }
 
@@ -162,8 +165,8 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
-        *p = i + 10; // change page but no pageDirty()
+        auto p = std::const_pointer_cast<uint8_t>(cm.loadPage(i).m_page); // don't do that! !!!!!!!!!!!!!!!
+        *p = i + 10;                                                      // change page but no pageDirty()
     }
 
     cm.trim(0);
@@ -179,7 +182,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
         CacheManager cm(&sf);
         for (int i = 0; i < 10; i++)
         {
-            auto p = cm.newPage().first;
+            auto p = cm.newPage().m_page;
             *p = i + 1;
         }
         cm.trim(0);
@@ -188,7 +191,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     CacheManager cm(&sf);
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = std::const_pointer_cast<uint8_t>(cm.loadPage(i).m_page);
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -196,7 +199,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = cm.loadPage(i).m_page;
         CHECK(*p == i + 10);
     }
 }
@@ -208,7 +211,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         CacheManager cm(&sf);
         for (int i = 0; i < 10; i++)
         {
-            auto p = cm.newPage().first;
+            auto p = cm.newPage().m_page;
             *p = i + 1;
         }
         cm.trim(0);
@@ -217,7 +220,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     CacheManager cm(&sf);
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = std::const_pointer_cast<uint8_t>(cm.loadPage(i).m_page);
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -225,7 +228,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = std::const_pointer_cast<uint8_t>(cm.loadPage(i).m_page);
         *p = i + 20;
         cm.setPageDirty(i);
     }
@@ -234,7 +237,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.loadPage(i);
+        auto p = cm.loadPage(i).m_page;
         CHECK(*p == i + 20);
     }
 }

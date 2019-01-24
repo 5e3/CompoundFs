@@ -2,6 +2,7 @@
 #include "../CompoundFs/InnerNode.h"
 #include "../CompoundFs/PageAllocator.h"
 #include <memory>
+#include <utility>
 
 class PageBuilder
 {
@@ -16,6 +17,8 @@ public:
 
 using namespace TxFs;
 
+using constNewInnerPage = std::pair<std::shared_ptr<const InnerNode>, const PageIndex>;
+
 int main()
 {
     PageAllocator pa(0);
@@ -23,4 +26,10 @@ int main()
     auto id = in->findPage("Key");
 
     in = PageBuilder::construct<InnerNode>(pa.allocate());
+    constNewInnerPage ip = constNewInnerPage(in, PageIndex(5));
+    constNewInnerPage ip2 = ip;
+    ip = ip2;
+    Blob b("test");
+    ip.first->findPage(b);
+    ip.second = 4;
 }
