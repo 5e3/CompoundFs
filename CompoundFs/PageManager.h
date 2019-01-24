@@ -42,7 +42,7 @@ public:
     LeafPage newLeaf(Node::Id prev, Node::Id next);
     InnerPage newInner();
     InnerPage newRoot(const Blob& key, Node::Id left, Node::Id right);
-    void pageDirty(Node::Id id);
+    void setPageDirty(Node::Id id);
     Interval newInterval(size_t maxPages);
 
     // raw write

@@ -67,7 +67,7 @@ public:
             if (m_pinnedPage->getNext() == Node::INVALID_NODE)
                 m_fileDescriptor.m_last = m_fileDescriptor.m_first;
             m_pinnedPage->clear();
-            m_pageManager->pageDirty(m_fileDescriptor.m_first);
+            m_pageManager->setPageDirty(m_fileDescriptor.m_first);
             m_fileDescriptor.m_fileSize = m_currentFileSize;
         }
 
@@ -148,7 +148,7 @@ private:
             return fd;
 
         PageManager::FileTablePage cur = PageManager::FileTablePage(m_pinnedPage, fd.m_first);
-        m_pageManager->pageDirty(cur.second);
+        m_pageManager->setPageDirty(cur.second);
         cur.first->transferFrom(is);
         while (!is.empty())
         {
@@ -156,7 +156,7 @@ private:
             auto pageId = is.popFront(1).begin();
             auto next = m_pageManager->loadFileTable(pageId); //!!
             if (m_freePageTables.count(pageId))
-                m_pageManager->pageDirty(pageId);
+                m_pageManager->setPageDirty(pageId);
             next.first->setNext(cur.first->getNext());
             cur.first->setNext(pageId);
             cur = next;
@@ -189,7 +189,7 @@ private:
         PageManager::FileTablePage ft = m_pageManager->loadFileTable(prev.m_last);
         assert(ft.first->getNext() == Node::INVALID_NODE);
         ft.first->setNext(next.m_first);
-        m_pageManager->pageDirty(prev.m_last);
+        m_pageManager->setPageDirty(prev.m_last);
 
         assert(prev.m_fileSize % 4096 == 0);
         assert(next.m_fileSize % 4096 == 0);

@@ -15,7 +15,7 @@ public:
     virtual void TestsStarted() {}
     virtual void TestStarted(const char* testName, const char* fileName, int lineNo)
     {
-        // printf("Test: %s\n", testName);
+        printf("Test: %s\n", testName);
         m_testCount++;
     }
     virtual void AddFailure(const char* testName, const char* fileName, int lineNo, const std::string& message)
@@ -89,7 +89,6 @@ public:
             Test& test = *m_tests[i];
             try
             {
-                printf(".");
                 test.Run_(result);
             }
             catch (const std::exception& e)

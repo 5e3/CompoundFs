@@ -328,8 +328,13 @@ FileDescriptor writeFragmentedFile(const std::vector<uint8_t>& v, std::shared_pt
 std::vector<uint8_t> makeVector(size_t size)
 {
     std::vector<uint8_t> v(size);
-    for (size_t i = 0; i < size; i++)
-        v[i] = i % 251;
+    int i = 0;
+    for (auto& elem : v)
+    {
+        elem = i++;
+        if (i >= 251)
+            i = 0;
+    }
     return v;
 }
 

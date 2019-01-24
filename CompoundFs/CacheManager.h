@@ -62,7 +62,7 @@ public:
 
     Page newPage();
     std::shared_ptr<uint8_t> getPage(Node::Id id);
-    void pageDirty(Node::Id id);
+    void setPageDirty(Node::Id id);
     size_t trim(uint32_t maxPages);
 
 private:

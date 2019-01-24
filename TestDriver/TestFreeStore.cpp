@@ -259,21 +259,23 @@ TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
     }
     {
         FreeStore fs(pm, fsfd);
-        while (fs.allocate(5).length())
+        while (!fs.allocate(251).empty())
             ;
         fsfd = fs.close();
+        CHECK(fsfd.m_fileSize != 0);
     }
     {
         FreeStore fs(pm, fsfd);
-        while (fs.allocate(2000).length())
+        while (!fs.allocate(2000).empty())
             ;
         fsfd = fs.close();
         CHECK(fsfd.m_fileSize == 0);
         CHECK(fsfd.m_first == freeStorePage.second);
         CHECK(fsfd.m_last == fsfd.m_first);
     }
+
     FreeStore fs(pm, fsfd);
-    CHECK(fs.allocate(1).length() == 0);
+    CHECK(!fs.allocate(1).empty() == 0);
     fsfd = fs.close();
     CHECK(fsfd.m_fileSize == 0);
     CHECK(fsfd.m_first == freeStorePage.second);

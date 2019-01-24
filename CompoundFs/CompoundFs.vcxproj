@@ -44,8 +44,8 @@
     <ProjectGuid>{72185D7D-E827-4AC6-AF48-11BA654C2006}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>CompundFs</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ProjectName>CompoundFs</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
