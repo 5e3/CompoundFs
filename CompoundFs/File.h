@@ -182,7 +182,7 @@ public:
         if (m_curFilePos % 4096)
         {
             size_t pageOffset = size_t(m_curFilePos % 4096);
-            Node::Id pageId = m_pageSequence.front().begin();
+            PageIndex pageId = m_pageSequence.front().begin();
             if ((pageOffset + blockSize) >= 4096)
             {
                 begin = m_pageManager->readPage(begin, begin + (4096 - pageOffset), pageId, pageOffset);
@@ -206,7 +206,7 @@ public:
         // partially read the next page
         if (end - begin)
         {
-            Node::Id pageId = nextInterval(0).begin();
+            PageIndex pageId = nextInterval(0).begin();
             begin = m_pageManager->readPage(begin, end, pageId, 0);
         }
 

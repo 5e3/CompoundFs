@@ -31,9 +31,9 @@ std::vector<FileDescriptor> createFiles(std::shared_ptr<PageManager> pm, size_t 
     return fds;
 }
 
-IntervalSequence readAllFreeStorePages(std::shared_ptr<PageManager> pm, Node::Id firstFreeStorePage)
+IntervalSequence readAllFreeStorePages(std::shared_ptr<PageManager> pm, PageIndex firstFreeStorePage)
 {
-    Node::Id page = firstFreeStorePage;
+    PageIndex page = firstFreeStorePage;
     IntervalSequence is;
     while (page != Node::INVALID_NODE)
     {

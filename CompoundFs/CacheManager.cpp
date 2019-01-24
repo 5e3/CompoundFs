@@ -20,7 +20,7 @@ CacheManager::Page CacheManager::newPage()
     return Page(page, id);
 }
 
-std::shared_ptr<uint8_t> CacheManager::getPage(Node::Id id)
+std::shared_ptr<uint8_t> CacheManager::getPage(PageIndex id)
 {
     id = redirectPage(id);
     auto it = m_cache.find(id);
@@ -37,7 +37,7 @@ std::shared_ptr<uint8_t> CacheManager::getPage(Node::Id id)
     return it->second.m_page;
 }
 
-void CacheManager::setPageDirty(Node::Id id)
+void CacheManager::setPageDirty(PageIndex id)
 {
     id = redirectPage(id);
     int type = m_newPageSet.count(id) ? CachedPage::New : CachedPage::DirtyRead;
@@ -71,7 +71,7 @@ size_t CacheManager::trim(uint32_t maxPages)
     return m_cache.size();
 }
 
-Node::Id CacheManager::redirectPage(Node::Id id) const
+PageIndex CacheManager::redirectPage(PageIndex id) const
 {
     auto it = m_redirectedPagesMap.find(id);
     if (it == m_redirectedPagesMap.end())
@@ -138,12 +138,12 @@ CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page, int t
 
 ///////////////////////////////////////////////////////////////////////////////
 
-CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, Node::Id id)
+CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, PageIndex id)
     : PageMetaData(pmd)
     , m_id(id)
 {}
 
-CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, Node::Id id)
+CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, PageIndex id)
     : PageMetaData(type, priority)
     , m_id(id)
 {

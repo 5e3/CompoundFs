@@ -8,6 +8,9 @@
 
 namespace TxFs
 {
+
+using PageIndex = uint32_t;
+
 struct NodeType
 {
     enum Type { Undefined, Leaf, Inner, FileTable };
@@ -20,8 +23,7 @@ struct NodeType
 
 struct Node
 {
-    typedef uint32_t Id;
-    static const Id INVALID_NODE = UINT32_MAX;
+    static const PageIndex INVALID_NODE = UINT32_MAX;
 
     uint16_t m_begin;
     uint16_t m_end;

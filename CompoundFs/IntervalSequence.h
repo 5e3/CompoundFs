@@ -69,9 +69,9 @@ public:
     Interval popFront(uint32_t maxSize)
     {
         assert(!empty());
-        Node::Id id = m_intervals.front().begin();
+        PageIndex id = m_intervals.front().begin();
 
-        Node::Id size = std::min(maxSize, m_intervals.front().length());
+        PageIndex size = std::min(maxSize, m_intervals.front().length());
         m_intervals.front().begin() += size;
         if (m_intervals.front().empty())
             m_intervals.pop_front();

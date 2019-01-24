@@ -14,14 +14,14 @@ public:
         , m_end(0)
     {}
 
-    Interval(Node::Id begin, Node::Id end)
+    Interval(PageIndex begin, PageIndex end)
         : m_begin(begin)
         , m_end(end)
     {
         assert(m_begin <= m_end);
     }
 
-    explicit Interval(Node::Id begin)
+    explicit Interval(PageIndex begin)
         : m_begin(begin)
         , m_end(begin + 1)
     {}
@@ -32,14 +32,14 @@ public:
 
     uint32_t length() const { return m_end - m_begin; }
     bool empty() const { return length() == 0; }
-    Node::Id begin() const { return m_begin; }
-    Node::Id end() const { return m_end; }
-    Node::Id& begin() { return m_begin; }
-    Node::Id& end() { return m_end; }
+    PageIndex begin() const { return m_begin; }
+    PageIndex end() const { return m_end; }
+    PageIndex& begin() { return m_begin; }
+    PageIndex& end() { return m_end; }
 
 private:
-    Node::Id m_begin;
-    Node::Id m_end;
+    PageIndex m_begin;
+    PageIndex m_end;
 };
 
 }

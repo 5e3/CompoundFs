@@ -12,20 +12,20 @@ struct SimpleFile : RawFileInterface
         : m_allocator(512)
     {}
 
-    virtual Node::Id newPage()
+    virtual PageIndex newPage()
     {
-        Node::Id id = (Node::Id) m_file.size();
+        PageIndex id = (PageIndex) m_file.size();
         m_file.push_back(m_allocator.allocate());
         return id;
     }
 
-    virtual void writePage(Node::Id id, std::shared_ptr<uint8_t> page)
+    virtual void writePage(PageIndex id, std::shared_ptr<uint8_t> page)
     {
         auto p = m_file.at(id);
         std::copy(page.get(), page.get() + 4096, p.get());
     }
 
-    virtual void readPage(Node::Id id, std::shared_ptr<uint8_t> page) const
+    virtual void readPage(PageIndex id, std::shared_ptr<uint8_t> page) const
     {
         auto p = m_file.at(id);
         std::copy(p.get(), p.get() + 4096, page.get());

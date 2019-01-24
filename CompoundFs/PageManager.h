@@ -30,28 +30,28 @@ public:
         }
     };
 
-    typedef std::pair<std::shared_ptr<Data>, Node::Id> DataPage;
-    typedef std::pair<std::shared_ptr<Leaf>, Node::Id> LeafPage;
-    typedef std::pair<std::shared_ptr<FileTable>, Node::Id> FileTablePage;
-    typedef std::pair<std::shared_ptr<InnerNode>, Node::Id> InnerPage;
+    typedef std::pair<std::shared_ptr<Data>, PageIndex> DataPage;
+    typedef std::pair<std::shared_ptr<Leaf>, PageIndex> LeafPage;
+    typedef std::pair<std::shared_ptr<FileTable>, PageIndex> FileTablePage;
+    typedef std::pair<std::shared_ptr<InnerNode>, PageIndex> InnerPage;
 
 public:
-    std::shared_ptr<Node> readNode(Node::Id id);
-    FileTablePage loadFileTable(Node::Id id);
+    std::shared_ptr<Node> readNode(PageIndex id);
+    FileTablePage loadFileTable(PageIndex id);
     FileTablePage newFileTable();
-    LeafPage newLeaf(Node::Id prev, Node::Id next);
+    LeafPage newLeaf(PageIndex prev, PageIndex next);
     InnerPage newInner();
-    InnerPage newRoot(const Blob& key, Node::Id left, Node::Id right);
-    void setPageDirty(Node::Id id);
+    InnerPage newRoot(const Blob& key, PageIndex left, PageIndex right);
+    void setPageDirty(PageIndex id);
     Interval newInterval(size_t maxPages);
 
     // raw write
-    void writePage(const uint8_t* begin, const uint8_t* end, Node::Id page, size_t pageOffset);
+    void writePage(const uint8_t* begin, const uint8_t* end, PageIndex page, size_t pageOffset);
     void writePages(const uint8_t* begin, Interval interval);
-    void finalWritePage(const uint8_t* begin, const uint8_t* end, Node::Id page);
+    void finalWritePage(const uint8_t* begin, const uint8_t* end, PageIndex page);
 
     // raw read
-    uint8_t* readPage(uint8_t* begin, uint8_t* end, Node::Id page, size_t pageOffset);
+    uint8_t* readPage(uint8_t* begin, uint8_t* end, PageIndex page, size_t pageOffset);
     uint8_t* readPages(uint8_t* begin, Interval interval);
 
 private:

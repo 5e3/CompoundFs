@@ -9,7 +9,7 @@
 
 using namespace TxFs;
 
-BTree::BTree(std::shared_ptr<PageManager> pageManager, Node::Id root)
+BTree::BTree(std::shared_ptr<PageManager> pageManager, PageIndex root)
     : m_pageManager(pageManager)
     , m_root(root)
 {
@@ -62,7 +62,7 @@ bool BTree::find(const Blob& key, Blob& value) const
 
 BTree::LeafPage BTree::findLeaf(const Blob& key, InnerPageStack& stack) const
 {
-    Node::Id id = m_root;
+    PageIndex id = m_root;
     while (true)
     {
         std::shared_ptr<Node> node = m_pageManager->readNode(id);
@@ -74,7 +74,7 @@ BTree::LeafPage BTree::findLeaf(const Blob& key, InnerPageStack& stack) const
     }
 }
 
-void BTree::propagate(InnerPageStack& stack, const Blob& keyToInsert, Node::Id left, Node::Id right)
+void BTree::propagate(InnerPageStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right)
 {
     Blob key = keyToInsert;
     Blob keyMiddle;
