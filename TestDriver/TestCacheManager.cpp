@@ -44,12 +44,12 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
 
     auto p = cm.newPage();
     {
-        auto p2 = cm.getPage(p.second);
+        auto p2 = cm.loadPage(p.second);
         CHECK(p.first == p2);
         *p2 = 0xaa;
     }
     p.first.reset();
-    auto p2 = cm.getPage(p.second);
+    auto p2 = cm.loadPage(p.second);
     CHECK(*p2 == 0xaa);
     CHECK(*sf.m_file.at(p.second) != *p2);
 }
@@ -61,8 +61,8 @@ TEST(CacheManager, getPageIsCachedButNotWritten)
     *sf.m_file.at(id) = 42;
 
     CacheManager cm(&sf);
-    auto p = cm.getPage(id);
-    auto p2 = cm.getPage(id);
+    auto p = cm.loadPage(id);
+    auto p2 = cm.loadPage(id);
     CHECK(p == p2);
 
     *p = 99;
@@ -109,8 +109,8 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
         auto p = cm.newPage().first;
         *p = i + 1;
     }
-    auto p1 = cm.getPage(0);
-    auto p2 = cm.getPage(9);
+    auto p1 = cm.loadPage(0);
+    auto p2 = cm.loadPage(9);
 
     CHECK(cm.trim(0) == 2);
 
@@ -136,7 +136,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -162,7 +162,7 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         *p = i + 10; // change page but no pageDirty()
     }
 
@@ -188,7 +188,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     CacheManager cm(&sf);
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -196,7 +196,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         CHECK(*p == i + 10);
     }
 }
@@ -217,7 +217,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     CacheManager cm(&sf);
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         *p = i + 10;
         cm.setPageDirty(i);
     }
@@ -225,7 +225,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         *p = i + 20;
         cm.setPageDirty(i);
     }
@@ -234,7 +234,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
     for (int i = 0; i < 10; i++)
     {
-        auto p = cm.getPage(i);
+        auto p = cm.loadPage(i);
         CHECK(*p == i + 20);
     }
 }

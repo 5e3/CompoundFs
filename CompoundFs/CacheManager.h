@@ -61,7 +61,7 @@ public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
 
     Page newPage();
-    std::shared_ptr<uint8_t> getPage(PageIndex id);
+    std::shared_ptr<uint8_t> loadPage(PageIndex id);
     void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
 
