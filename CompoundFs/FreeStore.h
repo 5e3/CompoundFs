@@ -31,7 +31,7 @@ public:
             loadCurrentIntervals();
 
         auto next = m_pinnedPage->getNext();
-        while (next != Node::INVALID_NODE && m_current.totalLength() < maxPages)
+        while (next != PageIdx::INVALID && m_current.totalLength() < maxPages)
         {
             m_freePageTables.insert(next);
             next = loadFileTablePage(next, m_current);
@@ -64,7 +64,7 @@ public:
     {
         if (m_fileDescriptor.m_fileSize != m_currentFileSize)
         {
-            if (m_pinnedPage->getNext() == Node::INVALID_NODE)
+            if (m_pinnedPage->getNext() == PageIdx::INVALID)
                 m_fileDescriptor.m_last = m_fileDescriptor.m_first;
             m_pinnedPage->clear();
             m_pageManager->setPageDirty(m_fileDescriptor.m_first);
@@ -96,7 +96,7 @@ private:
         for (auto it = begin; it != end; ++it)
         {
             PageIndex page = it->m_first;
-            while (page != Node::INVALID_NODE)
+            while (page != PageIdx::INVALID)
                 page = loadFileTablePage(page, is);
         }
         return is;
@@ -187,7 +187,7 @@ private:
     FileDescriptor chainFiles(FileDescriptor prev, FileDescriptor next)
     {
         PageManager::FileTablePage ft = m_pageManager->loadFileTable(prev.m_last);
-        assert(ft.first->getNext() == Node::INVALID_NODE);
+        assert(ft.first->getNext() == PageIdx::INVALID);
         ft.first->setNext(next.m_first);
         m_pageManager->setPageDirty(prev.m_last);
 

@@ -13,8 +13,8 @@ struct FileDescriptor
     uint64_t m_fileSize;
 
     FileDescriptor()
-        : m_first(Node::INVALID_NODE)
-        , m_last(Node::INVALID_NODE)
+        : m_first(PageIdx::INVALID)
+        , m_last(PageIdx::INVALID)
         , m_fileSize(0)
     {}
 

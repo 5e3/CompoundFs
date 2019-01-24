@@ -20,13 +20,11 @@ public:
     typedef PageManager::LeafPage LeafPage;
     typedef PageManager::InnerPage InnerPage;
     typedef std::stack<InnerPage> InnerPageStack;
-    static const PageIndex NULL_NODE = Node::INVALID_NODE;
 
 public:
-    BTree(std::shared_ptr<PageManager> pageManager, PageIndex root = NULL_NODE);
+    BTree(std::shared_ptr<PageManager> pageManager, PageIndex root = PageIdx::INVALID);
 
     void insert(const Blob& key, const Blob& value);
-
     bool find(const Blob& key, Blob& value) const;
 
 private:

@@ -13,8 +13,8 @@ BTree::BTree(std::shared_ptr<PageManager> pageManager, PageIndex root)
     : m_pageManager(pageManager)
     , m_root(root)
 {
-    if (m_root == NULL_NODE)
-        m_root = m_pageManager->newLeaf(NULL_NODE, NULL_NODE).second;
+    if (m_root == PageIdx::INVALID)
+        m_root = m_pageManager->newLeaf(PageIdx::INVALID, PageIdx::INVALID).second;
 }
 
 void BTree::insert(const Blob& key, const Blob& value)

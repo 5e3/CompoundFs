@@ -35,7 +35,7 @@ IntervalSequence readAllFreeStorePages(std::shared_ptr<PageManager> pm, PageInde
 {
     PageIndex page = firstFreeStorePage;
     IntervalSequence is;
-    while (page != Node::INVALID_NODE)
+    while (page != PageIdx::INVALID)
     {
         auto fileTablePage = pm->loadFileTable(page).first;
         fileTablePage->insertInto(is);

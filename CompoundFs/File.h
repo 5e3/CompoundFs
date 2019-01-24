@@ -93,10 +93,10 @@ public:
         if (m_fileTable.first)
         {
             m_fileTable.first->transferFrom(m_pageSequence);
-            if (m_fileDescriptor.m_last != Node::INVALID_NODE)
+            if (m_fileDescriptor.m_last != PageIdx::INVALID)
             {
                 m_pageManager->setPageDirty(m_fileTable.second);
-                m_fileDescriptor.m_last = Node::INVALID_NODE;
+                m_fileDescriptor.m_last = PageIdx::INVALID;
             }
             cur = m_fileTable;
         }
@@ -140,7 +140,7 @@ public:
         : m_pageManager(pageManager)
         , m_curFilePos(0)
         , m_fileSize(0)
-        , m_nextFileTable(Node::INVALID_NODE)
+        , m_nextFileTable(PageIdx::INVALID)
     {}
 
     void open(FileDescriptor fileId)
@@ -157,8 +157,8 @@ public:
     {
         if (m_pageSequence.empty())
         {
-            if (m_nextFileTable == Node::INVALID_NODE)
-                return Interval(Node::INVALID_NODE, Node::INVALID_NODE);
+            if (m_nextFileTable == PageIdx::INVALID)
+                return Interval(PageIdx::INVALID, PageIdx::INVALID);
 
             PageManager::FileTablePage fileTable = m_pageManager->loadFileTable(m_nextFileTable);
             fileTable.first->insertInto(m_pageSequence);

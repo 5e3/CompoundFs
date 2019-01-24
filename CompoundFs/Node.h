@@ -10,6 +10,7 @@ namespace TxFs
 {
 
 using PageIndex = uint32_t;
+enum PageIdx : PageIndex { INVALID = UINT32_MAX };
 
 struct NodeType
 {
@@ -23,8 +24,6 @@ struct NodeType
 
 struct Node
 {
-    static const PageIndex INVALID_NODE = UINT32_MAX;
-
     uint16_t m_begin;
     uint16_t m_end;
     uint8_t m_type;

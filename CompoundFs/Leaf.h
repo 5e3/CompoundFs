@@ -22,7 +22,7 @@ class Leaf : public Node
     PageIndex m_next;
 
 public:
-    Leaf(PageIndex prev = INVALID_NODE, PageIndex next = INVALID_NODE)
+    Leaf(PageIndex prev = PageIdx::INVALID, PageIndex next = PageIdx::INVALID)
         : Node(0, sizeof(m_data), NodeType::Leaf)
         , m_prev(prev)
         , m_next(next)
