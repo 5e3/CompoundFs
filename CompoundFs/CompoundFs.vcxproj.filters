@@ -15,6 +15,7 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="PageManager.h" />
+    <ClInclude Include="PageDef.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />

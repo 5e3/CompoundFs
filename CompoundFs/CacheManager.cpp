@@ -11,18 +11,18 @@ CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
     , m_maxPages(maxPages)
 {}
 
-CacheManager::Page CacheManager::newPage()
+PageDef<uint8_t> CacheManager::newPage()
 {
     auto page = m_pageAllocator.allocate();
     auto id = m_rawFileInterface->newPage();
     m_cache.insert(std::make_pair(id, CachedPage(page, CachedPage::New)));
     trimCheck();
-    return Page(page, id);
+    return PageDef<uint8_t>(page, id);
 }
 
-std::shared_ptr<uint8_t> CacheManager::loadPage(PageIndex id)
+ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
-    id = redirectPage(id);
+    auto id = redirectPage(origId);
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
@@ -30,11 +30,11 @@ std::shared_ptr<uint8_t> CacheManager::loadPage(PageIndex id)
         m_rawFileInterface->readPage(id, page);
         m_cache.insert(std::make_pair(id, CachedPage(page, CachedPage::Read)));
         trimCheck();
-        return page;
+        return ConstPageDef<uint8_t>(page, origId);
     }
 
     it->second.m_usageCount++;
-    return it->second.m_page;
+    return ConstPageDef<uint8_t>(it->second.m_page, origId);
 }
 
 void CacheManager::setPageDirty(PageIndex id)
