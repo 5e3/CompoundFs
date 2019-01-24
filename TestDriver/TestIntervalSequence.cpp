@@ -121,7 +121,7 @@ TEST(IntervalSequence, Sort)
 
 TEST(IntervalSequence, Sort2)
 {
-    std::vector<Node::Id> v;
+    std::vector<PageIndex> v;
     for (int i = 0; i < 50; i++)
         v.push_back(i);
 

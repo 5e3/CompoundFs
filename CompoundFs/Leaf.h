@@ -18,14 +18,11 @@ namespace TxFs
 class Leaf : public Node
 {
     uint8_t m_data[4083];
-    Id m_prev;
-    Id m_next;
+    PageIndex m_prev;
+    PageIndex m_next;
 
 public:
-    typedef Node::Id Id;
-
-public:
-    Leaf(Id prev = INVALID_NODE, Id next = INVALID_NODE)
+    Leaf(PageIndex prev = INVALID_NODE, PageIndex next = INVALID_NODE)
         : Node(0, sizeof(m_data), NodeType::Leaf)
         , m_prev(prev)
         , m_next(next)
@@ -33,8 +30,8 @@ public:
         m_data[0] = 0; // make the compiler happy
     }
 
-    Id getNext() const { return m_next; }
-    void setNext(Id next) { m_next = next; }
+    PageIndex getNext() const { return m_next; }
+    void setNext(PageIndex next) { m_next = next; }
 
     size_t itemSize() const { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
 

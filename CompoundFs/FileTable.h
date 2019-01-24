@@ -14,11 +14,8 @@ namespace TxFs
 class FileTable : public Node
 {
     uint8_t m_unused[3];
-    Id m_next;
+    PageIndex m_next;
     uint8_t m_data[4084];
-
-public:
-    typedef Node::Id Id;
 
 public:
     FileTable()
@@ -29,8 +26,8 @@ public:
         m_data[0] = 0;
     }
 
-    void setNext(Id next) { m_next = next; }
-    Id getNext() const { return m_next; }
+    void setNext(PageIndex next) { m_next = next; }
+    PageIndex getNext() const { return m_next; }
     void clear()
     {
         m_begin = 0;
@@ -48,16 +45,16 @@ public:
             if (iv.length() > 1)
             {
                 m_end -= sizeof(uint16_t);
-                *beginTable() = m_begin / sizeof(Id);
+                *beginTable() = m_begin / sizeof(PageIndex);
                 *endIds() = iv.begin();
-                m_begin += sizeof(Id);
+                m_begin += sizeof(PageIndex);
                 *endIds() = iv.end();
-                m_begin += sizeof(Id);
+                m_begin += sizeof(PageIndex);
             }
             else
             {
                 *endIds() = iv.begin();
-                m_begin += sizeof(Id);
+                m_begin += sizeof(PageIndex);
             }
             is.popFront();
         }
@@ -67,11 +64,11 @@ public:
     {
         std::reverse_iterator<uint16_t*> it(endTable());
         std::reverse_iterator<uint16_t*> end(beginTable());
-        for (size_t i = 0; i < m_begin / sizeof(Id); ++i)
+        for (size_t i = 0; i < m_begin / sizeof(PageIndex); ++i)
         {
             if (it != end && *it == i)
             {
-                assert((i + 1) < m_begin / sizeof(Id));
+                assert((i + 1) < m_begin / sizeof(PageIndex));
                 Interval iv(*(beginIds() + i), *(beginIds() + i + 1));
                 is.pushBack(iv);
                 ++i;
@@ -90,12 +87,13 @@ public:
 private:
     uint16_t* beginTable() const { return (uint16_t*) (m_data + m_end); }
     uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
-    Id* beginIds() const { return (Id*) m_data; }
-    Id* endIds() const { return (Id*) (m_data + m_begin); }
+    PageIndex* beginIds() const { return (PageIndex*) m_data; }
+    PageIndex* endIds() const { return (PageIndex*) (m_data + m_begin); }
     bool hasSpace(Interval iv) const
     {
         assert(iv.begin() < iv.end());
-        return size_t(m_end - m_begin) >= ((iv.length()) > 1 ? 2U * sizeof(Id) + sizeof(uint16_t) : sizeof(Id));
+        return size_t(m_end - m_begin)
+               >= ((iv.length()) > 1 ? 2U * sizeof(PageIndex) + sizeof(uint16_t) : sizeof(PageIndex));
     }
 };
 

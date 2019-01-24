@@ -8,8 +8,8 @@ namespace TxFs
 
 struct FileDescriptor
 {
-    Node::Id m_first;
-    Node::Id m_last;
+    PageIndex m_first;
+    PageIndex m_last;
     uint64_t m_fileSize;
 
     FileDescriptor()
@@ -18,7 +18,7 @@ struct FileDescriptor
         , m_fileSize(0)
     {}
 
-    explicit FileDescriptor(Node::Id singlePage)
+    explicit FileDescriptor(PageIndex singlePage)
         : m_first(singlePage)
         , m_last(singlePage)
         , m_fileSize(0)

@@ -16,16 +16,16 @@ class RawFileInterface
 public:
     virtual ~RawFileInterface() {}
 
-    virtual Node::Id newPage() = 0;
-    virtual void writePage(Node::Id id, std::shared_ptr<uint8_t> page) = 0;
-    virtual void readPage(Node::Id id, std::shared_ptr<uint8_t> page) const = 0;
+    virtual PageIndex newPage() = 0;
+    virtual void writePage(PageIndex id, std::shared_ptr<uint8_t> page) = 0;
+    virtual void readPage(PageIndex id, std::shared_ptr<uint8_t> page) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
 
 class CacheManager
 {
-    typedef std::pair<std::shared_ptr<uint8_t>, Node::Id> Page;
+    typedef std::pair<std::shared_ptr<uint8_t>, PageIndex> Page;
 
     struct PageMetaData
     {
@@ -48,10 +48,10 @@ class CacheManager
 public:
     struct PageSortItem : PageMetaData
     {
-        Node::Id m_id;
+        PageIndex m_id;
 
-        PageSortItem(const PageMetaData& pmd, Node::Id id);
-        PageSortItem(int type, int usageCount, int priority, Node::Id id);
+        PageSortItem(const PageMetaData& pmd, PageIndex id);
+        PageSortItem(int type, int usageCount, int priority, PageIndex id);
 
         bool operator<(PageSortItem rhs) const;
         bool operator==(PageSortItem rhs) const;
@@ -61,12 +61,12 @@ public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
 
     Page newPage();
-    std::shared_ptr<uint8_t> getPage(Node::Id id);
-    void setPageDirty(Node::Id id);
+    std::shared_ptr<uint8_t> getPage(PageIndex id);
+    void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
 
 private:
-    Node::Id redirectPage(Node::Id id) const;
+    PageIndex redirectPage(PageIndex id) const;
     std::vector<PageSortItem> getUnpinnedPages() const;
 
     void trimCheck();
@@ -76,9 +76,9 @@ private:
 
 private:
     RawFileInterface* m_rawFileInterface;
-    std::unordered_map<Node::Id, CachedPage> m_cache;
-    std::unordered_map<Node::Id, Node::Id> m_redirectedPagesMap;
-    std::unordered_set<Node::Id> m_newPageSet;
+    std::unordered_map<PageIndex, CachedPage> m_cache;
+    std::unordered_map<PageIndex, PageIndex> m_redirectedPagesMap;
+    std::unordered_set<PageIndex> m_newPageSet;
     PageAllocator m_pageAllocator;
     uint32_t m_maxPages;
 };

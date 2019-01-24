@@ -394,7 +394,7 @@ TEST(InnerNode, removeDetail)
     std::vector<int> keys = createKeys(20, 70, 10);
     InnerNode n = createInnerNode(keys);
 
-    Node::Id page = n.findPage("35");
+    PageIndex page = n.findPage("35");
     n.remove("35");
     CHECK(n.findPage("35") < page);
 

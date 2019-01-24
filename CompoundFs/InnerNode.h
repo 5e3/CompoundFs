@@ -18,7 +18,7 @@ namespace TxFs
 class InnerNode : public Node
 {
     uint8_t m_data[4087];
-    Id m_leftMost;
+    PageIndex m_leftMost;
 
 public:
     InnerNode()
@@ -28,7 +28,7 @@ public:
         m_data[0] = 0;
     }
 
-    InnerNode(const Blob& key, Id left, Id right)
+    InnerNode(const Blob& key, PageIndex left, PageIndex right)
         : Node(0, sizeof(m_data), NodeType::Inner)
     {
         std::copy(key.begin(), key.end(), m_data + m_begin);
@@ -36,7 +36,7 @@ public:
         setPageId(m_data + m_begin + key.size(), right);
         m_end -= sizeof(uint16_t);
         *beginTable() = m_begin;
-        m_begin += key.size() + sizeof(Id);
+        m_begin += key.size() + sizeof(PageIndex);
     }
 
     size_t itemSize() const { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
@@ -49,7 +49,7 @@ public:
 
     bool hasSpace(const Blob& key) const
     {
-        size_t size = key.size() + sizeof(Id) + sizeof(uint16_t);
+        size_t size = key.size() + sizeof(PageIndex) + sizeof(uint16_t);
         return size <= bytesLeft();
     }
 
@@ -67,27 +67,27 @@ public:
         return Blob(m_data + *it);
     }
 
-    Id getLeft(const uint16_t* it) const
+    PageIndex getLeft(const uint16_t* it) const
     {
         if (it == beginTable())
             return m_leftMost;
         return getRight(it - 1);
     }
 
-    Id getRight(const uint16_t* it) const
+    PageIndex getRight(const uint16_t* it) const
     {
         assert(it != endTable());
         return getPageId(getKey(it).end());
     }
 
-    void insert(const Blob& key, Id right)
+    void insert(const Blob& key, PageIndex right)
     {
         assert(hasSpace(key));
 
         uint16_t begin = m_begin;
         std::copy(key.begin(), key.end(), m_data + m_begin);
         setPageId(m_data + m_begin + key.size(), right);
-        m_begin += key.size() + sizeof(Id);
+        m_begin += key.size() + sizeof(PageIndex);
 
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -96,7 +96,7 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
-    Id findPage(const Blob& key) const
+    PageIndex findPage(const Blob& key) const
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -134,7 +134,7 @@ public:
         Blob kentry(m_data + *it);
         uint16_t index = *it;
         // copy what comes after to this place
-        uint16_t size = kentry.size() + sizeof(Id);
+        uint16_t size = kentry.size() + sizeof(PageIndex);
         ;
         std::copy(m_data + *it + size, m_data + m_begin, kentry.begin());
         m_begin -= size;
@@ -159,7 +159,7 @@ public:
         rightNode->fill(tmp, it + 1, tmp.endTable());
     }
 
-    void split(InnerNode* rightNode, Blob& keyMiddle, const Blob& key, Id page)
+    void split(InnerNode* rightNode, Blob& keyMiddle, const Blob& key, PageIndex page)
     {
         split(rightNode, keyMiddle);
         KeyCmp keyCmp(m_data);
@@ -170,18 +170,18 @@ public:
     }
 
 private:
-    Id getPageId(const uint8_t* src) const
+    PageIndex getPageId(const uint8_t* src) const
     {
-        Id res;
+        PageIndex res;
         uint8_t* dest = (uint8_t*) &res;
-        std::copy(src, src + sizeof(Id), dest);
+        std::copy(src, src + sizeof(PageIndex), dest);
         return res;
     }
 
-    void setPageId(uint8_t* dest, Id page)
+    void setPageId(uint8_t* dest, PageIndex page)
     {
         const uint8_t* src = (uint8_t*) &page;
-        std::copy(src, src + sizeof(Id), dest);
+        std::copy(src, src + sizeof(PageIndex), dest);
     }
 
     const uint16_t* findSplitPoint() const
@@ -190,7 +190,7 @@ private:
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
             Blob keyEntry(m_data + *it);
-            size += keyEntry.size() + sizeof(Id);
+            size += keyEntry.size() + sizeof(PageIndex);
             if (size > (m_begin / 2U))
                 return it;
         }
@@ -207,10 +207,10 @@ private:
         for (const uint16_t* it = begin; it < end; ++it)
         {
             Blob key(data + *it);
-            std::copy(key.begin(), key.end() + sizeof(Id), m_data + m_begin);
+            std::copy(key.begin(), key.end() + sizeof(PageIndex), m_data + m_begin);
             *destTable = m_begin;
             destTable++;
-            m_begin += key.size() + sizeof(Id);
+            m_begin += key.size() + sizeof(PageIndex);
         }
 
         m_leftMost = node.getLeft(begin);

@@ -7,12 +7,12 @@
 
 using namespace TxFs;
 
-std::shared_ptr<Node> PageManager::readNode(Node::Id id)
+std::shared_ptr<Node> PageManager::readNode(PageIndex id)
 {
     return m_file.at(id);
 }
 
-PageManager::LeafPage PageManager::newLeaf(Node::Id prev, Node::Id next)
+PageManager::LeafPage PageManager::newLeaf(PageIndex prev, PageIndex next)
 {
     std::shared_ptr<Leaf> leaf(new Leaf(prev, next));
     m_file.push_back(leaf);
@@ -26,17 +26,17 @@ PageManager::InnerPage PageManager::newInner()
     return std::make_pair(inner, (uint32_t) m_file.size() - 1);
 }
 
-PageManager::InnerPage PageManager::newRoot(const Blob& key, Node::Id left, Node::Id right)
+PageManager::InnerPage PageManager::newRoot(const Blob& key, PageIndex left, PageIndex right)
 {
     std::shared_ptr<InnerNode> root(new InnerNode(key, left, right));
     m_file.push_back(root);
     return std::make_pair(root, (uint32_t) m_file.size() - 1);
 }
 
-void PageManager::setPageDirty(Node::Id id)
+void PageManager::setPageDirty(PageIndex id)
 {}
 
-PageManager::FileTablePage PageManager::loadFileTable(Node::Id id)
+PageManager::FileTablePage PageManager::loadFileTable(PageIndex id)
 {
     std::shared_ptr<Node> node = readNode(id);
     if (node->m_type != NodeType::FileTable)
@@ -56,7 +56,7 @@ Interval PageManager::newInterval(size_t maxPages)
     return Interval(uint32_t(m_file.size()), uint32_t(m_file.size() + std::min(maxPages, size_t(3))));
 }
 
-void PageManager::writePage(const uint8_t* begin, const uint8_t* end, Node::Id page, size_t pageOffset)
+void PageManager::writePage(const uint8_t* begin, const uint8_t* end, PageIndex page, size_t pageOffset)
 {
     assert((end - begin + pageOffset) <= 4096);
     if (page == m_file.size())
@@ -70,11 +70,11 @@ void PageManager::writePages(const uint8_t* begin, Interval interval)
 {
     if (interval.begin() == m_file.size())
     {
-        for (Node::Id id = interval.begin(); id < interval.end(); id++)
+        for (PageIndex id = interval.begin(); id < interval.end(); id++)
             m_file.push_back(std::shared_ptr<Node>(new Data));
     }
 
-    for (Node::Id id = interval.begin(); id < interval.end(); id++)
+    for (PageIndex id = interval.begin(); id < interval.end(); id++)
     {
         std::shared_ptr<Node> node = readNode(id);
         std::copy(begin, begin + 4096, (uint8_t*) node.get());
@@ -82,7 +82,7 @@ void PageManager::writePages(const uint8_t* begin, Interval interval)
     }
 }
 
-void PageManager::finalWritePage(const uint8_t* begin, const uint8_t* end, Node::Id page)
+void PageManager::finalWritePage(const uint8_t* begin, const uint8_t* end, PageIndex page)
 {
     writePage(begin, end, page, 0);
     uint8_t buffer[4096];
@@ -91,7 +91,7 @@ void PageManager::finalWritePage(const uint8_t* begin, const uint8_t* end, Node:
     writePage(buffer, buffer + sizeToEndOfPage, page, end - begin);
 }
 
-uint8_t* PageManager::readPage(uint8_t* begin, uint8_t* end, Node::Id page, size_t pageOffset)
+uint8_t* PageManager::readPage(uint8_t* begin, uint8_t* end, PageIndex page, size_t pageOffset)
 {
     std::shared_ptr<Node> node = readNode(page);
     uint8_t* beginPage = ((uint8_t*) node.get()) + pageOffset;
@@ -100,7 +100,7 @@ uint8_t* PageManager::readPage(uint8_t* begin, uint8_t* end, Node::Id page, size
 
 uint8_t* PageManager::readPages(uint8_t* begin, Interval interval)
 {
-    for (Node::Id id = interval.begin(); id < interval.end(); id++)
+    for (PageIndex id = interval.begin(); id < interval.end(); id++)
     {
         std::shared_ptr<Node> node = readNode(id);
         uint8_t* beginPage = (uint8_t*) node.get();

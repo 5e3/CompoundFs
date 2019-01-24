@@ -83,7 +83,7 @@ public:
     }
 
 private:
-    Node::Id loadFileTablePage(Node::Id page, IntervalSequence& is) const
+    PageIndex loadFileTablePage(PageIndex page, IntervalSequence& is) const
     {
         auto pageTable = m_pageManager->loadFileTable(page).first;
         pageTable->insertInto(is);
@@ -95,7 +95,7 @@ private:
         IntervalSequence is;
         for (auto it = begin; it != end; ++it)
         {
-            Node::Id page = it->m_first;
+            PageIndex page = it->m_first;
             while (page != Node::INVALID_NODE)
                 page = loadFileTablePage(page, is);
         }
@@ -202,7 +202,7 @@ private:
     FileDescriptor m_fileDescriptor;
     uint64_t m_currentFileSize;
     std::vector<FileDescriptor> m_filesToDelete;
-    std::unordered_set<Node::Id> m_freePageTables;
+    std::unordered_set<PageIndex> m_freePageTables;
     IntervalSequence m_current;
     std::shared_ptr<FileTable> m_pinnedPage;
 };
