@@ -12,7 +12,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.clang-format = .clang-format
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sandbox", "Sandbox\Sandbox.vcxproj", "{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{72185D7D-E827-4AC6-AF48-11BA654C2006} = {72185D7D-E827-4AC6-AF48-11BA654C2006}
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
 		Debug|x64 = Debug|x64
@@ -36,6 +44,14 @@ Global
 		{52DCA9AC-D6F2-4CF9-A194-CA57E5206FB3}.Release|Win32.Build.0 = Release|Win32
 		{52DCA9AC-D6F2-4CF9-A194-CA57E5206FB3}.Release|x64.ActiveCfg = Release|x64
 		{52DCA9AC-D6F2-4CF9-A194-CA57E5206FB3}.Release|x64.Build.0 = Release|x64
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Debug|Win32.Build.0 = Debug|Win32
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Debug|x64.ActiveCfg = Debug|x64
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Debug|x64.Build.0 = Debug|x64
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Release|Win32.ActiveCfg = Release|Win32
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Release|Win32.Build.0 = Release|Win32
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Release|x64.ActiveCfg = Release|x64
+		{EDFF622A-1EBD-4F1A-B4CE-C6F607F81BDD}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

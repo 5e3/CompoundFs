@@ -95,7 +95,7 @@ public:
             m_fileTable.first->transferFrom(m_pageSequence);
             if (m_fileDescriptor.m_last != Node::INVALID_NODE)
             {
-                m_pageManager->pageDirty(m_fileTable.second);
+                m_pageManager->setPageDirty(m_fileTable.second);
                 m_fileDescriptor.m_last = Node::INVALID_NODE;
             }
             cur = m_fileTable;

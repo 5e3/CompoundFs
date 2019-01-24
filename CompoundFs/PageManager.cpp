@@ -33,7 +33,7 @@ PageManager::InnerPage PageManager::newRoot(const Blob& key, Node::Id left, Node
     return std::make_pair(root, (uint32_t) m_file.size() - 1);
 }
 
-void PageManager::pageDirty(Node::Id id)
+void PageManager::setPageDirty(Node::Id id)
 {}
 
 PageManager::FileTablePage PageManager::loadFileTable(Node::Id id)

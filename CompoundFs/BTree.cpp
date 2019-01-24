@@ -21,7 +21,7 @@ void BTree::insert(const Blob& key, const Blob& value)
 {
     InnerPageStack stack;
     LeafPage leafPage = findLeaf(key, stack);
-    m_pageManager->pageDirty(leafPage.second);
+    m_pageManager->setPageDirty(leafPage.second);
     auto it = leafPage.first->find(key);
     if (it != leafPage.first->endTable())
     {
@@ -81,7 +81,7 @@ void BTree::propagate(InnerPageStack& stack, const Blob& keyToInsert, Node::Id l
     while (!stack.empty())
     {
         InnerPage inner = stack.top();
-        m_pageManager->pageDirty(inner.second);
+        m_pageManager->setPageDirty(inner.second);
         if (inner.first->hasSpace(key))
         {
             inner.first->insert(key, right);

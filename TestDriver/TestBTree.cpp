@@ -4,6 +4,7 @@
 #include "Test.h"
 #include "../CompoundFs/BTree.h"
 #include "../CompoundFs/Blob.h"
+#include <algorithm>
 
 using namespace TxFs;
 
@@ -15,18 +16,22 @@ using namespace TxFs;
 
 TEST(BTree, insert)
 {
+    std::vector<std::string> keys;
+    for (size_t i = 0; i < MANYITERATION; i++)
+        keys.emplace_back(std::to_string(i));
+    std::random_shuffle(keys.begin(), keys.end());
+
     std::shared_ptr<PageManager> pm(new PageManager);
     BTree bt(pm);
+    for (auto& key: keys)
+        bt.insert(key.c_str(), "");
 
-    for (size_t i = 0; i < MANYITERATION; i++)
-    {
-        std::string s = std::to_string(i);
-        bt.insert(s.c_str(), "");
-    }
-
+    std::random_shuffle(keys.begin(), keys.end());
     Blob value;
-    for (size_t i = 0; i < MANYITERATION; i++)
-        CHECK(bt.find(std::to_string(i).c_str(), value));
+    for (auto& key: keys)
+        CHECK(bt.find(key.c_str(), value));
+
+    CHECK(!bt.find("gaga", value));
 }
 
 TEST(BTree, insertReplacesOriginal)
@@ -34,7 +39,7 @@ TEST(BTree, insertReplacesOriginal)
     std::shared_ptr<PageManager> pm(new PageManager);
     BTree bt(pm);
 
-    for (size_t i = 0; i < 100; i++)
+    for (size_t i = 0; i < 3000; i++)
     {
         std::string s = std::to_string(i);
         bt.insert(s.c_str(), "TestData");
@@ -43,13 +48,13 @@ TEST(BTree, insertReplacesOriginal)
     // value has same size => inplace
     Blob value("Te$tData");
     Blob res;
-    bt.insert("33", value);
-    CHECK(bt.find("33", res));
+    bt.insert("2233", value);
+    CHECK(bt.find("2233", res));
     CHECK(value == res);
 
     // value has different size => remove, add
     value = Blob("Data");
-    bt.insert("22", value);
-    CHECK(bt.find("22", res));
+    bt.insert("1122", value);
+    CHECK(bt.find("1122", res));
     CHECK(value == res);
 }

@@ -138,7 +138,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     {
         auto p = cm.getPage(i);
         *p = i + 10;
-        cm.pageDirty(i);
+        cm.setPageDirty(i);
     }
 
     cm.trim(0);
@@ -190,7 +190,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     {
         auto p = cm.getPage(i);
         *p = i + 10;
-        cm.pageDirty(i);
+        cm.setPageDirty(i);
     }
     cm.trim(0);
 
@@ -219,7 +219,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     {
         auto p = cm.getPage(i);
         *p = i + 10;
-        cm.pageDirty(i);
+        cm.setPageDirty(i);
     }
     cm.trim(0);
 
@@ -227,7 +227,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     {
         auto p = cm.getPage(i);
         *p = i + 20;
-        cm.pageDirty(i);
+        cm.setPageDirty(i);
     }
     cm.trim(0);
     CHECK(sf.m_file.size() == 20);

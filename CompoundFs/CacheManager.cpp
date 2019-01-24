@@ -37,7 +37,7 @@ std::shared_ptr<uint8_t> CacheManager::getPage(Node::Id id)
     return it->second.m_page;
 }
 
-void CacheManager::pageDirty(Node::Id id)
+void CacheManager::setPageDirty(Node::Id id)
 {
     id = redirectPage(id);
     int type = m_newPageSet.count(id) ? CachedPage::New : CachedPage::DirtyRead;
