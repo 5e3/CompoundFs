@@ -34,6 +34,7 @@
     <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="PageDef.h" />
     <ClInclude Include="PageManager.h" />
+    <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />

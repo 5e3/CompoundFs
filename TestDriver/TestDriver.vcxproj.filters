@@ -4,6 +4,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Test.h" />
+    <ClInclude Include="SimpleFile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
@@ -16,5 +17,6 @@
     <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="TestPageAllocator.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
+    <ClCompile Include="TestTypedCacheManager.cpp" />
   </ItemGroup>
 </Project>

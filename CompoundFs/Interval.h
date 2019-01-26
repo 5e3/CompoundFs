@@ -10,8 +10,8 @@ class Interval
 {
 public:
     Interval()
-        : m_begin(0)
-        , m_end(0)
+        : m_begin(PageIdx::INVALID)
+        , m_end(PageIdx::INVALID)
     {}
 
     Interval(PageIndex begin, PageIndex end)
@@ -24,7 +24,9 @@ public:
     explicit Interval(PageIndex begin)
         : m_begin(begin)
         , m_end(begin + 1)
-    {}
+    {
+        assert(m_begin <= m_end);
+    }
 
     bool operator==(Interval rhs) const { return m_begin == rhs.m_begin && m_end == rhs.m_end; }
     bool operator!=(Interval rhs) const { return !(operator==(rhs)); }

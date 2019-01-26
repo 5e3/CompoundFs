@@ -59,7 +59,6 @@ public:
         m_filesToDelete.push_back(fd);
     }
 
-    void compact();
     FileDescriptor close()
     {
         if (m_fileDescriptor.m_fileSize != m_currentFileSize)
