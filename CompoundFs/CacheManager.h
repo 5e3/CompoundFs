@@ -9,6 +9,7 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <functional>
 
 namespace TxFs
 {
@@ -60,13 +61,17 @@ public:
 
 public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
+    void setPageIndexAllocator(std::function < PageIndex()> pageIndexAllocator) { m_newPageIndex = pageIndexAllocator; }
 
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
+    PageDef<uint8_t> repurpose(PageIndex index);
+    PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage);
     void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
 
 private:
+    PageIndex newPageIndex();
     PageIndex redirectPage(PageIndex id) const;
     std::vector<PageSortItem> getUnpinnedPages() const;
 
@@ -77,6 +82,7 @@ private:
 
 private:
     RawFileInterface* m_rawFileInterface;
+    std::function<PageIndex()> m_newPageIndex;
     std::unordered_map<PageIndex, CachedPage> m_cache;
     std::unordered_map<PageIndex, PageIndex> m_redirectedPagesMap;
     std::unordered_set<PageIndex> m_newPageSet;

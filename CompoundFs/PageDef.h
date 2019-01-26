@@ -6,14 +6,20 @@
 namespace TxFs
 {
 /////////////////////////////////////////////////////////
+template <typename TPage> struct PageDef;
 
 template <typename TPage> struct ConstPageDef
 {
-    const std::shared_ptr<const TPage> m_page;
-    const PageIndex m_index;
+    std::shared_ptr<const TPage> m_page;
+    PageIndex m_index;
 
     ConstPageDef()
         : m_index(PageIdx::INVALID)
+    {}
+
+    ConstPageDef(const PageDef<TPage>& pdef)
+        : m_page(pdef.m_page)
+        , m_index(pdef.m_index)
     {}
 
     ConstPageDef(std::shared_ptr<const TPage> page, PageIndex index)
@@ -21,18 +27,15 @@ template <typename TPage> struct ConstPageDef
         , m_index(index)
     {}
 
-    template <typename TPageDef> bool operator==(const TPageDef& rhs) const
-    {
-        return m_page == rhs.m_page && m_index == rhs.m_index;
-    }
+    bool operator==(const ConstPageDef& rhs) const { return m_page == rhs.m_page && m_index == rhs.m_index; }
 };
 
 /////////////////////////////////////////////////////////
 
 template <typename TPage> struct PageDef
 {
-    const std::shared_ptr<TPage> m_page;
-    const PageIndex m_index;
+    std::shared_ptr<TPage> m_page;
+    PageIndex m_index;
 
     PageDef()
         : m_index(PageIdx::INVALID)
@@ -43,9 +46,6 @@ template <typename TPage> struct PageDef
         , m_index(index)
     {}
 
-    template <typename TPageDef> bool operator==(const TPageDef& rhs) const
-    {
-        return m_page == rhs.m_page && m_index == rhs.m_index;
-    }
+    bool operator==(const PageDef& rhs) const { return m_page == rhs.m_page && m_index == rhs.m_index; }
 };
 }
