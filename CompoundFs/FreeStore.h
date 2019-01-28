@@ -89,7 +89,8 @@ private:
         return pageTable->getNext();
     }
 
-    template <typename TIter> IntervalSequence loadIntervals(TIter begin, TIter end) const
+    template <typename TIter>
+    IntervalSequence loadIntervals(TIter begin, TIter end) const
     {
         IntervalSequence is;
         for (auto it = begin; it != end; ++it)
