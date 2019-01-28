@@ -28,8 +28,8 @@ int main()
     in = PageBuilder::construct<InnerNode>(pa.allocate());
     constNewInnerPage ip = constNewInnerPage(in, PageIndex(5));
     constNewInnerPage ip2 = ip;
-    ip = ip2;
+    // ip = ip2;
     Blob b("test");
     ip.first->findPage(b);
-    ip.second = 4;
+    //    ip.second = 4;
 }
