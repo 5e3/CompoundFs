@@ -6,9 +6,11 @@
 namespace TxFs
 {
 /////////////////////////////////////////////////////////
-template <typename TPage> struct PageDef;
+template <typename TPage>
+struct PageDef;
 
-template <typename TPage> struct ConstPageDef
+template <typename TPage>
+struct ConstPageDef
 {
     std::shared_ptr<const TPage> m_page;
     PageIndex m_index;
@@ -32,7 +34,8 @@ template <typename TPage> struct ConstPageDef
 
 /////////////////////////////////////////////////////////
 
-template <typename TPage> struct PageDef
+template <typename TPage>
+struct PageDef
 {
     std::shared_ptr<TPage> m_page;
     PageIndex m_index;

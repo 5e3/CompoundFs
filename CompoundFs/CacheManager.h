@@ -61,7 +61,7 @@ public:
 
 public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
-    void setPageIndexAllocator(std::function < PageIndex()> pageIndexAllocator) { m_newPageIndex = pageIndexAllocator; }
+    void setPageIndexAllocator(std::function<PageIndex()> pageIndexAllocator) { m_newPageIndex = pageIndexAllocator; }
 
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);

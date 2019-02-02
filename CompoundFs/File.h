@@ -118,7 +118,8 @@ public:
         m_fileTable = cur;
     }
 
-    template <class TIter> void writeIterator(TIter begin, TIter end)
+    template <class TIter>
+    void writeIterator(TIter begin, TIter end)
     {
         write((uint8_t*) &begin[0], (uint8_t*) &begin[end - begin]);
     }
@@ -216,7 +217,8 @@ public:
 
     uint64_t bytesLeft() const { return m_fileSize - m_curFilePos; }
 
-    template <class TIter> uint8_t* readIterator(TIter begin, TIter end)
+    template <class TIter>
+    uint8_t* readIterator(TIter begin, TIter end)
     {
         return read((uint8_t*) &begin[0], (uint8_t*) &begin[end - begin]);
     }
