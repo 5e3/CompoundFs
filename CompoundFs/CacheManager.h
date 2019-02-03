@@ -19,8 +19,8 @@ public:
     virtual ~RawFileInterface() {}
 
     virtual PageIndex newPage() = 0;
-    virtual void writePage(PageIndex id, std::shared_ptr<uint8_t> page) = 0;
-    virtual void readPage(PageIndex id, std::shared_ptr<uint8_t> page) const = 0;
+    virtual void writePage(PageIndex id, const uint8_t* page) = 0;
+    virtual void readPage(PageIndex id, uint8_t* page) const = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////
