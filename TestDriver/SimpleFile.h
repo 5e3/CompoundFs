@@ -7,6 +7,7 @@
 
 namespace TxFs
 {
+
 struct SimpleFile : RawFileInterface
 {
     SimpleFile()
@@ -20,16 +21,16 @@ struct SimpleFile : RawFileInterface
         return id;
     }
 
-    virtual void writePage(PageIndex id, std::shared_ptr<uint8_t> page) override
+    virtual void writePage(PageIndex id, const uint8_t* page) override
     {
         auto p = m_file.at(id);
-        std::copy(page.get(), page.get() + 4096, p.get());
+        std::copy(page, page + 4096, p.get());
     }
 
-    virtual void readPage(PageIndex id, std::shared_ptr<uint8_t> page) const override
+    virtual void readPage(PageIndex id, uint8_t* page) const override
     {
         auto p = m_file.at(id);
-        std::copy(p.get(), p.get() + 4096, page.get());
+        std::copy(p.get(), p.get() + 4096, page);
     }
 
     std::vector<std::shared_ptr<uint8_t>> m_file;
