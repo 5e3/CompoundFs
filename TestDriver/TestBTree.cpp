@@ -2,6 +2,8 @@
 
 #include "stdafx.h"
 #include "Test.h"
+#include "SimpleFile.h"
+#include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/BTree.h"
 #include "../CompoundFs/Blob.h"
 #include <algorithm>
@@ -21,8 +23,9 @@ TEST(BTree, insert)
         keys.emplace_back(std::to_string(i));
     std::random_shuffle(keys.begin(), keys.end());
 
-    std::shared_ptr<PageManager> pm(new PageManager);
-    BTree bt(pm);
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
     for (auto& key: keys)
         bt.insert(key.c_str(), "");
 
@@ -36,8 +39,9 @@ TEST(BTree, insert)
 
 TEST(BTree, insertReplacesOriginal)
 {
-    std::shared_ptr<PageManager> pm(new PageManager);
-    BTree bt(pm);
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
 
     for (size_t i = 0; i < 3000; i++)
     {
