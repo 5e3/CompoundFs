@@ -4,36 +4,39 @@
 #ifndef BTREE_H
 #define BTREE_H
 
-#include "Node.h"
-#include "PageManager.h"
+#include "PageDef.h"
+#include "TypedCacheManager.h"
+#include "Blob.h"
 
 #include <stack>
 #include <memory>
 
 namespace TxFs
 {
+class Leaf;
+class InnerNode;
 
 class BTree
 {
 
 public:
-    typedef PageManager::LeafPage LeafPage;
-    typedef PageManager::InnerPage InnerPage;
-    typedef std::stack<InnerPage> InnerPageStack;
+    using LeafDef = PageDef<Leaf>;
+    using InnerNodeDef = PageDef<InnerNode>;
+    using InnerNodeStack = std::stack<ConstPageDef<InnerNode>>;
 
 public:
-    BTree(std::shared_ptr<PageManager> pageManager, PageIndex root = PageIdx::INVALID);
+    BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
 
     void insert(const Blob& key, const Blob& value);
     bool find(const Blob& key, Blob& value) const;
 
 private:
-    void propagate(InnerPageStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
-    LeafPage findLeaf(const Blob& key, InnerPageStack& stack) const;
+    void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
+    ConstPageDef<Leaf> findLeaf(const Blob& key, InnerNodeStack& stack) const;
 
 private:
-    std::shared_ptr<PageManager> m_pageManager;
-    PageIndex m_root;
+    mutable TypedCacheManager m_cacheManager;
+    PageIndex m_rootIndex;
 };
 
 }
