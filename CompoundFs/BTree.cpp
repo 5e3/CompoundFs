@@ -47,16 +47,17 @@ void BTree::insert(const Blob& key, const Blob& value)
     propagate(stack, rightLeaf.m_page->getLowestKey(), leafDef.m_index, rightLeaf.m_index);
 }
 
-bool BTree::find(const Blob& key, Blob& value) const
+std::optional<Blob> BTree::find(const Blob& key) const
 {
     InnerNodeStack stack;
     auto leafDef = findLeaf(key, stack);
     auto it = leafDef.m_page->find(key);
     if (it == leafDef.m_page->endTable())
-        return false;
+        return std::nullopt;
+    return Blob().assign(leafDef.m_page->getValue(it).begin());
 
-    value.assign(leafDef.m_page->getValue(it).begin());
-    return true;
+    // value.assign(leafDef.m_page->getValue(it).begin());
+    // return true;
 }
 
 ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const

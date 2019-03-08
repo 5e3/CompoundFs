@@ -51,11 +51,12 @@ public:
         std::swap(m_data, rhs.m_data);
     }
 
-    void assign(const uint8_t* data)
+    Blob& assign(const uint8_t* data)
     {
         m_container.resize(static_cast<size_t>(*data) + 1);
         std::copy(data, data + *data + 1, m_container.begin());
         m_data = &m_container[0];
+        return *this;
     }
 
     uint16_t size() const { return *m_data + 1; }

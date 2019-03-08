@@ -7,6 +7,7 @@
 #include "../CompoundFs/BTree.h"
 #include "../CompoundFs/Blob.h"
 #include <algorithm>
+#include <random>
 
 using namespace TxFs;
 
@@ -21,20 +22,21 @@ TEST(BTree, insert)
     std::vector<std::string> keys;
     for (size_t i = 0; i < MANYITERATION; i++)
         keys.emplace_back(std::to_string(i));
-    std::random_shuffle(keys.begin(), keys.end());
+
+    auto rng = std::mt19937(std::random_device()());
+    std::shuffle(keys.begin(), keys.end(), rng);
 
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     BTree bt(cm);
-    for (auto& key: keys)
+    for (const auto& key: keys)
         bt.insert(key.c_str(), "");
 
-    std::random_shuffle(keys.begin(), keys.end());
-    Blob value;
-    for (auto& key: keys)
-        CHECK(bt.find(key.c_str(), value));
+    std::shuffle(keys.begin(), keys.end(), rng);
+    for (const auto& key: keys)
+        CHECK(bt.find(key.c_str()));
 
-    CHECK(!bt.find("gaga", value));
+    CHECK(!bt.find("gaga"));
 }
 
 TEST(BTree, insertReplacesOriginal)
@@ -51,14 +53,13 @@ TEST(BTree, insertReplacesOriginal)
 
     // value has same size => inplace
     Blob value("Te$tData");
-    Blob res;
     bt.insert("2233", value);
-    CHECK(bt.find("2233", res));
+    auto res = bt.find("2233");
     CHECK(value == res);
 
     // value has different size => remove, add
     value = Blob("Data");
     bt.insert("1122", value);
-    CHECK(bt.find("1122", res));
+    res = bt.find("1122");
     CHECK(value == res);
 }

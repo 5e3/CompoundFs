@@ -138,7 +138,7 @@ std::vector<CacheManager::PageSortItem> CacheManager::getUnpinnedPages() const
     std::vector<PageSortItem> pageSortItems;
     pageSortItems.reserve(m_cache.size());
     for (auto& cp: m_cache)
-        if (cp.second.m_page.unique())
+        if (cp.second.m_page.use_count() == 1) // we don't use weak_ptr => this is save
             pageSortItems.push_back(PageSortItem(cp.second, cp.first));
     return pageSortItems;
 }

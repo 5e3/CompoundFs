@@ -10,6 +10,7 @@
 
 #include <stack>
 #include <memory>
+#include <optional>
 
 namespace TxFs
 {
@@ -20,15 +21,13 @@ class BTree
 {
 
 public:
-    using LeafDef = PageDef<Leaf>;
-    using InnerNodeDef = PageDef<InnerNode>;
     using InnerNodeStack = std::stack<ConstPageDef<InnerNode>>;
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
 
     void insert(const Blob& key, const Blob& value);
-    bool find(const Blob& key, Blob& value) const;
+    std::optional<Blob> find(const Blob& key) const;
 
 private:
     void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
