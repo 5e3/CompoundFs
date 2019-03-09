@@ -17,6 +17,14 @@ using namespace TxFs;
 #define MANYITERATION 200000
 #endif
 
+TEST(BTree, trivialFind)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+    CHECK(!bt.find("test"));
+}
+
 TEST(BTree, insert)
 {
     std::vector<std::string> keys;

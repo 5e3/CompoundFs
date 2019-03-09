@@ -8,7 +8,7 @@
 #include "TypedCacheManager.h"
 #include "Blob.h"
 
-#include <stack>
+#include <vector>
 #include <memory>
 #include <optional>
 
@@ -19,9 +19,7 @@ class InnerNode;
 
 class BTree
 {
-
-public:
-    using InnerNodeStack = std::stack<ConstPageDef<InnerNode>>;
+    using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);

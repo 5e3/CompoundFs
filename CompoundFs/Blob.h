@@ -12,70 +12,107 @@
 namespace TxFs
 {
 
-class Blob
-{
-public:
-    Blob()
-        : m_data(0)
-    {}
-
-    Blob(const char* str)
-        : m_container(strlen(str) + 1)
-        , m_data(&m_container[0])
+    class BlobRef
     {
-        assert(m_container.size() <= UINT8_MAX);
-        m_container[0] = uint8_t(m_container.size() - 1);
-        for (size_t i = 1; i < m_container.size(); i++)
-            m_container[i] = (uint8_t) str[i - 1];
-    }
+        inline static uint8_t g_default = 0;
+    public:
+        BlobRef() : m_data(&g_default)
+        {
+        }
 
-    Blob(const uint8_t* data)
-        : m_data((uint8_t*) data)
-    {}
+        BlobRef(const uint8_t* val)
+            : m_data((uint8_t*)val)
+        {}
 
-    Blob(const Blob& rhs)
-        : m_container(rhs.m_container)
-        , m_data(m_container.empty() ? rhs.m_data : &m_container[0])
-    {}
+        uint16_t size() const { return *m_data + 1; }
+        const uint8_t* begin() const { return m_data; }
+        const uint8_t* end() const { return begin() + size(); }
+        bool operator==(const BlobRef& lhs) const { return std::equal(begin(), end(), lhs.begin()); }
+        bool operator!=(const BlobRef& lhs) const { return !(*this == lhs); }
+        bool operator<(const BlobRef& rhs) const
+        {
+            return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
+        }
 
-    Blob& operator=(const Blob& rhs)
+        uint8_t* begin() { return m_data; }
+        uint8_t* end() { return begin() + size(); }
+
+
+    protected:
+        uint8_t* m_data;
+    };
+
+    //////////////////////////////////////////////////////////////////////////
+
+
+    class Blob : public BlobRef
     {
-        Blob tmp = rhs;
-        swap(tmp);
-        return *this;
-    }
+    public:
+        Blob() = default;
 
-    void swap(Blob& rhs)
-    {
-        std::swap(m_container, rhs.m_container);
-        std::swap(m_data, rhs.m_data);
-    }
+        Blob(const char* str)
+            : m_container(strlen(str) + 1)
+        {
+            m_data = &m_container[0];
+            m_data[0] = uint8_t(m_container.size() - 1);
+            for (size_t i = 1; i < m_container.size(); i++)
+                m_container[i] = (uint8_t)str[i - 1];
+        }
 
-    Blob& assign(const uint8_t* data)
-    {
-        m_container.resize(static_cast<size_t>(*data) + 1);
-        std::copy(data, data + *data + 1, m_container.begin());
-        m_data = &m_container[0];
-        return *this;
-    }
+        Blob(const uint8_t* val)
+            : m_container(*val + 1)
+        {
+            m_data = &m_container[0];
+            std::copy(val, val + m_container.size(), m_data);
+        }
 
-    uint16_t size() const { return *m_data + 1; }
-    const uint8_t* begin() const { return m_data; }
-    const uint8_t* end() const { return begin() + size(); }
-    bool operator==(const Blob& lhs) const { return std::equal(begin(), end(), lhs.begin()); }
-    bool operator!=(const Blob& lhs) const { return !(*this == lhs); }
-    bool operator<(const Blob& rhs) const
-    {
-        return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
-    }
+        Blob(const BlobRef& br)
+            : Blob(br.begin())
+        {
+        }
 
-    uint8_t* begin() { return m_data; }
-    uint8_t* end() { return begin() + size(); }
+        Blob(const Blob& val)
+            : m_container(val.m_container)
+        {
+            m_data = &m_container[0];
+        }
 
-private:
-    std::vector<uint8_t> m_container;
-    uint8_t* m_data;
-};
+        Blob(Blob&& val)
+            : m_container(std::move(val.m_container))
+        {
+            m_data = &m_container[0];
+        }
+
+        Blob& operator=(const Blob& val)
+        {
+            auto tmp = val;
+            swap(tmp);
+            return *this;
+        }
+
+        Blob& operator=(const BlobRef& ref)
+        {
+            Blob val(ref);
+            swap(val);
+            return *this;
+        }
+
+        Blob& operator=(Blob&& val)
+        {
+            m_container = std::move(val.m_container);
+            m_data = &m_container[0];
+            return *this;
+        }
+
+        void swap(Blob& val)
+        {
+            std::swap(m_container, val.m_container);
+            std::swap(m_data, val.m_data);
+        }
+
+    private:
+        std::vector<uint8_t> m_container;
+    };
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -89,20 +126,20 @@ public:
 
     bool operator()(uint16_t left, uint16_t right) const
     {
-        Blob l(m_data + left);
-        Blob r(m_data + right);
+        BlobRef l(m_data + left);
+        BlobRef r(m_data + right);
         return l < r;
     }
 
-    bool operator()(uint16_t left, const Blob& right) const
+    bool operator()(uint16_t left, const BlobRef& right) const
     {
-        Blob l(m_data + left);
+        BlobRef l(m_data + left);
         return l < right;
     }
 
-    bool operator()(const Blob& left, uint16_t right) const
+    bool operator()(const BlobRef& left, uint16_t right) const
     {
-        Blob r(m_data + right);
+        BlobRef r(m_data + right);
         return left < r;
     }
 

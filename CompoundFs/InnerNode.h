@@ -61,10 +61,10 @@ public:
 
     uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    Blob getKey(const uint16_t* it) const
+    BlobRef getKey(const uint16_t* it) const
     {
         assert(it != endTable());
-        return Blob(m_data + *it);
+        return BlobRef(m_data + *it);
     }
 
     PageIndex getLeft(const uint16_t* it) const
@@ -102,7 +102,7 @@ public:
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return getLeft(it);
-        Blob kentry(m_data + *it);
+        BlobRef kentry(m_data + *it);
         if (kentry == key)
             return getRight(it);
         return getLeft(it);
@@ -120,7 +120,7 @@ public:
             --it;
         else
         {
-            if (Blob(m_data + *it) != key)
+            if (BlobRef(m_data + *it) != key)
             {
                 // must be the left PageId
                 if (it == beginTable())
@@ -131,7 +131,7 @@ public:
         }
         assert(getRight(it) == findPage(key));
 
-        Blob kentry(m_data + *it);
+        BlobRef kentry(m_data + *it);
         uint16_t index = *it;
         // copy what comes after to this place
         uint16_t size = kentry.size() + sizeof(PageIndex);
@@ -149,24 +149,28 @@ public:
                 *it -= size;
     }
 
-    void split(InnerNode* rightNode, Blob& keyMiddle)
+    // returns middle key
+    Blob split(InnerNode* rightNode)
     {
-        InnerNode tmp = *this;
-        const uint16_t* it = tmp.findSplitPoint();
+        const InnerNode tmp = *this;
+        const uint16_t* const it = tmp.findSplitPoint();
         assert(it != tmp.endTable());
-        keyMiddle.assign(tmp.m_data + *it);
         fill(tmp, tmp.beginTable(), it);
         rightNode->fill(tmp, it + 1, tmp.endTable());
+        Blob middleKey(tmp.m_data + *it);
+        return middleKey;
     }
 
-    void split(InnerNode* rightNode, Blob& keyMiddle, const Blob& key, PageIndex page)
+    // returns middle key
+    Blob split(InnerNode* rightNode, const Blob& key, PageIndex page)
     {
-        split(rightNode, keyMiddle);
+        auto keyMiddle = split(rightNode);
         KeyCmp keyCmp(m_data);
         if (keyCmp(*(endTable() - 1), key))
             rightNode->insert(key, page);
         else
             insert(key, page);
+        return keyMiddle;
     }
 
 private:
@@ -189,7 +193,7 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            Blob keyEntry(m_data + *it);
+            BlobRef keyEntry(m_data + *it);
             size += keyEntry.size() + sizeof(PageIndex);
             if (size > (m_begin / 2U))
                 return it;
@@ -206,7 +210,7 @@ private:
         const uint8_t* data = node.m_data;
         for (const uint16_t* it = begin; it < end; ++it)
         {
-            Blob key(data + *it);
+            BlobRef key(data + *it);
             std::copy(key.begin(), key.end() + sizeof(PageIndex), m_data + m_begin);
             *destTable = m_begin;
             destTable++;
