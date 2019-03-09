@@ -8,6 +8,9 @@ using namespace TxFs;
 
 TEST(Blob, Ctor)
 {
+    Blob a;
+    CHECK(a.size() == 1);
+
     Blob b("Nils");
     CHECK(b.size() == 5);
 
@@ -25,7 +28,26 @@ TEST(Blob, Ctor)
 
     Blob e(b.begin());
     CHECK(e == b);
-    CHECK(e.begin() == b.begin());
+    CHECK(e.begin() != b.begin());
+}
+
+TEST(BlobRef, Transformations)
+{
+    Blob b("Senta");
+    BlobRef br = b;
+    CHECK(br.begin() == b.begin());
+
+    Blob c(std::move(b));
+    CHECK(br.begin() == c.begin());
+
+    b = br; //legal? use after move!
+    CHECK(br.begin() != b.begin());
+    CHECK(br == b);
+
+    br = b;
+    c = std::move(b);
+    CHECK(br.begin() == c.begin());
+
 }
 
 TEST(Node, hasPageSize)
@@ -310,8 +332,7 @@ TEST(InnerNode, split)
     n.insert("300", 300);
 
     InnerNode right;
-    Blob key;
-    n.split(&right, key);
+    Blob key = n.split(&right);
 
     CHECK(n.itemSize() == 2);
     CHECK(right.itemSize() == 2);

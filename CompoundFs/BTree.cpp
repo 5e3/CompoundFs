@@ -20,12 +20,14 @@ BTree::BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIn
 void BTree::insert(const Blob& key, const Blob& value)
 {
     InnerNodeStack stack;
+    stack.reserve(5);
+
     auto leafDef = m_cacheManager.makePageWritable(findLeaf(key, stack));
     auto it = leafDef.m_page->find(key);
     if (it != leafDef.m_page->endTable())
     {
         // there is already an entry for that key
-        Blob ventry = leafDef.m_page->getValue(it);
+        BlobRef ventry = leafDef.m_page->getValue(it);
         if (ventry.size() == value.size())
         {
             // replace at the same position
@@ -50,14 +52,14 @@ void BTree::insert(const Blob& key, const Blob& value)
 std::optional<Blob> BTree::find(const Blob& key) const
 {
     InnerNodeStack stack;
+    stack.reserve(5);
+
     auto leafDef = findLeaf(key, stack);
     auto it = leafDef.m_page->find(key);
     if (it == leafDef.m_page->endTable())
         return std::nullopt;
-    return Blob().assign(leafDef.m_page->getValue(it).begin());
-
-    // value.assign(leafDef.m_page->getValue(it).begin());
-    // return true;
+    Blob value(leafDef.m_page->getValue(it).begin());
+    return value;
 }
 
 ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const
@@ -68,18 +70,17 @@ ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const
         auto nodeDef = m_cacheManager.loadPage<Node>(id);
         if (nodeDef.m_page->m_type == NodeType::Leaf)
             return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(nodeDef.m_page), id);
-        stack.push(ConstPageDef<InnerNode>(std::static_pointer_cast<const InnerNode>(nodeDef.m_page), id));
-        id = stack.top().m_page->findPage(key);
+        stack.push_back(ConstPageDef<InnerNode>(std::static_pointer_cast<const InnerNode>(nodeDef.m_page), id));
+        id = stack.back().m_page->findPage(key);
     }
 }
 
 void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right)
 {
     Blob key = keyToInsert;
-    Blob keyMiddle;
     while (!stack.empty())
     {
-        auto inner = m_cacheManager.makePageWritable(stack.top());
+        auto inner = m_cacheManager.makePageWritable(stack.back());
         if (inner.m_page->hasSpace(key))
         {
             inner.m_page->insert(key, right);
@@ -87,11 +88,10 @@ void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex 
         }
 
         auto rightInner = m_cacheManager.newPage<InnerNode>();
-        inner.m_page->split(rightInner.m_page.get(), keyMiddle, key, right);
-        key = keyMiddle;
+        key = inner.m_page->split(rightInner.m_page.get(), key, right);
         left = inner.m_index;
         right = rightInner.m_index;
-        stack.pop();
+        stack.pop_back();
     }
 
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;

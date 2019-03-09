@@ -55,22 +55,22 @@ public:
 
     uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    Blob getKey(const uint16_t* it) const
+    BlobRef getKey(const uint16_t* it) const
     {
         assert(it != endTable());
-        return Blob(m_data + *it);
+        return BlobRef(m_data + *it);
     }
 
-    Blob getLowestKey() const
+    BlobRef getLowestKey() const
     {
         assert(beginTable() != endTable());
-        return Blob(m_data + *beginTable());
+        return BlobRef(m_data + *beginTable());
     }
 
-    Blob getValue(const uint16_t* it) const
+    BlobRef getValue(const uint16_t* it) const
     {
         assert(it != endTable());
-        return Blob(getKey(it).end());
+        return BlobRef(getKey(it).end());
     }
 
     void insert(const Blob& key, const Blob& value)
@@ -96,7 +96,7 @@ public:
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return it;
-        Blob kentry(&m_data[*it]);
+        BlobRef kentry(&m_data[*it]);
         if (kentry == key)
             return it;
         return endTable();
@@ -108,13 +108,13 @@ public:
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return;
-        Blob kentry(&m_data[*it]);
+        BlobRef kentry(&m_data[*it]);
         if (kentry != key)
             return;
 
         uint16_t index = *it;
         // copy what comes after to this place
-        Blob ventry(kentry.end());
+        BlobRef ventry(kentry.end());
         uint16_t size = kentry.size() + ventry.size();
         std::copy(ventry.end(), &m_data[m_begin], kentry.begin());
         m_begin -= size;
@@ -150,9 +150,9 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            Blob keyEntry(m_data + *it);
+            BlobRef keyEntry(m_data + *it);
             size += keyEntry.size();
-            Blob valueEntry(keyEntry.end());
+            BlobRef valueEntry(keyEntry.end());
             size += valueEntry.size();
             if (size > (m_begin / 2U))
                 return it;
@@ -169,8 +169,8 @@ private:
         uint8_t* data = (uint8_t*) leaf.m_data;
         for (const uint16_t* it = begin; it < end; ++it)
         {
-            Blob key(data + *it);
-            Blob value(key.end());
+            BlobRef key(data + *it);
+            BlobRef value(key.end());
             std::copy(key.begin(), value.end(), m_data + m_begin);
             *destTable = m_begin;
             destTable++;
