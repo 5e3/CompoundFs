@@ -17,6 +17,7 @@
     <ClInclude Include="PageManager.h" />
     <ClInclude Include="PageDef.h" />
     <ClInclude Include="TypedCacheManager.h" />
+    <ClInclude Include="RawFileInterface.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../CompoundFs/CacheManager.h"
+#include "../CompoundFs/RawFileInterface.h"
 #include "../CompoundFs/PageAllocator.h"
 #include <memory>
 
