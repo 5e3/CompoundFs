@@ -32,7 +32,7 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
 TEST(CacheManager, loadPageIsCachedButNotWritten)
 {
     SimpleFile sf;
-    auto id = sf.newPage();
+    auto id = sf.newInterval(1).begin();
     *sf.m_file.at(id) = 42;
 
     CacheManager cm(&sf);
