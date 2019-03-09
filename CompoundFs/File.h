@@ -73,7 +73,7 @@ public:
         {
             Interval iv = m_pageManager->newInterval(1);
             m_pageSequence.pushBack(iv);
-            m_pageManager->finalWritePage(begin, end, iv.end() - 1);
+            m_pageManager->writePage(begin, end, iv.begin(), 0);
         }
         m_fileDescriptor.m_fileSize += blockSize;
 

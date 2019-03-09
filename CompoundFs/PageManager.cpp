@@ -82,15 +82,6 @@ void PageManager::writePages(const uint8_t* begin, Interval interval)
     }
 }
 
-void PageManager::finalWritePage(const uint8_t* begin, const uint8_t* end, PageIndex page)
-{
-    writePage(begin, end, page, 0);
-    uint8_t buffer[4096];
-    size_t sizeToEndOfPage = sizeof(buffer) - (end - begin);
-    std::fill(buffer, buffer + sizeToEndOfPage, 0xfe);
-    writePage(buffer, buffer + sizeToEndOfPage, page, end - begin);
-}
-
 uint8_t* PageManager::readPage(uint8_t* begin, uint8_t* end, PageIndex page, size_t pageOffset)
 {
     std::shared_ptr<Node> node = readNode(page);
