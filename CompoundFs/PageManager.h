@@ -48,7 +48,6 @@ public:
     // raw write
     void writePage(const uint8_t* begin, const uint8_t* end, PageIndex page, size_t pageOffset);
     void writePages(const uint8_t* begin, Interval interval);
-    void finalWritePage(const uint8_t* begin, const uint8_t* end, PageIndex page);
 
     // raw read
     uint8_t* readPage(uint8_t* begin, uint8_t* end, PageIndex page, size_t pageOffset);
