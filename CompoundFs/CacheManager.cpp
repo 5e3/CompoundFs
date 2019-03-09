@@ -1,5 +1,7 @@
 
 #include "CacheManager.h"
+#include "RawFileInterface.h"
+
 #include <assert.h>
 #include <algorithm>
 
