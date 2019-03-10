@@ -258,7 +258,7 @@ TEST(CacheManager, setPageIndexAllocator)
 {
     SimpleFile sf;
     CacheManager cm(&sf);
-    cm.setPageIndexAllocator([]() { return 5; });
+    cm.setPageIntervalAllocator([](size_t) { return Interval(5); });
     auto pdef = cm.newPage();
     pdef.m_page.reset();
 

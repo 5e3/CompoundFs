@@ -11,7 +11,7 @@ namespace TxFs
 class TypedCacheManager
 {
 public:
-    TypedCacheManager(std::shared_ptr<CacheManager> cacheManager)
+    TypedCacheManager(const std::shared_ptr<CacheManager>& cacheManager)
         : m_cacheManager(cacheManager)
     {}
 
@@ -44,6 +44,9 @@ public:
         auto obj = new (pdef.m_page.get()) TPage(std::forward<Args>(args)...);
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }
+
+    RawFileInterface* getRawFileInterface() const { return m_cacheManager->getRawFileInterface(); }
+    Interval allocatePageInterval(size_t maxPages) { return m_cacheManager->allocatePageInterval(maxPages); }
 
 private:
     std::shared_ptr<CacheManager> m_cacheManager;

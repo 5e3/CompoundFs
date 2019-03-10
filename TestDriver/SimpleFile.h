@@ -23,11 +23,12 @@ struct SimpleFile : RawFileInterface
         return Interval(idx, idx + uint32_t(maxPages));
     }
 
-    virtual const uint8_t* writePage(PageIndex idx, size_t pageOffset, const uint8_t* page) override
+    virtual const uint8_t* writePage(PageIndex idx, size_t pageOffset, const uint8_t* begin,
+                                     const uint8_t* end) override
     {
         auto p = m_file.at(idx);
-        std::copy(page + pageOffset, page + 4096, p.get());
-        return page + 4096 - pageOffset;
+        std::copy(begin, end, p.get() + pageOffset);
+        return end;
     }
 
     virtual const uint8_t* writePages(Interval iv, const uint8_t* page) override
@@ -41,10 +42,10 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
-    virtual uint8_t* readPage(PageIndex idx, size_t pageOffset, uint8_t* page) const override
+    virtual uint8_t* readPage(PageIndex idx, size_t pageOffset, uint8_t* begin, uint8_t* end) const override
     {
         auto p = m_file.at(idx);
-        return std::copy(p.get() + pageOffset, p.get() + 4096, page);
+        return std::copy(p.get() + pageOffset, p.get() + pageOffset + (end - begin), begin);
     }
 
     virtual uint8_t* readPages(Interval iv, uint8_t* page) const

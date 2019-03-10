@@ -9,7 +9,7 @@ using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
     : m_rawFileInterface(rfi)
-    , m_newPageIndex([rfi]() { return PageIdx::INVALID; })
+    , m_pageIntervalAllocator([rfi](size_t maxPages) { return rfi->newInterval(maxPages); })
     , m_pageAllocator(maxPages)
     , m_maxPages(maxPages)
 {}
@@ -36,7 +36,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     if (it == m_cache.end())
     {
         auto page = m_pageAllocator.allocate();
-        m_rawFileInterface->readPage(id, 0, page.get());
+        m_rawFileInterface->readPage(id, 0, page.get(), page.get() + 4096);
         m_cache.insert(std::make_pair(id, CachedPage(page, PageMetaData::Read)));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
@@ -113,17 +113,16 @@ size_t CacheManager::trim(uint32_t maxPages)
 }
 
 /// Use installed allocation function or the rawFileInterface.
-PageIndex CacheManager::newPageIndex()
+Interval CacheManager::allocatePageInterval(size_t maxPages)
 {
-    auto idx = m_newPageIndex();
-    if (idx == PageIdx::INVALID)
+    auto iv = m_pageIntervalAllocator(maxPages);
+    if (iv.begin() == PageIdx::INVALID)
     {
-        m_newPageIndex
-            = std::function<PageIndex()>([this]() { return this->m_rawFileInterface->newInterval(1).begin(); });
-        return m_newPageIndex();
+        iv = m_rawFileInterface->newInterval(maxPages);
+        m_pageIntervalAllocator = [rfi = m_rawFileInterface](size_t maxPages) { return rfi->newInterval(maxPages); };
     }
 
-    return idx;
+    return iv;
 }
 
 /// Find the page we moved the original page to or return identity.
@@ -154,7 +153,7 @@ void CacheManager::evictDirtyPages(std::vector<PageSortItem>::iterator begin, st
         auto p = m_cache.find(it->m_id);
         assert(p != m_cache.end());
         auto id = newPageIndex();
-        m_rawFileInterface->writePage(id, 0, p->second.m_page.get());
+        m_rawFileInterface->writePage(id, 0, p->second.m_page.get(), p->second.m_page.get() + 4096);
         m_redirectedPagesMap[it->m_id] = id;
         m_newPageSet.insert(id);
     }
@@ -167,7 +166,7 @@ void CacheManager::evictNewPages(std::vector<PageSortItem>::iterator begin, std:
         assert(it->m_type == PageMetaData::New);
         auto p = m_cache.find(it->m_id);
         assert(p != m_cache.end());
-        m_rawFileInterface->writePage(p->first, 0, p->second.m_page.get());
+        m_rawFileInterface->writePage(p->first, 0, p->second.m_page.get(), p->second.m_page.get() + 4096);
     }
 }
 
