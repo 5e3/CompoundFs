@@ -5,6 +5,7 @@
 #include "Node.h"
 #include "PageAllocator.h"
 #include "PageDef.h"
+#include "Interval.h"
 
 #include <utility>
 #include <memory>
@@ -55,7 +56,10 @@ public:
 
 public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
-    void setPageIndexAllocator(std::function<PageIndex()> pageIndexAllocator) { m_newPageIndex = pageIndexAllocator; }
+    void setPageIntervalAllocator(const std::function<Interval(size_t)>& pageIntervalAllocator)
+    {
+        m_pageIntervalAllocator = pageIntervalAllocator;
+    }
 
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
@@ -63,9 +67,11 @@ public:
     PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage);
     void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
+    RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
+    Interval allocatePageInterval(size_t maxPages);
 
 private:
-    PageIndex newPageIndex();
+    PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const;
     std::vector<PageSortItem> getUnpinnedPages() const;
 
@@ -76,7 +82,7 @@ private:
 
 private:
     RawFileInterface* m_rawFileInterface;
-    std::function<PageIndex()> m_newPageIndex;
+    std::function<Interval(size_t)> m_pageIntervalAllocator;
     std::unordered_map<PageIndex, CachedPage> m_cache;
     std::unordered_map<PageIndex, PageIndex> m_redirectedPagesMap;
     std::unordered_set<PageIndex> m_newPageSet;
