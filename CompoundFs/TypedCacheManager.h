@@ -38,9 +38,9 @@ public:
     }
 
     template <typename TPage, class... Args>
-    PageDef<TPage> repurpose(PageIndex index, Args... args)
+    PageDef<TPage> repurpose(PageIndex index, bool forceNew, Args... args)
     {
-        auto pdef = m_cacheManager->repurpose(index);
+        auto pdef = m_cacheManager->repurpose(index, forceNew);
         auto obj = new (pdef.m_page.get()) TPage(std::forward<Args>(args)...);
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }

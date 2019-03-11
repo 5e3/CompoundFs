@@ -63,7 +63,7 @@ public:
 
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
-    PageDef<uint8_t> repurpose(PageIndex index);
+    PageDef<uint8_t> repurpose(PageIndex index, bool forceNew = false);
     PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage);
     void setPageDirty(PageIndex id);
     size_t trim(uint32_t maxPages);
