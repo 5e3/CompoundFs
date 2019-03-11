@@ -28,7 +28,7 @@ PageDef<uint8_t> CacheManager::newPage()
 
 /// Loads the specified page. The page is loaded because previous transactions left state that is now being accessed.
 /// The returnvalue can be transformed into something writable (makePageWritable()) which in turn makes this page
-/// subject to the DirtyPage protocoll.
+/// subject to the dirty-page-protocoll.
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
     auto id = redirectPage(origId);
@@ -46,22 +46,25 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     return ConstPageDef<uint8_t>(it->second.m_page, origId);
 }
 
-/// Reuses a page for new purposes. This is a dangerous API as it will treat pages
-/// never seen before by the CacheManager as PageMetaData::New.
-PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
+/// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
+/// setPageDirty(). The page is treated as PageMetaData::New if we find the page in the m_newPageSet otherwise it will
+/// be flagged as PageMetaData::DirtyRead. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
+/// following the dirty-page-protocoll.
+PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
 {
     auto id = redirectPage(origId);
+    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::DirtyRead;
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
         auto page = m_pageAllocator.allocate();
-        int type = m_redirectedPagesMap.count(id) ? PageMetaData::DirtyRead : PageMetaData::New;
         m_cache.insert(std::make_pair(id, CachedPage(page, type)));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
     }
 
     it->second.m_usageCount++;
+    it->second.m_type = type;
     return PageDef<uint8_t>(it->second.m_page, origId);
 }
 
