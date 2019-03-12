@@ -2,7 +2,7 @@
 
 #include "FileDescriptor.h"
 #include "IntervalSequence.h"
-#include "PageManager.h"
+#include "TypedCacheManager.h"
 #include "FileTable.h"
 #include <vector>
 #include <unordered_set>
@@ -14,8 +14,8 @@ namespace TxFs
 class FreeStore
 {
 public:
-    FreeStore(std::shared_ptr<PageManager> pageManager, FileDescriptor fd)
-        : m_pageManager(pageManager)
+    FreeStore(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor fd)
+        : m_cacheManager(cacheManager)
         , m_fileDescriptor(fd)
         , m_currentFileSize(fd.m_fileSize)
     {
@@ -27,19 +27,24 @@ public:
         if (m_currentFileSize == 0)
             return Interval();
 
-        if (!m_pinnedPage)
-            loadCurrentIntervals();
+        // delayed loading of the first batch of Intervals
+        if (!m_pinnedPage.m_page)
+            loadInitialIntervals();
 
-        auto next = m_pinnedPage->getNext();
+        // load as many PageTables necessary to potentially fulfill this request
+        auto next = m_pinnedPage.m_page->getNext();
         while (next != PageIdx::INVALID && m_current.totalLength() < maxPages)
         {
-            m_freePageTables.insert(next);
+            m_freeMetaDataPages.insert(next);
             next = loadFileTablePage(next, m_current);
         }
 
-        if (next != m_pinnedPage->getNext())
+        // if we loaded more than one page then sort it. This potentially improves access patterns as it ensures that we
+        // write low-index to high-index and it might merge the intervals.
+        if (next != m_pinnedPage.m_page->getNext())
         {
-            m_pinnedPage->setNext(next);
+            // TODO: make nicer
+            m_cacheManager.makePageWritable(m_pinnedPage).m_page->setNext(next);
             m_current.sort();
         }
 
@@ -48,8 +53,11 @@ public:
         return iv;
     }
 
-    void deallocate(uint32_t page) { m_freePageTables.insert(page); }
+    /// Return meta-data-pages to the FreeStore. These pages will be available in the next transaction.
+    void deallocate(uint32_t page) { m_freeMetaDataPages.insert(page); }
 
+    /// Defered file deletion. Upon commit-time when close() is called we will add these files to the FreeStore. The
+    /// space of these files will be available in the next transaction.
     void deleteFile(FileDescriptor fd)
     {
         assert(fd != FileDescriptor());
@@ -61,30 +69,31 @@ public:
 
     FileDescriptor close()
     {
+        // if anything was changed establish consistancy before calling finalize()
         if (m_fileDescriptor.m_fileSize != m_currentFileSize)
         {
-            if (m_pinnedPage->getNext() == PageIdx::INVALID)
+            auto pinnedPage = m_cacheManager.makePageWritable(m_pinnedPage).m_page;
+            if (pinnedPage->getNext() == PageIdx::INVALID)
                 m_fileDescriptor.m_last = m_fileDescriptor.m_first;
-            m_pinnedPage->clear();
-            m_pageManager->setPageDirty(m_fileDescriptor.m_first);
+            pinnedPage->clear();
             m_fileDescriptor.m_fileSize = m_currentFileSize;
         }
 
         finalize();
         FileDescriptor fd;
         std::swap(fd, m_fileDescriptor);
-        m_pageManager.reset();
-        m_pinnedPage.reset();
-        m_freePageTables.clear();
+        // m_pinnedPage.reset(); TODO: ?
+        m_freeMetaDataPages.clear();
         m_current.clear();
 
         return fd;
     }
 
 private:
+    /// Loads one FileTablePage into an Intervalsequence and returns the next page's index
     PageIndex loadFileTablePage(PageIndex page, IntervalSequence& is) const
     {
-        auto pageTable = m_pageManager->loadFileTable(page).first;
+        auto pageTable = m_cacheManager.loadPage<FileTable>(page).m_page;
         pageTable->insertInto(is);
         return pageTable->getNext();
     }
@@ -102,15 +111,17 @@ private:
         return is;
     }
 
-    void loadCurrentIntervals()
+    void loadInitialIntervals()
     {
-        if (!m_pinnedPage)
+        if (!m_pinnedPage.m_page)
         {
-            m_pinnedPage = m_pageManager->loadFileTable(m_fileDescriptor.m_first).first;
-            m_pinnedPage->insertInto(m_current);
+            m_pinnedPage = m_cacheManager.loadPage<FileTable>(m_fileDescriptor.m_first);
+            m_pinnedPage.m_page->insertInto(m_current);
         }
     }
 
+    /// Loads and merges the Intervals of all files consisting of only one FileTable page as these pages are likely only
+    /// sparsly filled.
     IntervalSequence onePageOptimization()
     {
         // separate one-page FileTable files from the others
@@ -120,20 +131,22 @@ private:
         // load all one-page FileTables into IntervalSequence
         auto is = loadIntervals(m_filesToDelete.begin(), pos);
 
-        // move these pages to m_freePageTables
+        // move these pages to m_freeMetaDataPages
         for (auto it = m_filesToDelete.begin(); it != pos; ++it)
-            m_freePageTables.insert(it->m_first);
+            m_freeMetaDataPages.insert(it->m_first);
 
         // lets just keep the files with longer tables
         m_filesToDelete.erase(m_filesToDelete.begin(), pos);
 
+        // TODO: split function here
+
         // add the freePageTables to the IntervalSequence so we can reuse it
-        for (auto page: m_freePageTables)
+        for (auto page: m_freeMetaDataPages)
             is.pushBack(Interval(page));
 
         // if by now we have anything add m_current intervals to the IntervalSequence
         if (!is.empty())
-            loadCurrentIntervals();
+            loadInitialIntervals();
         m_current.moveTo(is);
 
         // good chance that we can make this shorter by sorting
@@ -141,30 +154,37 @@ private:
         return is;
     }
 
+    /// Pushes the IntervalSequence back into FileTable pages. If more than one page is needed it will reuse its own
+    /// pages to store the FileTables.
     FileDescriptor pushFileTables(IntervalSequence& is) const
     {
-        FileDescriptor fd = m_fileDescriptor;
         if (is.empty())
-            return fd;
+            return m_fileDescriptor;
 
-        PageManager::FileTablePage cur = PageManager::FileTablePage(m_pinnedPage, fd.m_first);
-        m_pageManager->setPageDirty(cur.second);
-        cur.first->transferFrom(is);
+        FileDescriptor fd = m_fileDescriptor;
+
+        auto cur = m_cacheManager.makePageWritable(m_pinnedPage);
+        cur.m_page->transferFrom(is);
         while (!is.empty())
         {
             // let's use one of our pages as a FileTable
             auto pageId = is.popFront(1).begin();
-            auto next = m_pageManager->loadFileTable(pageId); //!!
-            if (m_freePageTables.count(pageId))
-                m_pageManager->setPageDirty(pageId);
-            next.first->setNext(cur.first->getNext());
-            cur.first->setNext(pageId);
+
+            // if this happens to be one of our m_freeMetaDataPages let's have the CacheManager decide how to treat
+            // that page otherwise it was not used for meta-data and we can safely enforce it to be of type new.
+            auto next = m_cacheManager.repurpose<FileTable>(pageId, m_freeMetaDataPages.count(pageId) == 0);
+
+            // rewire the next pointers in the singly linked list
+            next.m_page->setNext(cur.m_page->getNext());
+            cur.m_page->setNext(pageId);
+
             cur = next;
-            cur.first->transferFrom(is);
+            cur.m_page->transferFrom(is); // move as much as possible to the page
         }
 
+        // TODO: this is incorrect: cur.m_index could be Idx::INVALID
         if (fd.m_first == fd.m_last)
-            fd.m_last = cur.second;
+            fd.m_last = cur.m_index;
 
         return fd;
     }
@@ -175,7 +195,7 @@ private:
             m_fileDescriptor.m_fileSize += fd.m_fileSize;
 
         auto is = onePageOptimization();
-        m_fileDescriptor.m_fileSize += m_freePageTables.size() * 4096ULL;
+        m_fileDescriptor.m_fileSize += m_freeMetaDataPages.size() * 4096ULL;
 
         FileDescriptor cur = pushFileTables(is);
         for (auto& fd: m_filesToDelete)
@@ -184,26 +204,27 @@ private:
         m_fileDescriptor = cur;
     }
 
+    /// Links two files together. Makes the last page of prev dirty.
     FileDescriptor chainFiles(FileDescriptor prev, FileDescriptor next)
     {
-        PageManager::FileTablePage ft = m_pageManager->loadFileTable(prev.m_last);
-        assert(ft.first->getNext() == PageIdx::INVALID);
-        ft.first->setNext(next.m_first);
-        m_pageManager->setPageDirty(prev.m_last);
+        auto ft = m_cacheManager.loadPage<FileTable>(prev.m_last);
+        assert(ft.m_page->getNext() == PageIdx::INVALID);
+        m_cacheManager.makePageWritable(ft).m_page->setNext(next.m_first);
 
         assert(prev.m_fileSize % 4096 == 0);
         assert(next.m_fileSize % 4096 == 0);
+
         prev.m_last = next.m_last;
         return prev;
     }
 
 private:
-    std::shared_ptr<PageManager> m_pageManager;
-    FileDescriptor m_fileDescriptor;
-    uint64_t m_currentFileSize;
+    mutable TypedCacheManager m_cacheManager;
+    FileDescriptor m_fileDescriptor; // the FreeStore looks like a file
+    uint64_t m_currentFileSize;      // tracks the space left before close()
     std::vector<FileDescriptor> m_filesToDelete;
-    std::unordered_set<PageIndex> m_freePageTables;
+    std::unordered_set<PageIndex> m_freeMetaDataPages;
     IntervalSequence m_current;
-    std::shared_ptr<FileTable> m_pinnedPage;
+    ConstPageDef<FileTable> m_pinnedPage; // TODO: rename
 };
 }

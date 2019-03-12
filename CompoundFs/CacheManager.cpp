@@ -9,7 +9,6 @@ using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
     : m_rawFileInterface(rfi)
-    , m_pageIntervalAllocator([rfi](size_t maxPages) { return rfi->newInterval(maxPages); })
     , m_pageAllocator(maxPages)
     , m_maxPages(maxPages)
 {}
@@ -20,7 +19,7 @@ PageDef<uint8_t> CacheManager::newPage()
 {
     auto page = m_pageAllocator.allocate();
     auto id = newPageIndex();
-    m_cache.insert(std::make_pair(id, CachedPage(page, PageMetaData::New)));
+    m_cache.emplace(id, CachedPage(page, PageMetaData::New));
     m_newPageSet.insert(id);
     trimCheck();
     return PageDef<uint8_t>(page, id);
@@ -28,7 +27,7 @@ PageDef<uint8_t> CacheManager::newPage()
 
 /// Loads the specified page. The page is loaded because previous transactions left state that is now being accessed.
 /// The returnvalue can be transformed into something writable (makePageWritable()) which in turn makes this page
-/// subject to the dirty-page-protocoll.
+/// subject to the dirty-page-protocol.
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
     auto id = redirectPage(origId);
@@ -37,7 +36,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     {
         auto page = m_pageAllocator.allocate();
         m_rawFileInterface->readPage(id, 0, page.get(), page.get() + 4096);
-        m_cache.insert(std::make_pair(id, CachedPage(page, PageMetaData::Read)));
+        m_cache.emplace(id, CachedPage(page, PageMetaData::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
     }
@@ -49,7 +48,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 /// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
 /// setPageDirty(). The page is treated as PageMetaData::New if we find the page in the m_newPageSet otherwise it will
 /// be flagged as PageMetaData::DirtyRead. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
-/// following the dirty-page-protocoll.
+/// following the dirty-page-protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
 {
     auto id = redirectPage(origId);
@@ -58,7 +57,7 @@ PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
     if (it == m_cache.end())
     {
         auto page = m_pageAllocator.allocate();
-        m_cache.insert(std::make_pair(id, CachedPage(page, type)));
+        m_cache.emplace(id, CachedPage(page, type));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
     }
@@ -69,7 +68,7 @@ PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
 }
 
 /// Transforms a const page into a writable page. CacheManager needs to know that pages written by a previous
-/// transaction are now about to be changed. Such pages are subject to the DirtyPages protocoll.
+/// transaction are now about to be changed. Such pages are subject to the DirtyPages protocol.
 PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loadedPage)
 {
     setPageDirty(loadedPage.m_index);
@@ -88,7 +87,7 @@ void CacheManager::setPageDirty(PageIndex id)
     it->second.m_type = type;
 }
 
-/// Finds out if a trim operation needs to be performed and does it if neccessary.
+/// Finds out if a trim operation needs to be performed and does it if necessary.
 void CacheManager::trimCheck()
 {
     if (m_cache.size() > m_maxPages)
@@ -96,7 +95,7 @@ void CacheManager::trimCheck()
 }
 
 // Trims down memory usage by maxPages. If users have a lot of pinned pages this is triggered too often. Make sure that
-// there is sufficient space to deal with real-world scenarious.
+// there is sufficient space to deal with real-world scenarios.
 size_t CacheManager::trim(uint32_t maxPages)
 {
     auto pageSortItems = getUnpinnedPages();
@@ -118,14 +117,14 @@ size_t CacheManager::trim(uint32_t maxPages)
 /// Use installed allocation function or the rawFileInterface.
 Interval CacheManager::allocatePageInterval(size_t maxPages)
 {
-    auto iv = m_pageIntervalAllocator(maxPages);
-    if (iv.begin() == PageIdx::INVALID)
+    if (m_pageIntervalAllocator)
     {
-        iv = m_rawFileInterface->newInterval(maxPages);
-        m_pageIntervalAllocator = [rfi = m_rawFileInterface](size_t maxPages) { return rfi->newInterval(maxPages); };
+        auto iv = m_pageIntervalAllocator(maxPages);
+        if (iv.begin() == PageIdx::INVALID)
+            m_pageIntervalAllocator = std::function<Interval (size_t)>();
+        return iv;
     }
-
-    return iv;
+    return m_rawFileInterface->newInterval(maxPages);
 }
 
 /// Find the page we moved the original page to or return identity.

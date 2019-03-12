@@ -20,6 +20,7 @@ public:
     void pushBack(Interval iv)
     {
         assert(!iv.empty());
+        m_totalLength += iv.length();
         if (m_intervals.empty())
         {
             m_intervals.push_back(iv);
@@ -52,10 +53,7 @@ public:
 
     size_t totalLength() const
     {
-        size_t len = 0;
-        for (auto it = m_intervals.begin(); it != m_intervals.end(); ++it)
-            len += it->length();
-        return len;
+        return m_totalLength;
     }
 
     Interval popFront()
@@ -63,6 +61,7 @@ public:
         assert(!empty());
         Interval iv = front();
         m_intervals.pop_front();
+        m_totalLength -= iv.length();
         return iv;
     }
 
@@ -76,10 +75,15 @@ public:
         if (m_intervals.front().empty())
             m_intervals.pop_front();
 
+        m_totalLength -= size;
         return Interval(id, id + size);
     }
 
-    void clear() { m_intervals.clear(); }
+    void clear() 
+    { 
+        m_intervals.clear(); 
+        m_totalLength = 0;
+    }
 
     bool empty() const { return m_intervals.empty(); }
 
@@ -118,6 +122,7 @@ public:
 
 private:
     std::deque<Interval> m_intervals;
+    size_t m_totalLength = 0;
 };
 }
 
