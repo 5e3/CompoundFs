@@ -26,7 +26,7 @@ private:
     size_t m_pagesPerBlock;
     std::shared_ptr<uint8_t> m_block;
     uint8_t* m_currentPosInBlock;
-    typedef std::pair<std::shared_ptr<uint8_t>, uint8_t*> BlockPage;
+    using BlockPage = std::pair<std::shared_ptr<uint8_t>, uint8_t*>;
     std::vector<BlockPage> m_freePages;
 };
 

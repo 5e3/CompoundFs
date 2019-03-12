@@ -42,7 +42,7 @@ std::pair<size_t, size_t> PageAllocator::trim()
         auto it = blockToPage.find(bp.first);
         if (it == blockToPage.end())
         {
-            it = blockToPage.insert(std::make_pair(bp.first, std::vector<uint8_t*>())).first;
+            it = blockToPage.emplace(bp.first, std::vector<uint8_t*>()).first;
             it->second.reserve(m_pagesPerBlock);
         }
         it->second.push_back(bp.second);
@@ -55,7 +55,7 @@ std::pair<size_t, size_t> PageAllocator::trim()
         if (it.second.size() != m_pagesPerBlock)
         {
             for (auto p: it.second)
-                m_freePages.push_back(std::make_pair(it.first, p));
+                m_freePages.emplace_back(it.first, p);
             m_blocksAllocated++;
         }
     }
@@ -76,7 +76,7 @@ std::shared_ptr<uint8_t> PageAllocator::allocBlock()
 
 void PageAllocator::free(std::shared_ptr<uint8_t> block, uint8_t* page)
 {
-    m_freePages.push_back(std::make_pair(block, page));
+    m_freePages.emplace_back(block, page);
 }
 
 std::shared_ptr<uint8_t> PageAllocator::makePage(std::shared_ptr<uint8_t> block, uint8_t* page)
