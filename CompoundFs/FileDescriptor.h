@@ -18,6 +18,12 @@ struct FileDescriptor
         , m_fileSize(0)
     {}
 
+    FileDescriptor(PageIndex first, PageIndex last, uint64_t fileSize)
+        : m_first(first)
+        , m_last(last)
+        , m_fileSize(fileSize)
+    {}
+
     explicit FileDescriptor(PageIndex singlePage)
         : m_first(singlePage)
         , m_last(singlePage)

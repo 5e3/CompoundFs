@@ -28,8 +28,8 @@ public:
     uint16_t size() const { return *m_data + 1; }
     const uint8_t* begin() const { return m_data; }
     const uint8_t* end() const { return begin() + size(); }
-    bool operator==(const BlobRef& lhs) const { return std::equal(begin(), end(), lhs.begin()); }
-    bool operator!=(const BlobRef& lhs) const { return !(*this == lhs); }
+    bool operator==(const BlobRef& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
+    bool operator!=(const BlobRef& rhs) const { return !(*this == rhs); }
     bool operator<(const BlobRef& rhs) const
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
@@ -52,6 +52,7 @@ public:
     Blob(const char* str)
         : m_container(strlen(str) + 1)
     {
+        assert(m_container.size() <= UINT8_MAX);
         m_data = &m_container[0];
         m_data[0] = uint8_t(m_container.size() - 1);
         for (size_t i = 1; i < m_container.size(); i++)
