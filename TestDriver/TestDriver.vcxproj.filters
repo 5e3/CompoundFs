@@ -18,5 +18,6 @@
     <ClCompile Include="TestPageAllocator.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
+    <ClCompile Include="TestBlobTransformation.cpp" />
   </ItemGroup>
 </Project>

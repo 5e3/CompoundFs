@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TestBlobTransformation.cpp" />
     <ClCompile Include="TestBTree.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
     <ClCompile Include="TestDriver.cpp" />

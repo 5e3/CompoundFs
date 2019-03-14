@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Blob.h" />
+    <ClInclude Include="BlobTransformation.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />
     <ClInclude Include="File.h" />
@@ -38,6 +39,7 @@
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BlobTransformation.cpp" />
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
