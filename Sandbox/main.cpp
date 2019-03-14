@@ -1,169 +1,239 @@
-
-#include "../CompoundFs/InnerNode.h"
-#include "../CompoundFs/PageAllocator.h"
+#include "../CompoundFs/Blob.h"
+#include "../CompoundFs/FileDescriptor.h"
 #include <memory>
+#include <tuple>
 #include <utility>
 #include <iostream>
+#include <variant>
 
 using namespace TxFs;
+//
+// struct Version
+//{
+//    int m_major = 0;
+//    int m_minor = 0;
+//    int m_patch = 0;
+//};
+//
+// struct Folder
+//{
+//    uint32_t m_folderId;
+//};
+//
+// struct Empty {};
+//
+// template<typename Tuple>
+// struct ToVariant;
+//
+// template<typename... Args>
+// struct ToVariant<std::tuple<Args...>>
+//{
+//    using Variant = std::variant<Args ...>;
+//
+//};
+//
+//
+// enum class DirectoryType : uint8_t { Empty, File, Folder, Version };
+// using DirectoryTypeList = std::tuple<Empty, FileDescriptor, Folder, Version>;
+// static const char* const Names[] = { "Empty", "File", "Folder", "Version" };
+// using DirectoryVariant = ToVariant<DirectoryTypeList>::Variant;
+//
+// template <class T, class Tuple>
+// struct Index;
+//
+// template <class T, class... Types>
 
-struct Reporter
+// struct Index<T, std::tuple<T, Types...>> {
+//    static const std::size_t value = 0;
+//    static const DirectoryType m_type = DirectoryType::Empty;
+//};
+//
+// template <class T, class U, class... Types>
+// struct Index<T, std::tuple<U, Types...>> {
+//    static const std::size_t value = 1 + Index<T, std::tuple<Types...>>::value;
+//    static const DirectoryType m_type = (DirectoryType)value;
+//};
+//
+// template<typename T>
+// auto makeTuple(const T&);
+//
+// auto makeTuple(const Version& v)
+//{
+//    return std::make_tuple(v.m_major, v.m_minor, v.m_patch);
+//}
+//
+// auto makeTuple(const Folder& v)
+//{
+//    return std::make_tuple(v.m_folderId);
+//}
+//
+// auto makeTuple(const FileDescriptor& v)
+//{
+//    return std::make_tuple(v.m_first, v.m_last, v.m_fileSize);
+//}
+//
+// auto makeTuple(const Empty& v)
+//{
+//    return std::make_tuple();
+//}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+// template <typename T, typename Tuple, std::size_t... Inds>
+// T helperMakeFromTuple(Tuple&& tuple, std::index_sequence<Inds...>)
+//{
+//    return T{ std::get<Inds>(std::forward<Tuple>(tuple))... };
+//}
+//
+// template <typename T, typename Tuple>
+// T makeFromTuple(Tuple&& tuple)
+//{
+//    return helperMakeFromTuple<T>(std::forward<Tuple>(tuple),
+//        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>());
+//}
+//
+//
+// template<typename T>
+// Blob makeBlob(const T& value)
+//{
+//    return Blob();
+//}
+//
+// template<typename T>
+// constexpr const char* getType(const T&)
+//{
+//    return Names[Index<T, DirectoryTypeList>::value];
+//}
+//
+// template <typename T>
+// auto variantFromBlob(const Blob& blob)
+//{
+//    decltype(makeTuple(T())) t;
+//    auto rt = makeFromTuple<T>(t);
+//    return DirectoryVariant(rt);
+//
+//}
+//
+// using variantFromBlobFunc = DirectoryVariant(*)(const Blob&);
+//
+// template <typename T>
+// struct VariantFromBlobFuncArray;
+//
+// template <typename... Args>
+// struct VariantFromBlobFuncArray < std::tuple<Args...>>
+//{
+//    static inline variantFromBlobFunc funcs[] = { variantFromBlob<Args> ... };
+//};
+//
+// using Func = int(*)();
+//
+// const Func g_funcVect[] = { [] {return 5;}, [] {return 3;} };
+//
+// int main()
+//{
+//    Version v = { 1, 2, 3 };
+//    //Blob b = makeBlob(v);
+//    std::cout << getType(v) << "\n" << getType(FileDescriptor());
+//    auto t = makeTuple(v);
+//    Version v2 = makeFromTuple<Version>(t);
+//    //Version v3 = std::make_from_tuple<Version>(t);
+//    decltype(makeTuple(Version())) t2 = makeTuple(v2);
+//
+//    //VariantFromBlobFuncArray<DirectoryTypeList>::funcs[3](Blob());
+//    DirectoryVariant dv;
+//    auto var = variantFromBlob<Version>(Blob());
+//}
+
+#include <deque>
+
+struct Generic
 {
-    Reporter()
-    {
-        std::cout << "ctor\n";
-    }
-
-    Reporter(const Reporter&)
-    {
-        std::cout << "copy ctor\n";
-    }
-
-    Reporter(Reporter&&)
-    {
-        std::cout << "move ctor\n";
-    }
-
-    ~Reporter()
-    {
-        std::cout << "dtor\n";
-    }
-
-    Reporter& operator=(const Reporter&)
-    {
-        std::cout << "copy assign\n";
-        return *this;
-    }
-
-    Reporter& operator=(const Reporter&&)
-    {
-        std::cout << "move assign\n";
-        return *this;
-    }
-
-
+    std::vector<uint8_t> m_value;
 };
 
+template <typename Tuple>
+struct ToVariant;
 
-class BlobRef : private Reporter
+template <typename... Args>
+struct ToVariant<std::tuple<Args...>>
 {
-public:
-    BlobRef() : m_data(0)
-    {
-    }
-
-    BlobRef(const uint8_t* val)
-        : m_data((uint8_t*) val)
-    {}
-
-    uint16_t size() const { return *m_data + 1; }
-    const uint8_t* begin() const { return m_data; }
-    const uint8_t* end() const { return begin() + size(); }
-    bool operator==(const Blob& lhs) const { return std::equal(begin(), end(), lhs.begin()); }
-    bool operator!=(const Blob& lhs) const { return !(*this == lhs); }
-    bool operator<(const Blob& rhs) const
-    {
-        return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
-    }
-
-    uint8_t* begin() { return m_data; }
-    uint8_t* end() { return begin() + size(); }
-
-
-protected:
-    uint8_t* m_data;
+    using Variant = std::variant<Args...>;
 };
 
-class BlobVal : public BlobRef
+using Types = std::tuple<uint8_t, uint32_t, uint64_t, std::string>;
+using Buffer = std::deque<uint8_t>;
+using Variant = ToVariant<Types>::Variant;
+
+template <typename T>
+Variant BufferToVariant(Buffer& buf)
 {
-public:
-    BlobVal() = default;
-
-    BlobVal(const char* str)
-        : m_container(strlen(str) + 1)
-    {
-        m_data = &m_container[0];
-        m_data[0] = uint8_t(m_container.size()-1);
-        for (size_t i = 1; i < m_container.size(); i++)
-            m_container[i] = (uint8_t)str[i - 1];
-    }
-
-    BlobVal(const uint8_t* val)
-        : m_container(*val + 1)
-    {
-        m_data = &m_container[0];
-        std::copy(val, val + m_container.size(), m_data);
-    }
-
-    BlobVal(const BlobRef& br)
-        : BlobVal(br.begin())
-    {
-    }
-
-    BlobVal(const BlobVal& val)
-        : m_container(val.m_container)
-    {
-        m_data = &m_container[0];
-    }
-
-    BlobVal(BlobVal&& val)
-        : m_container(std::move(val.m_container))
-    {
-        m_data = &m_container[0];
-    }
-
-    BlobVal& operator=(const BlobVal& val)
-    {
-        auto tmp = val;
-        swap(tmp);
-        return *this;
-    }
-
-    BlobVal& operator=(const BlobRef& ref)
-    {
-        BlobVal val(ref);
-        swap(val);
-        return *this;
-    }
-
-    BlobVal& operator=(BlobVal&& val)
-    {
-        m_container = std::move(val.m_container);
-        m_data = &m_container[0];
-        return *this;
-    }
-
-    void swap(BlobVal& val)
-    {
-        std::swap(m_container, val.m_container);
-        std::swap(m_data, val.m_data);
-    }
-
-private:
-    std::vector<uint8_t> m_container;
-};
-
-BlobVal creatBlobVal(int i=0)
-{
-    if (i)
-        return "Hello";
-    else
-        return BlobVal("World");
-}
-
-BlobVal doSome(BlobVal val)
-{
+    T val;
+    std::copy(buf.begin(), buf.begin() + sizeof(T), (uint8_t*) &val);
+    buf.erase(buf.begin(), buf.begin() + sizeof(T));
     return val;
 }
 
+using BufferToVariantFuncType = Variant (*)(Buffer&);
 
+template <typename T>
+struct BufferToVariantFuncArray;
 
+template <typename... Args>
+struct BufferToVariantFuncArray<std::tuple<Args...>>
+{
+    inline static const BufferToVariantFuncType m_funcs[] = { BufferToVariant<Args>... };
+};
+
+size_t t2iHelper(size_t in, std::true_type)
+{
+    return in;
+}
+
+size_t t2iHelper(size_t, std::false_type)
+{
+    return 0;
+}
+
+template <typename Tuple>
+struct TypeToIndex;
+
+template <typename... Args>
+struct TypeToIndex<std::tuple<Args...>>
+{
+    template <typename T>
+    static constexpr size_t getIndex()
+    {
+        static_assert((std::is_same<T, Args>::value || ...), "Type has to match one of the tuple<> types!");
+        size_t i = 0;
+        return (t2iHelper(i++, std::is_same<T, Args>()) + ...);
+    }
+};
+
+struct Test
+{
+    // static const size_t s = TypeToIndex<Types>::getIndex<uint32_t>();
+};
+
+using TestVariant = std::variant<double, std::pair<double, double>, std::pair<int, int>, std::string>;
 
 int main()
 {
+    BufferToVariantFuncArray<Types> bvfa;
+    Buffer buf(100, 2);
 
+    auto type = buf.front();
+    buf.pop_front();
+    bvfa.m_funcs[type](buf);
 
-    auto a = doSome(creatBlobVal());
-    a = doSome(creatBlobVal());
+    auto i = TypeToIndex<Types>::getIndex<std::string>();
 
+    TestVariant tv = std::make_pair(1, 2);
+    tv = std::make_pair(1., 2.);
+    tv = "Test";
 }
