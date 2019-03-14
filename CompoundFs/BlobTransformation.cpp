@@ -86,6 +86,25 @@ struct ToVariantFuncArray<std::tuple<Args...>>
 
 //////////////////////////////////////////////////////////////////////////
 
+Blob BlobTransformation::toBlob(const Key& key)
+{
+    FixedBlob blob;
+    blob.pushBack(key.m_folder);
+    auto begin = (const uint8_t*) &key.m_name[0];
+    blob.pushBack(begin, begin + key.m_name.size());
+
+    return Blob(blob);
+}
+
+Key BlobTransformation::toKey(const BlobRef& blob)
+{
+    Folder folder;
+    auto begin = (uint8_t*) &folder;
+    begin = std::copy(blob.begin() + 1, blob.begin() + sizeof(Folder) + 1, begin);
+    Key key = { folder, { blob.begin() + sizeof(Folder) + 1, blob.end() } };
+    return key;
+}
+
 Blob BlobTransformation::variantToBlob(const Variant& v)
 {
     auto idx = static_cast<BlobTransformation::TypeEnum>(v.index());

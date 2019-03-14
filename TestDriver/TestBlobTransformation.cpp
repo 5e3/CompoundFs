@@ -164,3 +164,12 @@ TEST(BlobTransformation, CorruptedBlobThrows)
     catch (std::exception&)
     {}
 }
+
+TEST(BlobTransformation, KeyToBlob)
+{
+    Key key = { { 1 }, "hello" };
+    Blob blob = BlobTransformation::toBlob(key);
+    Key key2 = BlobTransformation::toKey(blob);
+    CHECK(key.m_folder.m_folderId == key2.m_folder.m_folderId);
+    CHECK(key.m_name == key2.m_name);
+}
