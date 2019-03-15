@@ -14,7 +14,6 @@
     <ClInclude Include="Leaf.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />
-    <ClInclude Include="PageManager.h" />
     <ClInclude Include="PageDef.h" />
     <ClInclude Include="TypedCacheManager.h" />
     <ClInclude Include="RawFileInterface.h" />
@@ -24,7 +23,6 @@
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
-    <ClCompile Include="PageManager.cpp" />
     <ClCompile Include="BlobTransformation.cpp" />
   </ItemGroup>
 </Project>

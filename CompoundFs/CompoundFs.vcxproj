@@ -34,7 +34,6 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="PageDef.h" />
-    <ClInclude Include="PageManager.h" />
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
@@ -43,7 +42,6 @@
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
-    <ClCompile Include="PageManager.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{72185D7D-E827-4AC6-AF48-11BA654C2006}</ProjectGuid>

@@ -14,7 +14,7 @@ enum PageIdx : PageIndex { INVALID = UINT32_MAX };
 
 struct NodeType
 {
-    enum Type { Undefined, Leaf, Inner, FileTable };
+    enum Type { Undefined, Leaf, Inner };
 };
 
 //////////////////////////////////////////////////////////////////////////

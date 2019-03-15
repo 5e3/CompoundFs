@@ -15,7 +15,6 @@ TEST(TypedCacheManager, newPageCallsCtor)
     TypedCacheManager tcm(std::make_shared<CacheManager>(&sf));
 
     auto pdef = tcm.newPage<FileTable>();
-    CHECK(pdef.m_page->m_type == NodeType::FileTable);
     CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
     CHECK(pdef.m_page->empty());
 }

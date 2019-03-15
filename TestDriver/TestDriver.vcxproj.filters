@@ -15,7 +15,6 @@
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestFile.cpp" />
     <ClCompile Include="TestFreeStore.cpp" />
-    <ClCompile Include="TestPageAllocator.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
     <ClCompile Include="TestBlobTransformation.cpp" />
