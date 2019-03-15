@@ -71,3 +71,97 @@ TEST(BTree, insertReplacesOriginal)
     res = bt.find("1122");
     CHECK(value == res);
 }
+
+TEST(BTree, EmptyTreeReturnsDoneCursor)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    auto cur = bt.begin("");
+    CHECK(cur.done());
+    CHECK(bt.next(cur).done());
+}
+
+TEST(BTree, CursorPointsToCurrentItem)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    for (size_t i = 0; i < 500; i++)
+    {
+        std::string s = std::to_string(i);
+        bt.insert(s.c_str(), (s + " Test").c_str());
+    }
+
+    auto cur = bt.begin("100");
+    CHECK(cur.current().first == Blob("100"));
+    CHECK(cur.current().second == Blob("100 Test"));
+
+    
+}
+
+TEST(BTree, CursorIterates)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    for (size_t i = 0; i < 500; i++)
+    {
+        std::string s = std::to_string(i);
+        bt.insert(s.c_str(), (s + " Test").c_str());
+    }
+
+    auto cur = bt.begin("");
+    for (size_t i = 0; i < 500; i++)
+    {
+        CHECK(!cur.done());
+        cur = bt.next(cur);
+    }
+
+    CHECK(cur.done());
+}
+
+TEST(BTree, CursorNextPointsToNext)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    for (size_t i = 0; i < 500; i++)
+    {
+        std::string s = std::to_string(i);
+        bt.insert(s.c_str(), (s + " Test").c_str());
+    }
+
+    auto cur = bt.begin("100");
+    cur = bt.next(cur);
+    CHECK(cur.current().first == Blob("101"));
+}
+
+TEST(BTree, CursorKeepsPageInMemory)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    for (size_t i = 0; i < 500; i++)
+    {
+        std::string s = std::to_string(i);
+        bt.insert(s.c_str(), (s + " Test").c_str());
+    }
+
+    auto cur = bt.begin("250");
+    auto pagesStillInMem = cm->trim(0);
+
+    CHECK(pagesStillInMem == 1);
+    CHECK(cur.current().first == Blob("250"));
+    CHECK(cur.current().second == Blob("250 Test"));
+
+    cur = Cursor();
+    pagesStillInMem = cm->trim(0);
+    CHECK(pagesStillInMem == 0);
+}
+

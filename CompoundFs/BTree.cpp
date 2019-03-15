@@ -96,3 +96,41 @@ void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex 
 
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
 }
+
+Cursor BTree::begin(const Blob& key) const
+{
+    InnerNodeStack stack;
+    stack.reserve(5);
+
+    auto leafDef = findLeaf(key, stack);
+    auto it = leafDef.m_page->lowerBound(key);
+    if (it == leafDef.m_page->endTable())
+        return Cursor();
+
+    return Cursor(leafDef.m_page, uint16_t(it - leafDef.m_page->beginTable()));
+}
+
+Cursor BTree::next(Cursor cursor) const
+{
+    if (cursor.done())
+        return cursor;
+
+    const auto& [leaf, index] = *cursor.m_position;
+    if (leaf->beginTable() + index + 1 < leaf->endTable())
+        return Cursor(leaf, index + 1);
+
+    if (leaf->getNext() == PageIdx::INVALID)
+        return Cursor();
+
+    const auto& nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
+    return Cursor(nextLeaf, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+std::pair<BlobRef, BlobRef> Cursor::current() const
+{
+    const auto&[leaf, index] = *m_position;
+    auto it = leaf->beginTable() + index;
+    return std::make_pair(leaf->getKey(it), leaf->getValue(it));
+}
