@@ -18,6 +18,7 @@
     <ClInclude Include="TypedCacheManager.h" />
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="BlobTransformation.h" />
+    <ClInclude Include="DirectoryStructure.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
