@@ -11,18 +11,19 @@
 namespace TxFs
 {
 
-class FileTable : public Node
+class FileTable
 {
-    uint8_t m_unused[3];
+    uint16_t m_begin;
+    uint16_t m_end;
     PageIndex m_next;
-    uint8_t m_data[4084];
+    uint8_t m_data[4088];
 
 public:
     FileTable()
-        : Node(0, sizeof(m_data), NodeType::FileTable)
+        : m_begin(0)
+        , m_end(sizeof(m_data))
         , m_next(PageIdx::INVALID)
     {
-        m_unused[0] = 0;
         m_data[0] = 0;
     }
 
