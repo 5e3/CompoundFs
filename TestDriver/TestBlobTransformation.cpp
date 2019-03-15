@@ -146,30 +146,8 @@ TEST(BlobTransformation, TooLongStringThrows)
         Blob b = BlobTransformation::toBlob(std::string(300, 'X'));
         CHECK(false);
     }
-    catch (std::exception&)
-    {}
+    catch(std::exception&)
+    { }
 }
 
-TEST(BlobTransformation, CorruptedBlobThrows)
-{
-    try
-    {
-        uint8_t blob[] = { 2, 111 /* thats not a legal type! */ };
-        Blob b(blob);
-        CHECK(BlobTransformation::getBlobType(b) == TransformationTypeEnum::Undefined);
-        CHECK(BlobTransformation::getBlobTypeName(b) == "Undefined");
-        BlobTransformation::toVariant(b);
-        CHECK(false);
-    }
-    catch (std::exception&)
-    {}
-}
 
-TEST(BlobTransformation, KeyToBlob)
-{
-    Key key = { { 1 }, "hello" };
-    Blob blob = BlobTransformation::toBlob(key);
-    Key key2 = BlobTransformation::toKey(blob);
-    CHECK(key.m_folder.m_folderId == key2.m_folder.m_folderId);
-    CHECK(key.m_name == key2.m_name);
-}
