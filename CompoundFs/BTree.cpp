@@ -43,8 +43,11 @@ void BTree::insert(const Blob& key, const Blob& value)
         return;
     }
 
+    // link rightLeaf to the righthand-side of leafDef
     auto rightLeaf = m_cacheManager.newPage<Leaf>(leafDef.m_index, leafDef.m_page->getNext());
     leafDef.m_page->setNext(rightLeaf.m_index);
+
+    // split and move up
     leafDef.m_page->split(rightLeaf.m_page.get(), key, value);
     propagate(stack, rightLeaf.m_page->getLowestKey(), leafDef.m_index, rightLeaf.m_index);
 }
@@ -130,7 +133,7 @@ Cursor BTree::next(Cursor cursor) const
 
 std::pair<BlobRef, BlobRef> Cursor::current() const
 {
-    const auto&[leaf, index] = *m_position;
+    const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;
     return std::make_pair(leaf->getKey(it), leaf->getValue(it));
 }
