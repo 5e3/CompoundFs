@@ -23,6 +23,7 @@
     <ClInclude Include="BlobTransformation.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />
+    <ClInclude Include="DirectoryStructure.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="FileDescriptor.h" />
     <ClInclude Include="FileTable.h" />
