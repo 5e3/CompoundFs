@@ -40,14 +40,13 @@ TEST(BlobRef, Transformations)
     Blob c(std::move(b));
     CHECK(br.begin() == c.begin());
 
-    b = br; //legal? use after move!
+    b = br; // reassignment after move is legal
     CHECK(br.begin() != b.begin());
     CHECK(br == b);
 
     br = b;
     c = std::move(b);
     CHECK(br.begin() == c.begin());
-
 }
 
 TEST(Node, hasPageSize)

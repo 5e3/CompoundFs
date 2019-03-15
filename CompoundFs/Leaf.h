@@ -90,6 +90,12 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
+    uint16_t* lowerBound(const Blob& key) const
+    {
+        KeyCmp keyCmp(m_data);
+        return std::lower_bound(beginTable(), endTable(), key, keyCmp);
+    }
+    
     uint16_t* find(const Blob& key) const
     {
         KeyCmp keyCmp(m_data);

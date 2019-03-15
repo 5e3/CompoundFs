@@ -209,7 +209,7 @@ struct TypeToIndex<std::tuple<Args...>>
     template <typename T>
     static constexpr size_t getIndex()
     {
-        static_assert((std::is_same<T, Args>::value || ...), "Type has to match one of the tuple<> types!");
+        static_assert((std::is_same<T, Args>::value + ...) == 1, "Type has to match one of the tuple<> types!");
         size_t i = 0;
         return (t2iHelper(i++, std::is_same<T, Args>()) + ...);
     }
@@ -220,7 +220,7 @@ struct Test
     // static const size_t s = TypeToIndex<Types>::getIndex<uint32_t>();
 };
 
-using TestVariant = std::variant<double, std::pair<double, double>, std::pair<int, int>, std::string>;
+using TestVariant = std::tuple<double, std::pair<double, double>, std::pair<int, int>, std::string>;
 
 int main()
 {
@@ -231,9 +231,11 @@ int main()
     buf.pop_front();
     bvfa.m_funcs[type](buf);
 
-    auto i = TypeToIndex<Types>::getIndex<std::string>();
+    auto i = TypeToIndex<TestVariant>::getIndex<double>();
 
-    TestVariant tv = std::make_pair(1, 2);
-    tv = std::make_pair(1., 2.);
-    tv = "Test";
+    //TestVariant tv = std::make_pair(1, 2);
+    //tv = std::make_pair(1., 2.);
+    //tv = "Test";
+
+    auto boolSum = true + true;
 }
