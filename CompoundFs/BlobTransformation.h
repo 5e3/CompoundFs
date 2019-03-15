@@ -10,9 +10,6 @@
 
 namespace TxFs
 {
-
-///////////////////////////////////////////////////////////////////////////////
-
 namespace Private
 {
     template <typename Tuple>
@@ -25,14 +22,14 @@ namespace Private
     };
 }
 
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 struct Folder
 {
     uint32_t m_folderId = 0;
 };
 
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 struct Version
 {
@@ -51,22 +48,7 @@ struct Version
     }
 };
 
-///////////////////////////////////////////////////////////////////////////////
-
-struct Key
-{
-    Key() = default;
-
-    Key(Folder folder, std::string name)
-        : m_folder(folder)
-        , m_name(std::move(name))
-    {}
-
-    Folder m_folder;
-    std::string m_name;
-};
-
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 class BlobTransformation
 {
@@ -90,27 +72,22 @@ public:
     template <typename T>
     static Blob toBlob(const T& value)
     {
+        // Variant v = std::forward(value);
         return variantToBlob(value);
     }
-
-    static Blob toBlob(const Key& key);
-    static Key toKey(const BlobRef& blob);
 
     static TypeEnum getBlobType(const BlobRef& blob);
     static std::string getBlobTypeName(const BlobRef& blob);
     static Variant toVariant(const BlobRef& blob);
-    template <typename T>
-    static T toValue(const BlobRef& blob)
-    {
-        return std::get<T>(toVariant(blob));
-    }
+    template <typename T> static T toValue(const BlobRef& blob) { return std::get<T>(toVariant(blob)); }
 
 private:
     static Blob variantToBlob(const Variant& v);
 };
 
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 using TransformationTypeEnum = BlobTransformation::TypeEnum;
+
 
 }

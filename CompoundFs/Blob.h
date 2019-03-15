@@ -145,7 +145,6 @@ public:
 private:
     const uint8_t* m_data;
 };
-
 }
 
 #endif

@@ -7,9 +7,9 @@ namespace
 {
 //////////////////////////////////////////////////////////////////////////
 
-struct FixedBlob : BlobRef
+    struct FixedBlob : BlobRef
 {
-    uint8_t m_buffer[UINT8_MAX + 1];
+    uint8_t m_buffer[UINT8_MAX];
     uint8_t* m_iterator;
 
     FixedBlob()
@@ -58,15 +58,15 @@ template <typename T>
 BlobTransformation::Variant BlobToVariant(const BlobRef& blob)
 {
     T value;
-    std::copy(blob.begin() + 2, blob.end(), (uint8_t*) &value);
+    std::copy(blob.begin() + 2, blob.end(), (uint8_t*)&value);
     return BlobTransformation::Variant(value);
 }
 
 template <>
 BlobTransformation::Variant BlobToVariant<std::string>(const BlobRef& blob)
 {
-    auto begin = (const char*) blob.begin() + 2;
-    auto end = (const char*) blob.end();
+    auto begin = (const char*)blob.begin() + 2;
+    auto end = (const char*)blob.end();
     std::string s(begin, end);
     return BlobTransformation::Variant(std::move(s));
 }
@@ -85,25 +85,6 @@ struct ToVariantFuncArray<std::tuple<Args...>>
 }
 
 //////////////////////////////////////////////////////////////////////////
-
-Blob BlobTransformation::toBlob(const Key& key)
-{
-    FixedBlob blob;
-    blob.pushBack(key.m_folder);
-    auto begin = (const uint8_t*) &key.m_name[0];
-    blob.pushBack(begin, begin + key.m_name.size());
-
-    return Blob(blob);
-}
-
-Key BlobTransformation::toKey(const BlobRef& blob)
-{
-    Folder folder;
-    auto begin = (uint8_t*) &folder;
-    begin = std::copy(blob.begin() + 1, blob.begin() + sizeof(Folder) + 1, begin);
-    Key key = { folder, { blob.begin() + sizeof(Folder) + 1, blob.end() } };
-    return key;
-}
 
 Blob BlobTransformation::variantToBlob(const Variant& v)
 {
@@ -135,9 +116,5 @@ std::string BlobTransformation::getBlobTypeName(const BlobRef& blob)
 
 BlobTransformation::Variant BlobTransformation::toVariant(const BlobRef& blob)
 {
-    auto type = getBlobType(blob);
-    if (type == TypeEnum::Undefined)
-        throw std::runtime_error("Blob is corrupted");
-
-    return ToVariantFuncArray<BlobTransformation::Types>::g_funcs[uint8_t(type)](blob);
+    return ToVariantFuncArray<BlobTransformation::Types>::g_funcs[*(blob.begin() + 1)](blob);
 }
