@@ -4,6 +4,7 @@
 
 #include <assert.h>
 #include <algorithm>
+#include <tuple>
 
 using namespace TxFs;
 
@@ -121,7 +122,7 @@ Interval CacheManager::allocatePageInterval(size_t maxPages)
     {
         auto iv = m_pageIntervalAllocator(maxPages);
         if (iv.begin() == PageIdx::INVALID)
-            m_pageIntervalAllocator = std::function<Interval (size_t)>();
+            m_pageIntervalAllocator = std::function<Interval(size_t)>();
         return iv;
     }
     return m_rawFileInterface->newInterval(maxPages);
@@ -207,16 +208,12 @@ CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority,
     m_usageCount = usageCount;
 }
 
-bool CacheManager::PageSortItem::operator<(PageSortItem rhs) const
+bool CacheManager::PageSortItem::operator<(const PageSortItem rhs) const
 {
-    if (m_type != rhs.m_type)
-        return m_type > rhs.m_type;
-    if (m_usageCount != rhs.m_usageCount)
-        return m_usageCount > rhs.m_usageCount;
-    return m_priority > rhs.m_priority;
+    return std::tie(m_type, m_usageCount, m_priority) > std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
 }
 
-bool CacheManager::PageSortItem::operator==(PageSortItem rhs) const
+bool CacheManager::PageSortItem::operator==(const PageSortItem rhs) const
 {
-    return m_type == rhs.m_type && m_usageCount == rhs.m_usageCount && m_priority == rhs.m_priority && m_id == rhs.m_id;
+    return std::tie(m_type, m_usageCount, m_priority) == std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
 }
