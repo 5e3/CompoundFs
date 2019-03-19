@@ -222,20 +222,67 @@ struct Test
 
 using TestVariant = std::tuple<double, std::pair<double, double>, std::pair<int, int>, std::string>;
 
+template <class T>
+constexpr auto supportsPushBack(T* x) -> decltype(&T::push_back, std::true_type {})
+{
+    return {};
+}
+constexpr auto supportsPushBack(...) -> std::false_type
+{
+    return {};
+}
+
+template <typename T>
+Blob convertToBlob(T* value)
+{
+    if constexpr (supportsPushBack(value))
+    {
+        return Blob();
+    }
+    else
+    {
+        return Blob();
+    }
+}
+
+template <typename T, template <typename... Ts> class Tmpl>
+struct IsClassTemplate : std::false_type
+{};
+
+template <template <typename... Ts> class Tmpl, typename... Args>
+struct IsClassTemplate<Tmpl<Args...>, Tmpl> : std::true_type
+{};
+
+#include <array>
+
+template <typename T>
+auto fromBlob(const BlobRef& blob, const uint8_t* begin = nullptr)
+{
+    if (!begin)
+        begin = blob.begin() + 1;
+
+    if constexpr (IsClassTemplate<T, std::vector>::value)
+    {
+        T vec((blob.end() - begin) / sizeof(T::value_type));
+        std::copy(begin, blob.end(), (uint8_t*) &vec[0]);
+        return vec;
+    }
+    else if constexpr (std::is_same<T, std::string>::value)
+    {
+        return std::string(begin, blob.end());
+    }
+    else
+    {
+        T value;
+        std::copy(begin, blob.end(), (uint8_t*) &value);
+        return value;
+    }
+}
+
 int main()
 {
-    BufferToVariantFuncArray<Types> bvfa;
-    Buffer buf(100, 2);
-
-    auto type = buf.front();
-    buf.pop_front();
-    bvfa.m_funcs[type](buf);
-
-    auto i = TypeToIndex<TestVariant>::getIndex<double>();
-
-    //TestVariant tv = std::make_pair(1, 2);
-    //tv = std::make_pair(1., 2.);
-    //tv = "Test";
-
-    auto boolSum = true + true;
+    Blob b;
+    fromBlob<std::vector<float>>(b);
+    fromBlob<std::string>(b);
+    fromBlob<int>(b);
 }
