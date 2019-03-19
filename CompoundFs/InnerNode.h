@@ -39,6 +39,7 @@ public:
         m_begin += key.size() + sizeof(PageIndex);
     }
 
+    bool empty() const { return m_begin == 0; }
     size_t itemSize() const { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
 
     size_t bytesLeft() const

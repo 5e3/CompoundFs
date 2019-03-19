@@ -17,26 +17,26 @@ class BlobRef
     inline static uint8_t g_default = 0;
 
 public:
-    BlobRef()
+    constexpr BlobRef() noexcept
         : m_data(&g_default)
     {}
 
-    BlobRef(const uint8_t* val)
+    constexpr BlobRef(const uint8_t* val) noexcept
         : m_data((uint8_t*) val)
     {}
 
-    uint16_t size() const { return *m_data + 1; }
-    const uint8_t* begin() const { return m_data; }
-    const uint8_t* end() const { return begin() + size(); }
-    bool operator==(const BlobRef& rhs) const { return std::equal(begin(), end(), rhs.begin(), rhs.end()); }
-    bool operator!=(const BlobRef& rhs) const { return !(*this == rhs); }
-    bool operator<(const BlobRef& rhs) const
+    constexpr uint16_t size() const noexcept { return *m_data + 1; }
+    constexpr const uint8_t* begin() const noexcept { return m_data; }
+    constexpr const uint8_t* end() const noexcept { return begin() + size(); }
+    bool operator==(const BlobRef& rhs) const noexcept { return std::equal(begin(), end(), rhs.begin()); }
+    bool operator!=(const BlobRef& rhs) const noexcept{ return !(*this == rhs); }
+    bool operator<(const BlobRef& rhs) const noexcept
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
     }
 
-    uint8_t* begin() { return m_data; }
-    uint8_t* end() { return begin() + size(); }
+    constexpr uint8_t* begin() noexcept { return m_data; }
+    constexpr uint8_t* end() noexcept { return begin() + size(); }
 
 protected:
     uint8_t* m_data;
@@ -47,7 +47,7 @@ protected:
 class Blob : public BlobRef
 {
 public:
-    Blob() = default;
+    Blob() noexcept = default;
 
     Blob(const char* str)
         : m_container(strlen(str) + 1)
@@ -55,8 +55,7 @@ public:
         assert(m_container.size() <= UINT8_MAX);
         m_data = &m_container[0];
         m_data[0] = uint8_t(m_container.size() - 1);
-        for (size_t i = 1; i < m_container.size(); i++)
-            m_container[i] = (uint8_t) str[i - 1];
+        std::copy(str, str + size()-1, begin() + 1);
     }
 
     Blob(const uint8_t* val)
@@ -103,7 +102,7 @@ public:
         return *this;
     }
 
-    void swap(Blob& val)
+    void swap(Blob& val) noexcept
     {
         std::swap(m_container, val.m_container);
         std::swap(m_data, val.m_data);
@@ -119,7 +118,7 @@ class KeyCmp
 {
 
 public:
-    KeyCmp(const uint8_t* data)
+    constexpr KeyCmp(const uint8_t* data) noexcept
         : m_data(data)
     {}
 

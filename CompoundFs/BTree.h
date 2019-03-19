@@ -11,37 +11,13 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <variant>
 
 namespace TxFs
 {
 class Leaf;
 class InnerNode;
-class Cursor;
-
-//////////////////////////////////////////////////////////////////////////
-
-class BTree
-{
-    using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
-
-public:
-    BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
-
-    void insert(const Blob& key, const Blob& value);
-    std::optional<Blob> find(const Blob& key) const;
-
-    Cursor begin(const Blob& key) const;
-    Cursor next(Cursor cursor) const;
-
-
-private:
-    void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
-    ConstPageDef<Leaf> findLeaf(const Blob& key, InnerNodeStack& stack) const;
-
-private:
-    mutable TypedCacheManager m_cacheManager;
-    PageIndex m_rootIndex;
-};
+class BTree;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -50,13 +26,13 @@ class Cursor
     friend class BTree;
 
 public:
-    Cursor() = default;
-    Cursor(const std::shared_ptr<const Leaf>& leaf, uint16_t index)
-        : m_position({ leaf, index })
-    {}
+    constexpr Cursor() = default;
+    constexpr Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it);
 
-    bool done() const { return !m_position.has_value(); }
     std::pair<BlobRef, BlobRef> current() const;
+    BlobRef key() const { return current().first; }
+    BlobRef value() const { return current().second; }
+    constexpr explicit operator bool() const noexcept { return m_position.has_value(); }
 
 private:
     struct Position
@@ -67,6 +43,56 @@ private:
 
     std::optional<Position> m_position;
 };
+
+//////////////////////////////////////////////////////////////////////////
+
+class BTree
+{
+    using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
+
+public:
+    struct Inserted
+    {};
+
+    struct Replaced
+    {
+        Blob m_beforeValue;
+    };
+
+    struct Unchanged
+    {
+        Cursor m_currentValue;
+    };
+
+    using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
+    using ReplacePolicy = bool (*)(const BlobRef& newValue, const BlobRef& beforValue);
+
+public:
+    BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
+
+    void insert(const Blob& key, const Blob& value)
+    {
+        insert(key, value, [](const BlobRef&, const BlobRef&) { return true; });
+    }
+
+    InsertResult insert(const Blob& key, const Blob& value, ReplacePolicy replacePolicy);
+    std::optional<Blob> remove(const Blob& key);
+
+    Cursor find(const Blob& key) const;
+    Cursor begin(const Blob& key) const;
+    Cursor next(Cursor cursor) const;
+
+private:
+    void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
+    ConstPageDef<Leaf> findLeaf(const Blob& key, InnerNodeStack& stack) const;
+
+private:
+    mutable TypedCacheManager m_cacheManager;
+    PageIndex m_rootIndex;
+    std::vector<uint32_t> m_freePages;
+};
+
+//////////////////////////////////////////////////////////////////////////
 
 }
 #endif // BTREE_H
