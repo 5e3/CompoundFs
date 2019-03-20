@@ -8,7 +8,7 @@
 
 using namespace TxFs;
 
-CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages)
+CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
     : m_rawFileInterface(rfi)
     , m_pageAllocator(maxPages)
     , m_maxPages(maxPages)
@@ -70,7 +70,7 @@ PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
 
 /// Transforms a const page into a writable page. CacheManager needs to know that pages written by a previous
 /// transaction are now about to be changed. Such pages are subject to the DirtyPages protocol.
-PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loadedPage)
+PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loadedPage) noexcept
 {
     setPageDirty(loadedPage.m_index);
     return PageDef<uint8_t>(std::const_pointer_cast<uint8_t>(loadedPage.m_page), loadedPage.m_index);
@@ -78,7 +78,7 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 
 /// Marks that a page was changed: Pages previously read-in are marked dirty (which makes them follow the
 /// Dirty-Page-Protocoll). All other pages are treated as PageMetaData::New.
-void CacheManager::setPageDirty(PageIndex id)
+void CacheManager::setPageDirty(PageIndex id) noexcept
 {
     id = redirectPage(id);
     int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::DirtyRead;
@@ -89,7 +89,7 @@ void CacheManager::setPageDirty(PageIndex id)
 }
 
 /// Finds out if a trim operation needs to be performed and does it if necessary.
-void CacheManager::trimCheck()
+void CacheManager::trimCheck() noexcept
 {
     if (m_cache.size() > m_maxPages)
         trim(m_maxPages / 4 * 3);
@@ -116,7 +116,7 @@ size_t CacheManager::trim(uint32_t maxPages)
 }
 
 /// Use installed allocation function or the rawFileInterface.
-Interval CacheManager::allocatePageInterval(size_t maxPages)
+Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
 {
     if (m_pageIntervalAllocator)
     {
@@ -129,7 +129,7 @@ Interval CacheManager::allocatePageInterval(size_t maxPages)
 }
 
 /// Find the page we moved the original page to or return identity.
-PageIndex CacheManager::redirectPage(PageIndex id) const
+PageIndex CacheManager::redirectPage(PageIndex id) const noexcept
 {
     auto it = m_redirectedPagesMap.find(id);
     if (it == m_redirectedPagesMap.end())

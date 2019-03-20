@@ -22,7 +22,7 @@ class Leaf : public Node
     PageIndex m_next;
 
 public:
-    Leaf(PageIndex prev = PageIdx::INVALID, PageIndex next = PageIdx::INVALID)
+    Leaf(PageIndex prev = PageIdx::INVALID, PageIndex next = PageIdx::INVALID) noexcept
         : Node(0, sizeof(m_data), NodeType::Leaf)
         , m_prev(prev)
         , m_next(next)
@@ -30,51 +30,51 @@ public:
         m_data[0] = 0; // make the compiler happy
     }
 
-    PageIndex getNext() const { return m_next; }
-    void setNext(PageIndex next) { m_next = next; }
-    bool empty() const { return m_begin == 0; }
+    constexpr PageIndex getNext() const noexcept { return m_next; }
+    constexpr void setNext(PageIndex next) noexcept { m_next = next; }
+    constexpr bool empty() const noexcept { return m_begin == 0; }
 
-    size_t itemSize() const { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
+    constexpr size_t itemSize() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
 
-    size_t bytesLeft() const
+    constexpr size_t bytesLeft() const noexcept
     {
         assert(m_end >= m_begin);
         return m_end - m_begin;
     }
 
-    bool hasSpace(const Blob& key, const Blob& value) const
+    constexpr bool hasSpace(const Blob& key, const Blob& value) const noexcept
     {
         size_t size = sizeof(uint16_t) + key.size() + value.size();
         return size <= bytesLeft();
     }
 
-    uint16_t* beginTable() const
+    constexpr uint16_t* beginTable() const noexcept
     {
         assert(m_end <= sizeof(m_data));
         return (uint16_t*) &m_data[m_end];
     }
 
-    uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
+    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    BlobRef getKey(const uint16_t* it) const
+    constexpr BlobRef getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return BlobRef(m_data + *it);
     }
 
-    BlobRef getLowestKey() const
+    constexpr BlobRef getLowestKey() const noexcept
     {
         assert(beginTable() != endTable());
         return BlobRef(m_data + *beginTable());
     }
 
-    BlobRef getValue(const uint16_t* it) const
+    constexpr BlobRef getValue(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return BlobRef(getKey(it).end());
     }
 
-    void insert(const Blob& key, const Blob& value)
+    void insert(const Blob& key, const Blob& value) noexcept
     {
         assert(hasSpace(key, value));
 
@@ -91,13 +91,13 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
-    uint16_t* lowerBound(const Blob& key) const
+    uint16_t* lowerBound(const Blob& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         return std::lower_bound(beginTable(), endTable(), key, keyCmp);
     }
-    
-    uint16_t* find(const Blob& key) const
+
+    uint16_t* find(const Blob& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -109,7 +109,7 @@ public:
         return endTable();
     }
 
-    void remove(const Blob& key)
+    void remove(const Blob& key) noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -136,7 +136,7 @@ public:
                 *it -= size;
     }
 
-    void split(Leaf* rightLeaf, const Blob& key, const Blob& value)
+    void split(Leaf* rightLeaf, const Blob& key, const Blob& value) noexcept
     {
         Leaf tmp = *this;
         const uint16_t* it = tmp.findSplitPoint();
@@ -152,7 +152,7 @@ public:
     }
 
 private:
-    const uint16_t* findSplitPoint() const
+    constexpr const uint16_t* findSplitPoint() const noexcept
     {
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
@@ -168,7 +168,7 @@ private:
         return endTable();
     }
 
-    void fill(const Leaf& leaf, const uint16_t* begin, const uint16_t* end)
+    constexpr void fill(const Leaf& leaf, const uint16_t* begin, const uint16_t* end) noexcept
     {
         m_begin = 0;
         m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));

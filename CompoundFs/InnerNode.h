@@ -21,14 +21,14 @@ class InnerNode : public Node
     PageIndex m_leftMost;
 
 public:
-    InnerNode()
+    InnerNode() noexcept
         : Node(0, sizeof(m_data), NodeType::Inner)
         , m_leftMost(PageIdx::INVALID)
     {
         m_data[0] = 0;
     }
 
-    InnerNode(const Blob& key, PageIndex left, PageIndex right)
+    InnerNode(const Blob& key, PageIndex left, PageIndex right) noexcept
         : Node(0, sizeof(m_data), NodeType::Inner)
     {
         std::copy(key.begin(), key.end(), m_data + m_begin);
@@ -39,49 +39,49 @@ public:
         m_begin += key.size() + sizeof(PageIndex);
     }
 
-    bool empty() const { return m_begin == 0; }
-    size_t itemSize() const { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
+    constexpr bool empty() const noexcept { return m_begin == 0; }
+    constexpr size_t itemSize() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
 
-    size_t bytesLeft() const
+    constexpr size_t bytesLeft() const noexcept
     {
         assert(m_end >= m_begin);
         return m_end - m_begin;
     }
 
-    bool hasSpace(const Blob& key) const
+    constexpr bool hasSpace(const Blob& key) const noexcept
     {
         size_t size = key.size() + sizeof(PageIndex) + sizeof(uint16_t);
         return size <= bytesLeft();
     }
 
-    uint16_t* beginTable() const
+    constexpr uint16_t* beginTable() const noexcept
     {
         assert(m_end <= sizeof(m_data));
         return (uint16_t*) &m_data[m_end];
     }
 
-    uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
+    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    BlobRef getKey(const uint16_t* it) const
+    constexpr BlobRef getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return BlobRef(m_data + *it);
     }
 
-    PageIndex getLeft(const uint16_t* it) const
+    constexpr PageIndex getLeft(const uint16_t* it) const noexcept
     {
         if (it == beginTable())
             return m_leftMost;
         return getRight(it - 1);
     }
 
-    PageIndex getRight(const uint16_t* it) const
+    PageIndex getRight(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return getPageId(getKey(it).end());
     }
 
-    void insert(const Blob& key, PageIndex right)
+    void insert(const Blob& key, PageIndex right) noexcept
     {
         assert(hasSpace(key));
 
@@ -97,7 +97,7 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
-    PageIndex findPage(const Blob& key) const
+    PageIndex findPage(const Blob& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -109,7 +109,7 @@ public:
         return getLeft(it);
     }
 
-    void remove(const Blob& key)
+    void remove(const Blob& key) noexcept
     {
         assert(itemSize() > 0);
 
@@ -151,7 +151,7 @@ public:
     }
 
     // returns middle key
-    Blob split(InnerNode* rightNode)
+    Blob split(InnerNode* rightNode) noexcept
     {
         const InnerNode tmp = *this;
         const uint16_t* const it = tmp.findSplitPoint();
@@ -163,7 +163,7 @@ public:
     }
 
     // returns middle key
-    Blob split(InnerNode* rightNode, const Blob& key, PageIndex page)
+    Blob split(InnerNode* rightNode, const Blob& key, PageIndex page) noexcept
     {
         auto keyMiddle = split(rightNode);
         KeyCmp keyCmp(m_data);
@@ -175,7 +175,7 @@ public:
     }
 
 private:
-    PageIndex getPageId(const uint8_t* src) const
+    PageIndex getPageId(const uint8_t* src) const noexcept
     {
         PageIndex res;
         uint8_t* dest = (uint8_t*) &res;
@@ -189,7 +189,7 @@ private:
         std::copy(src, src + sizeof(PageIndex), dest);
     }
 
-    const uint16_t* findSplitPoint() const
+    const uint16_t* findSplitPoint() const noexcept
     {
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
@@ -203,7 +203,7 @@ private:
         return endTable();
     }
 
-    void fill(const InnerNode& node, const uint16_t* begin, const uint16_t* end)
+    void fill(const InnerNode& node, const uint16_t* begin, const uint16_t* end) noexcept
     {
         m_begin = 0;
         m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));

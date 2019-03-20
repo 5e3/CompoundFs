@@ -7,12 +7,12 @@ namespace
 {
 //////////////////////////////////////////////////////////////////////////
 
-    struct FixedBlob : BlobRef
+struct FixedBlob : BlobRef
 {
     uint8_t m_buffer[UINT8_MAX];
     uint8_t* m_iterator;
 
-    FixedBlob()
+    FixedBlob() noexcept
         : m_iterator(m_buffer + 1)
     {
         m_buffer[0] = 0;
@@ -30,7 +30,7 @@ namespace
     }
 
     template <typename T>
-    void pushBack(const T& value)
+    constexpr void pushBack(const T& value)
     {
         auto begin = (uint8_t*) &value;
         auto end = begin + sizeof(T);
@@ -58,15 +58,15 @@ template <typename T>
 BlobTransformation::Variant BlobToVariant(const BlobRef& blob)
 {
     T value;
-    std::copy(blob.begin() + 2, blob.end(), (uint8_t*)&value);
+    std::copy(blob.begin() + 2, blob.end(), (uint8_t*) &value);
     return BlobTransformation::Variant(value);
 }
 
 template <>
 BlobTransformation::Variant BlobToVariant<std::string>(const BlobRef& blob)
 {
-    auto begin = (const char*)blob.begin() + 2;
-    auto end = (const char*)blob.end();
+    auto begin = (const char*) blob.begin() + 2;
+    auto end = (const char*) blob.end();
     std::string s(begin, end);
     return BlobTransformation::Variant(std::move(s));
 }

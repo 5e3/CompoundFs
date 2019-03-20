@@ -28,7 +28,7 @@ struct Node
     uint16_t m_end;
     uint8_t m_type;
 
-    Node(uint16_t begin = 0, uint16_t end = 0, NodeType::Type type = NodeType::Undefined)
+    constexpr Node(uint16_t begin = 0, uint16_t end = 0, NodeType::Type type = NodeType::Undefined) noexcept
         : m_begin(begin)
         , m_end(end)
         , m_type(type)

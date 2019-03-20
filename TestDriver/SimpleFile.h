@@ -19,7 +19,6 @@ struct SimpleFile : RawFileInterface
     virtual Interval newInterval(size_t maxPages) override
     {
         PageIndex idx = (PageIndex) m_file.size();
-        //m_file.reserve(m_file.size() + maxPages);
         for (size_t i = 0; i < maxPages; i++)
             m_file.emplace_back(m_allocator.allocate());
         return Interval(idx, idx + uint32_t(maxPages));
