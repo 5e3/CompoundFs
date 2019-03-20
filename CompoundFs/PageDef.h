@@ -15,21 +15,24 @@ struct ConstPageDef
     std::shared_ptr<const TPage> m_page;
     PageIndex m_index;
 
-    ConstPageDef()
+    constexpr ConstPageDef() noexcept
         : m_index(PageIdx::INVALID)
     {}
 
-    ConstPageDef(const PageDef<TPage>& pdef)
+    constexpr ConstPageDef(const PageDef<TPage>& pdef) noexcept
         : m_page(pdef.m_page)
         , m_index(pdef.m_index)
     {}
 
-    ConstPageDef(std::shared_ptr<const TPage> page, PageIndex index)
+    constexpr ConstPageDef(std::shared_ptr<const TPage> page, PageIndex index) noexcept
         : m_page(page)
         , m_index(index)
     {}
 
-    bool operator==(const ConstPageDef& rhs) const { return m_page == rhs.m_page && m_index == rhs.m_index; }
+    constexpr bool operator==(const ConstPageDef& rhs) const noexcept
+    {
+        return m_page == rhs.m_page && m_index == rhs.m_index;
+    }
 };
 
 /////////////////////////////////////////////////////////
@@ -40,15 +43,18 @@ struct PageDef
     std::shared_ptr<TPage> m_page;
     PageIndex m_index;
 
-    PageDef()
+    constexpr PageDef() noexcept
         : m_index(PageIdx::INVALID)
     {}
 
-    PageDef(std::shared_ptr<TPage> page, PageIndex index)
+    constexpr PageDef(std::shared_ptr<TPage> page, PageIndex index) noexcept
         : m_page(page)
         , m_index(index)
     {}
 
-    bool operator==(const PageDef& rhs) const { return m_page == rhs.m_page && m_index == rhs.m_index; }
+    constexpr bool operator==(const PageDef& rhs) const noexcept
+    {
+        return m_page == rhs.m_page && m_index == rhs.m_index;
+    }
 };
 }

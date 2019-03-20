@@ -55,7 +55,7 @@ public:
     };
 
 public:
-    CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256);
+    CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256) noexcept;
     void setPageIntervalAllocator(const std::function<Interval(size_t)>& pageIntervalAllocator)
     {
         m_pageIntervalAllocator = pageIntervalAllocator;
@@ -64,18 +64,18 @@ public:
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
     PageDef<uint8_t> repurpose(PageIndex index, bool forceNew = false);
-    PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage);
-    void setPageDirty(PageIndex id);
+    PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage) noexcept;
+    void setPageDirty(PageIndex id) noexcept;
     size_t trim(uint32_t maxPages);
     RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
-    Interval allocatePageInterval(size_t maxPages);
+    Interval allocatePageInterval(size_t maxPages) noexcept;
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
-    PageIndex redirectPage(PageIndex id) const;
+    PageIndex redirectPage(PageIndex id) const noexcept;
     std::vector<PageSortItem> getUnpinnedPages() const;
 
-    void trimCheck();
+    void trimCheck() noexcept;
     void evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
     void evictNewPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
     void removeFromCache(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);

@@ -29,7 +29,7 @@ public:
     constexpr const uint8_t* begin() const noexcept { return m_data; }
     constexpr const uint8_t* end() const noexcept { return begin() + size(); }
     bool operator==(const BlobRef& rhs) const noexcept { return std::equal(begin(), end(), rhs.begin()); }
-    bool operator!=(const BlobRef& rhs) const noexcept{ return !(*this == rhs); }
+    bool operator!=(const BlobRef& rhs) const noexcept { return !(*this == rhs); }
     bool operator<(const BlobRef& rhs) const noexcept
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
@@ -55,7 +55,7 @@ public:
         assert(m_container.size() <= UINT8_MAX);
         m_data = &m_container[0];
         m_data[0] = uint8_t(m_container.size() - 1);
-        std::copy(str, str + size()-1, begin() + 1);
+        std::copy(str, str + size() - 1, begin() + 1);
     }
 
     Blob(const uint8_t* val)
@@ -122,20 +122,20 @@ public:
         : m_data(data)
     {}
 
-    bool operator()(uint16_t left, uint16_t right) const
+    bool operator()(uint16_t left, uint16_t right) const noexcept
     {
         BlobRef l(m_data + left);
         BlobRef r(m_data + right);
         return l < r;
     }
 
-    bool operator()(uint16_t left, const BlobRef& right) const
+    bool operator()(uint16_t left, const BlobRef& right) const noexcept
     {
         BlobRef l(m_data + left);
         return l < right;
     }
 
-    bool operator()(const BlobRef& left, uint16_t right) const
+    bool operator()(const BlobRef& left, uint16_t right) const noexcept
     {
         BlobRef r(m_data + right);
         return left < r;

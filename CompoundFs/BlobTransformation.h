@@ -72,14 +72,17 @@ public:
     template <typename T>
     static Blob toBlob(const T& value)
     {
-        // Variant v = std::forward(value);
         return variantToBlob(value);
     }
 
     static TypeEnum getBlobType(const BlobRef& blob);
     static std::string getBlobTypeName(const BlobRef& blob);
     static Variant toVariant(const BlobRef& blob);
-    template <typename T> static T toValue(const BlobRef& blob) { return std::get<T>(toVariant(blob)); }
+    template <typename T>
+    static T toValue(const BlobRef& blob)
+    {
+        return std::get<T>(toVariant(blob));
+    }
 
 private:
     static Blob variantToBlob(const Variant& v);
@@ -88,6 +91,5 @@ private:
 //////////////////////////////////////////////////////////////////////////
 
 using TransformationTypeEnum = BlobTransformation::TypeEnum;
-
 
 }
