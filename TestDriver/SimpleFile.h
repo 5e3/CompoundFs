@@ -13,7 +13,7 @@ struct SimpleFile : RawFileInterface
     SimpleFile()
         : m_allocator(1024)
     {
-        m_file.reserve(1000);
+        m_file.reserve(1024);
     }
 
     virtual Interval newInterval(size_t maxPages) override
