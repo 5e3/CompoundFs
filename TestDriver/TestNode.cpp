@@ -356,6 +356,44 @@ TEST(InnerNode, split)
     CHECK(it == right.endTable());
 }
 
+TEST(InnerNode, splitInsertsTheNewKeyLeft)
+{
+    InnerNode n("200", 0, 200);
+    n.insert("100", 100);
+    n.insert("400", 400);
+    n.insert("500", 500);
+    n.insert("300", 300);
+
+    InnerNode right;
+    Blob key = n.split(&right, Blob("250"), 250);
+
+    CHECK(key == Blob("300"));
+    CHECK(n.itemSize() == 3);
+    CHECK(right.itemSize() == 2);
+    auto it = n.endTable() - 1;
+    CHECK(n.getRight(it) == 250);
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(right.getLeft(right.beginTable()) == 300);
+}
+TEST(InnerNode, splitInsertsTheNewKeyRight)
+{
+    InnerNode n("200", 0, 200);
+    n.insert("100", 100);
+    n.insert("400", 400);
+    n.insert("500", 500);
+    n.insert("300", 300);
+
+    InnerNode right;
+    Blob key = n.split(&right, Blob("350"), 350);
+
+    CHECK(key == Blob("300"));
+    CHECK(n.itemSize() == 2);
+    CHECK(right.itemSize() == 3);
+    auto it = right.beginTable();
+    CHECK(right.getRight(it) == 350);
+    CHECK(right.getLeft(it) == 300);
+}
+
 InnerNode createInnerNode(const std::vector<int>& keys)
 {
     InnerNode n(std::to_string(keys[0]).c_str(), 0, keys[0]);

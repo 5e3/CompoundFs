@@ -166,11 +166,12 @@ public:
     Blob split(InnerNode* rightNode, const Blob& key, PageIndex page) noexcept
     {
         auto keyMiddle = split(rightNode);
-        KeyCmp keyCmp(m_data);
-        if (keyCmp(*(endTable() - 1), key))
-            rightNode->insert(key, page);
-        else
+
+        if (key < keyMiddle)
             insert(key, page);
+        else
+            rightNode->insert(key, page);
+
         return keyMiddle;
     }
 
