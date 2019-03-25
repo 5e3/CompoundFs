@@ -61,15 +61,15 @@ TEST(Node, hasPageSize)
 TEST(Leaf, insert)
 {
     Leaf l;
-    CHECK(l.itemSize() == 0);
+    CHECK(l.nofItems() == 0);
     size_t s = l.bytesLeft();
 
     l.insert("Test", "");
-    CHECK(l.itemSize() == 1);
+    CHECK(l.nofItems() == 1);
     CHECK(l.bytesLeft() == s - 8);
 
     l.insert("Anfang", "");
-    CHECK(l.itemSize() == 2);
+    CHECK(l.nofItems() == 2);
     CHECK(l.bytesLeft() == s - 18);
 }
 
@@ -89,11 +89,11 @@ TEST(Leaf, keysAreSorted)
             break;
 
         l.insert(strs[i].c_str(), strs[i].c_str());
-        CHECK(l.itemSize() == i + 1);
+        CHECK(l.nofItems() == i + 1);
     }
 
     strs.resize(i);
-    CHECK(strs.size() == l.itemSize());
+    CHECK(strs.size() == l.nofItems());
 
     std::sort(strs.begin(), strs.end());
     i = 0;
@@ -133,13 +133,13 @@ TEST(Leaf, removeInOppositeOrder)
     l.insert("Test3", "Run");
 
     l.remove("Test3");
-    CHECK(l.itemSize() == 3);
+    CHECK(l.nofItems() == 3);
     l.remove("Test2");
-    CHECK(l.itemSize() == 2);
+    CHECK(l.nofItems() == 2);
     l.remove("Test1");
-    CHECK(l.itemSize() == 1);
+    CHECK(l.nofItems() == 1);
     l.remove("Test0");
-    CHECK(l.itemSize() == 0);
+    CHECK(l.nofItems() == 0);
 
     CHECK(free == l.bytesLeft());
 }
@@ -155,13 +155,13 @@ TEST(Leaf, removeInSameOrder)
     l.insert("Test3", "Run");
 
     l.remove("Test0");
-    CHECK(l.itemSize() == 3);
+    CHECK(l.nofItems() == 3);
     l.remove("Test1");
-    CHECK(l.itemSize() == 2);
+    CHECK(l.nofItems() == 2);
     l.remove("Test2");
-    CHECK(l.itemSize() == 1);
+    CHECK(l.nofItems() == 1);
     l.remove("Test3");
-    CHECK(l.itemSize() == 0);
+    CHECK(l.nofItems() == 0);
 
     CHECK(free == l.bytesLeft());
 }
@@ -177,7 +177,7 @@ TEST(Leaf, removeWhatIsNotThere)
 
     l.remove("Test");
     l.remove("Test4");
-    CHECK(l.itemSize() == 4);
+    CHECK(l.nofItems() == 4);
 }
 
 TEST(Leaf, removeInRandomOrder)
@@ -205,10 +205,10 @@ TEST(Leaf, removeInRandomOrder)
 
     for (size_t i = 0; i < strs.size(); i++)
     {
-        size_t items = l.itemSize();
+        size_t items = l.nofItems();
         size_t bytesLeft = l.bytesLeft();
         l.remove(strs[i].c_str());
-        CHECK(items == l.itemSize() + 1);
+        CHECK(items == l.nofItems() + 1);
         CHECK(bytesLeft < l.bytesLeft());
     }
 
@@ -234,7 +234,7 @@ TEST(Leaf, split)
     }
 
     strs.resize(i + 1);
-    CHECK(strs.size() - 1 == l.itemSize());
+    CHECK(strs.size() - 1 == l.nofItems());
 
     Leaf m;
     l.split(&m, strs[i].c_str(), strs[i].c_str());
@@ -256,14 +256,14 @@ TEST(Leaf, split)
 TEST(InnerNode, insertGrows)
 {
     InnerNode m;
-    CHECK(m.itemSize() == 0);
+    CHECK(m.nofItems() == 0);
 
     InnerNode n("100", 0, 100);
-    CHECK(n.itemSize() == 1);
+    CHECK(n.nofItems() == 1);
     CHECK(m.bytesLeft() > n.bytesLeft());
 
     n.insert("200", 200);
-    CHECK(n.itemSize() == 2);
+    CHECK(n.nofItems() == 2);
 }
 
 TEST(InnerNode, insertedItemsCanBeFound)
@@ -333,8 +333,8 @@ TEST(InnerNode, split)
     InnerNode right;
     Blob key = n.split(&right);
 
-    CHECK(n.itemSize() == 2);
-    CHECK(right.itemSize() == 2);
+    CHECK(n.nofItems() == 2);
+    CHECK(right.nofItems() == 2);
     CHECK(key == Blob("300"));
 
     uint16_t* it = n.beginTable();
@@ -368,8 +368,8 @@ TEST(InnerNode, splitInsertsTheNewKeyLeft)
     Blob key = n.split(&right, Blob("250"), 250);
 
     CHECK(key == Blob("300"));
-    CHECK(n.itemSize() == 3);
-    CHECK(right.itemSize() == 2);
+    CHECK(n.nofItems() == 3);
+    CHECK(right.nofItems() == 2);
     auto it = n.endTable() - 1;
     CHECK(n.getRight(it) == 250);
     CHECK(n.getLeft(n.beginTable()) == 0);
@@ -387,8 +387,8 @@ TEST(InnerNode, splitInsertsTheNewKeyRight)
     Blob key = n.split(&right, Blob("350"), 350);
 
     CHECK(key == Blob("300"));
-    CHECK(n.itemSize() == 2);
-    CHECK(right.itemSize() == 3);
+    CHECK(n.nofItems() == 2);
+    CHECK(right.nofItems() == 3);
     auto it = right.beginTable();
     CHECK(right.getRight(it) == 350);
     CHECK(right.getLeft(it) == 300);
@@ -421,30 +421,30 @@ TEST(InnerNode, remove)
     std::vector<int> keys = createKeys(10, 300, 10);
     InnerNode n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::reverse(keys.begin(), keys.end());
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::reverse(keys.begin(), keys.end());
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::random_shuffle(keys.begin(), keys.end());
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.itemSize() == 0);
+    CHECK(n.nofItems() == 0);
 }
 
 TEST(InnerNode, removeDetail)

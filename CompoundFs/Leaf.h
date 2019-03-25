@@ -34,7 +34,7 @@ public:
     constexpr void setNext(PageIndex next) noexcept { m_next = next; }
     constexpr bool empty() const noexcept { return m_begin == 0; }
 
-    constexpr size_t itemSize() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
+    constexpr size_t nofItems() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
 
     constexpr size_t bytesLeft() const noexcept
     {
