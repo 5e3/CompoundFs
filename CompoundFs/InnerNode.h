@@ -40,7 +40,8 @@ public:
     }
 
     constexpr bool empty() const noexcept { return m_begin == 0; }
-    constexpr size_t itemSize() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
+    constexpr size_t nofItems() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
+    constexpr size_t size() const noexcept { return sizeof(m_data) - bytesLeft(); }
 
     constexpr size_t bytesLeft() const noexcept
     {
@@ -111,7 +112,7 @@ public:
 
     void remove(const Blob& key) noexcept
     {
-        assert(itemSize() > 0);
+        assert(nofItems() > 0);
 
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -154,7 +155,7 @@ public:
     Blob split(InnerNode* rightNode) noexcept
     {
         const InnerNode tmp = *this;
-        const uint16_t* const it = tmp.findSplitPoint();
+        const uint16_t* const it = tmp.findSplitPoint(m_begin / 2U);
         assert(it != tmp.endTable());
         fill(tmp, tmp.beginTable(), it);
         rightNode->fill(tmp, it + 1, tmp.endTable());
@@ -175,6 +176,29 @@ public:
         return keyMiddle;
     }
 
+    // static redistribute(InnerNode& left, InnerNode& right)
+    //{
+    //    if (left.size() < right.size())
+    //    {
+    //        const InnerNode tmp = right;
+    //        size_t splitPoint = (left.m_begin + right.m_begin) / 2 - left.m_begin;
+    //        const uint16_t* const it = tmp.findSplitPoint(splitPoint);
+    //        left.append(tmp, tmp.beginTable(), it);
+    //        right.fill(tmp, it, tmp.endTable());
+    //    }
+    //    else
+    //    {
+    //        const InnerNode tmp = left;
+    //        size_t splitPoint = (left.m_begin + right.m_begin) / 2;
+    //        const uint16_t* const it = tmp.findSplitPoint(splitPoint);
+    //        left.fill(tmp, tmp.beginTable(), it);
+    //        right.fill(tmp, it, tmp.endTable());
+
+    //        left.append(tmp, tmp.beginTable(), it);
+    //        right.fill(tmp, it, tmp.endTable());
+    //    }
+    //}
+
 private:
     PageIndex getPageId(const uint8_t* src) const noexcept
     {
@@ -190,14 +214,14 @@ private:
         std::copy(src, src + sizeof(PageIndex), dest);
     }
 
-    const uint16_t* findSplitPoint() const noexcept
+    const uint16_t* findSplitPoint(size_t splitPoint) const noexcept
     {
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
             BlobRef keyEntry(m_data + *it);
             size += keyEntry.size() + sizeof(PageIndex);
-            if (size > (m_begin / 2U))
+            if (size > splitPoint)
                 return it;
         }
 
@@ -208,6 +232,13 @@ private:
     {
         m_begin = 0;
         m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));
+        append(node, begin, end);
+
+        m_leftMost = node.getLeft(begin);
+    }
+
+    void append(const InnerNode& node, const uint16_t* begin, const uint16_t* end) noexcept
+    {
         uint16_t* destTable = beginTable();
         const uint8_t* data = node.m_data;
         for (const uint16_t* it = begin; it < end; ++it)
@@ -218,8 +249,6 @@ private:
             destTable++;
             m_begin += key.size() + sizeof(PageIndex);
         }
-
-        m_leftMost = node.getLeft(begin);
     }
 };
 
