@@ -176,28 +176,71 @@ public:
         return keyMiddle;
     }
 
-    // static redistribute(InnerNode& left, InnerNode& right)
-    //{
-    //    if (left.size() < right.size())
-    //    {
-    //        const InnerNode tmp = right;
-    //        size_t splitPoint = (left.m_begin + right.m_begin) / 2 - left.m_begin;
-    //        const uint16_t* const it = tmp.findSplitPoint(splitPoint);
-    //        left.append(tmp, tmp.beginTable(), it);
-    //        right.fill(tmp, it, tmp.endTable());
-    //    }
-    //    else
-    //    {
-    //        const InnerNode tmp = left;
-    //        size_t splitPoint = (left.m_begin + right.m_begin) / 2;
-    //        const uint16_t* const it = tmp.findSplitPoint(splitPoint);
-    //        left.fill(tmp, tmp.beginTable(), it);
-    //        right.fill(tmp, it, tmp.endTable());
+    static void redistribute(InnerNode& left, InnerNode& right) noexcept
+    {
+        if (left.size() < right.size())
+        {
+            const InnerNode tmp = right;
+            size_t splitPoint = (left.m_begin + right.m_begin) / 2;
+            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
+            left.copyToBack(tmp, tmp.beginTable(), sp);
+            right.reset();
+            right.copyToFront(tmp, sp, tmp.endTable());
+        }
+        else
+        {
+            const InnerNode tmp = left;
+            size_t splitPoint = (left.m_begin + right.m_begin) / 2;
+            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
+            left.reset();
+            left.copyToFront(tmp, tmp.beginTable(), sp);
+            right.copyToFront(tmp, sp, tmp.endTable());
+        }
+    }
 
-    //        left.append(tmp, tmp.beginTable(), it);
-    //        right.fill(tmp, it, tmp.endTable());
-    //    }
-    //}
+    void reset() noexcept
+    {
+        m_begin = 0;
+        m_end = sizeof(m_data);
+        m_leftMost = PageIdx::INVALID;
+    }
+
+    void copyToFront(const InnerNode& from, const uint16_t* begin, const uint16_t* end) noexcept
+    {
+        size_t idxSize = end - begin;
+        auto idx = beginTable() - idxSize;
+        auto data = m_data + m_begin;
+        for (auto it = begin; it < end; ++it)
+        {
+            *idx = static_cast<uint16_t>(data - m_data);
+            BlobRef key(from.m_data + *it);
+            data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
+            idx++;
+        }
+        assert(idx == beginTable());
+        m_begin = static_cast<uint16_t>(data - m_data);
+        m_end -= static_cast<uint16_t>(idxSize * sizeof(uint16_t));
+        assert(m_begin <= m_end);
+        m_leftMost = from.getLeft(begin);
+    }
+
+    void copyToBack(const InnerNode& from, const uint16_t* begin, const uint16_t* end) noexcept
+    {
+        size_t idxSize = end - begin;
+        auto idx = std::copy(beginTable(), endTable(), beginTable() - idxSize);
+        auto data = m_data + m_begin;
+        for (auto it = begin; it < end; ++it)
+        {
+            *idx = static_cast<uint16_t>(data - m_data);
+            BlobRef key(from.m_data + *it);
+            data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
+            idx++;
+        }
+        assert(idx == endTable());
+        m_begin = static_cast<uint16_t>(data - m_data);
+        m_end -= static_cast<uint16_t>(idxSize * sizeof(uint16_t));
+        assert(m_begin <= m_end);
+    }
 
 private:
     PageIndex getPageId(const uint8_t* src) const noexcept
