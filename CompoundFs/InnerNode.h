@@ -198,7 +198,7 @@ public:
         }
     }
 
-    void reset() noexcept
+    constexpr void reset() noexcept
     {
         m_begin = 0;
         m_end = sizeof(m_data);
@@ -273,25 +273,8 @@ private:
 
     void fill(const InnerNode& node, const uint16_t* begin, const uint16_t* end) noexcept
     {
-        m_begin = 0;
-        m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));
-        append(node, begin, end);
-
-        m_leftMost = node.getLeft(begin);
-    }
-
-    void append(const InnerNode& node, const uint16_t* begin, const uint16_t* end) noexcept
-    {
-        uint16_t* destTable = beginTable();
-        const uint8_t* data = node.m_data;
-        for (const uint16_t* it = begin; it < end; ++it)
-        {
-            BlobRef key(data + *it);
-            std::copy(key.begin(), key.end() + sizeof(PageIndex), m_data + m_begin);
-            *destTable = m_begin;
-            destTable++;
-            m_begin += key.size() + sizeof(PageIndex);
-        }
+        reset();
+        copyToFront(node, begin, end);
     }
 };
 

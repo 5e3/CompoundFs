@@ -484,7 +484,7 @@ TEST(InnerNode, copyToBack)
     CHECK(n.nofItems() == 6);
     CHECK(n.findPage(Blob("600")) == 600);
 
-    n.copyToBack(m, m.beginTable()+1, m.endTable());
+    n.copyToBack(m, m.beginTable() + 1, m.endTable());
     CHECK(n.nofItems() == 8);
     CHECK(n.findPage(Blob("600")) == 600);
     CHECK(n.findPage(Blob("700")) == 700);
@@ -506,12 +506,12 @@ TEST(InnerNode, copyToFront)
     m.copyToFront(n, n.beginTable(), n.beginTable());
     CHECK(m.nofItems() == 3);
 
-    m.copyToFront(n, n.endTable()-1, n.endTable());
+    m.copyToFront(n, n.endTable() - 1, n.endTable());
     CHECK(m.nofItems() == 4);
     CHECK(m.findPage(Blob("500")) == 500);
     CHECK(m.getLeft(m.beginTable()) == 400);
 
-    m.copyToFront(n, n.beginTable(), n.endTable()-1);
+    m.copyToFront(n, n.beginTable(), n.endTable() - 1);
     CHECK(m.nofItems() == 8);
     uint32_t pidx = 100;
     for (auto it = m.beginTable(); it < m.endTable(); ++it)
@@ -519,6 +519,37 @@ TEST(InnerNode, copyToFront)
         CHECK(m.getRight(it) == pidx);
         pidx += 100;
     }
-    
+
     CHECK(m.getLeft(m.beginTable()) == 0);
+}
+
+TEST(InnerNode, redistributeWithNoWork)
+{
+    InnerNode n("100", 0, 100);
+    InnerNode m("200", 150, 200);
+
+    InnerNode::redistribute(n, m);
+    CHECK(n.nofItems() == 1);
+    CHECK(m.nofItems() == 1);
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+    CHECK(m.getLeft(m.beginTable()) == 100);
+    CHECK(m.getRight(m.beginTable()) == 200);
+}
+
+TEST(InnerNode, redistribute)
+{
+    InnerNode n("100", 0, 100);
+    n.insert("400", 400);
+    n.insert("200", 200);
+    n.insert("300", 300);
+    InnerNode m("500", 450, 500);
+
+    InnerNode::redistribute(n, m);
+    CHECK(n.nofItems() == 2);
+    CHECK(m.nofItems() == 3);
+    // CHECK(n.getLeft(n.beginTable()) == 0);
+    // CHECK(n.getRight(n.beginTable()) == 100);
+    // CHECK(m.getLeft(m.beginTable()) == 100);
+    // CHECK(m.getRight(m.beginTable()) == 200);
 }
