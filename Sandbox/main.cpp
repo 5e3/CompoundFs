@@ -279,6 +279,8 @@ auto fromBlob(const BlobRef& blob, const uint8_t* begin = nullptr)
     }
 }
 
+std::tuple<int, float, double, std::string> types;
+
 int main()
 {
     Blob b;
