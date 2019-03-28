@@ -548,8 +548,53 @@ TEST(InnerNode, redistribute)
     InnerNode::redistribute(n, m);
     CHECK(n.nofItems() == 2);
     CHECK(m.nofItems() == 3);
-    // CHECK(n.getLeft(n.beginTable()) == 0);
-    // CHECK(n.getRight(n.beginTable()) == 100);
-    // CHECK(m.getLeft(m.beginTable()) == 100);
-    // CHECK(m.getRight(m.beginTable()) == 200);
+}
+
+TEST(InnerNode, removeLeftMost)
+{
+    InnerNode n("100", 0, 100);
+    n.insert("200", 200);
+
+    n.remove(Blob("000"));
+    CHECK(n.getLeft(n.beginTable()) == 100);
+    CHECK(n.getRight(n.beginTable()) == 200);
+}
+
+TEST(InnerNode, removeRightOfFirstNode)
+{
+    InnerNode n("100", 0, 100);
+    n.insert("200", 200);
+
+    n.remove(Blob("100"));
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 200);
+}
+
+TEST(InnerNode, removeRightMost)
+{
+    InnerNode n("100", 0, 100);
+    n.insert("200", 200);
+
+    n.remove(Blob("300"));
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+    CHECK(n.nofItems() == 1);
+}
+
+TEST(InnerNode, removeSingleEntryRight)
+{
+    InnerNode n("100", 0, 100);
+
+    n.remove(Blob("300"));
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.nofItems() == 0);
+}
+
+TEST(InnerNode, removeSingleEntryLeft)
+{
+    InnerNode n("100", 0, 100);
+
+    n.remove(Blob("050"));
+    CHECK(n.getLeft(n.beginTable()) == 100);
+    CHECK(n.nofItems() == 0);
 }
