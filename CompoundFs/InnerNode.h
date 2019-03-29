@@ -198,6 +198,34 @@ public:
         }
     }
 
+    static Blob redistribute2(InnerNode& left, InnerNode& right, BlobRef parentKey) noexcept
+    {
+        if (left.size() < right.size())
+        {
+            const InnerNode tmp = right;
+            size_t splitPoint = (right.m_begin - left.m_begin) / 2;
+            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
+            assert(sp != tmp.endTable());
+            left.insert(parentKey, right.m_leftMost);
+            left.copyToBack(tmp, tmp.beginTable(), sp);
+            right.reset();
+            right.copyToFront(tmp, sp + 1, tmp.endTable());
+            return tmp.getKey(sp);
+        }
+        else
+        {
+            const InnerNode tmp = left;
+            size_t splitPoint = (left.m_begin - right.m_begin) / 2;
+            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
+            assert(sp != tmp.endTable());
+            left.reset();
+            left.copyToFront(tmp, tmp.beginTable(), sp);
+            right.insert(parentKey, right.m_leftMost);
+            right.copyToFront(tmp, sp + 1, tmp.endTable());
+            return tmp.getKey(sp);
+        }
+    }
+
     constexpr void reset() noexcept
     {
         m_begin = 0;
@@ -251,7 +279,7 @@ private:
         return res;
     }
 
-    void setPageId(uint8_t* dest, PageIndex page)
+    void setPageId(uint8_t* dest, PageIndex page) noexcept
     {
         const uint8_t* src = (uint8_t*) &page;
         std::copy(src, src + sizeof(PageIndex), dest);
