@@ -176,29 +176,7 @@ public:
         return keyMiddle;
     }
 
-    static void redistribute(InnerNode& left, InnerNode& right) noexcept
-    {
-        if (left.size() < right.size())
-        {
-            const InnerNode tmp = right;
-            size_t splitPoint = (left.m_begin + right.m_begin) / 2;
-            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
-            left.copyToBack(tmp, tmp.beginTable(), sp);
-            right.reset();
-            right.copyToFront(tmp, sp, tmp.endTable());
-        }
-        else
-        {
-            const InnerNode tmp = left;
-            size_t splitPoint = (left.m_begin + right.m_begin) / 2;
-            const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
-            left.reset();
-            left.copyToFront(tmp, tmp.beginTable(), sp);
-            right.copyToFront(tmp, sp, tmp.endTable());
-        }
-    }
-
-    static Blob redistribute2(InnerNode& left, InnerNode& right, BlobRef parentKey) noexcept
+    static Blob redistribute(InnerNode& left, InnerNode& right, BlobRef parentKey) noexcept
     {
         if (left.size() < right.size())
         {
@@ -215,7 +193,7 @@ public:
         else
         {
             const InnerNode tmp = left;
-            size_t splitPoint = (left.m_begin - right.m_begin) / 2;
+            size_t splitPoint = left.m_begin - (left.m_begin - right.m_begin) / 2;
             const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
             assert(sp != tmp.endTable());
             left.reset();
@@ -268,6 +246,17 @@ public:
         m_begin = static_cast<uint16_t>(data - m_data);
         m_end -= static_cast<uint16_t>(idxSize * sizeof(uint16_t));
         assert(m_begin <= m_end);
+    }
+
+    bool canMergeWidth(const InnerNode& right, BlobRef parentKey) noexcept
+    {
+        return bytesLeft() >= (right.size() + parentKey.size() + sizeof(PageIndex) + sizeof(uint16_t));
+    }
+
+    void mergeWidth(const InnerNode& right, BlobRef parentKey) noexcept
+    {
+        insert(parentKey, right.m_leftMost);
+        copyToBack(right, right.beginTable(), right.endTable());
     }
 
 private:
