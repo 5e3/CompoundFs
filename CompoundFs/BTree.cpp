@@ -14,11 +14,9 @@ constexpr Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t
     : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
 {}
 
-
-
 std::pair<BlobRef, BlobRef> Cursor::current() const
 {
-    const auto&[leaf, index] = *m_position;
+    const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;
     return std::make_pair(leaf->getKey(it), leaf->getValue(it));
 }
@@ -47,9 +45,9 @@ BTree::InsertResult BTree::insert(const Blob& key, const Blob& value, ReplacePol
         // there is already an entry for that key
         BlobRef ventry = leafDef.m_page->getValue(it);
         if (!replacePolicy(value, ventry))
-            return Unchanged{ Cursor(leafDef.m_page, it) };
+            return Unchanged { Cursor(leafDef.m_page, it) };
 
-        result = Replaced{ ventry };
+        result = Replaced { ventry };
         if (ventry.size() == value.size())
         {
             // replace at the same position
@@ -88,25 +86,56 @@ std::optional<Blob> BTree::remove(const Blob& key)
     Blob beforeValue = leafDef.m_page->getValue(it);
     auto leaf = m_cacheManager.makePageWritable(leafDef).m_page;
     leaf->remove(key);
-    if (!leaf->empty())
+    if (leaf->nofItems() > 0)
         return beforeValue;
 
     auto freePage = leafDef.m_index;
-    while (stack.size() > 1)
+    while (stack.size() > 0)
     {
         m_freePages.push_back(freePage);
         auto inner = m_cacheManager.makePageWritable(stack.back());
         inner.m_page->remove(key);
-        if (!inner.m_page->empty())
+
+        if (inner.m_page->nofItems() > 1)
+            return beforeValue;
+        else if (inner.m_page->nofItems() == 0)
+        {
+            // must be the root page
+            assert(m_rootIndex == inner.m_index);
+            m_freePages.push_back(m_rootIndex);
+            m_rootIndex = inner.m_page->getLeft(inner.m_page->beginTable());
+            return beforeValue;
+        }
+        else if (stack.size() == 1)
             return beforeValue;
 
-        freePage = inner.m_index;
+        // handle underflow
+        assert(inner.m_page->nofItems() == 1);
+        assert(stack.size() >= 2);
+
+        auto parent = m_cacheManager.makePageWritable(*(stack.end() - 2));
+        assert(parent.m_page->findPage(key) == inner.m_index);
+
+        auto it = parent.m_page->findKey(key);
+        auto left = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(parent.m_page->getLeft(it)));
+        auto right = m_cacheManager.loadPage<InnerNode>(parent.m_page->getRight(it));
+        auto parentKey = parent.m_page->getKey(it);
+        if (!left.m_page->canMergeWith(*right.m_page, parentKey))
+        {
+            auto rightPage = m_cacheManager.makePageWritable(right).m_page;
+            auto newParentKey = InnerNode::redistribute(*left.m_page, *rightPage, parentKey);
+            parent.m_page->remove(parentKey);
+            parent.m_page->insert(newParentKey, right.m_index);
+            return beforeValue;
+        }
+
+        left.m_page->mergeWith(*right.m_page, parentKey);
+        freePage = right.m_index;
         stack.pop_back();
     }
 
     return beforeValue;
 }
-
 
 Cursor BTree::find(const Blob& key) const
 {
@@ -183,4 +212,3 @@ Cursor BTree::next(Cursor cursor) const
     const auto& nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
     return Cursor(nextLeaf, nextLeaf->beginTable());
 }
-
