@@ -523,33 +523,6 @@ TEST(InnerNode, copyToFront)
     CHECK(m.getLeft(m.beginTable()) == 0);
 }
 
-TEST(InnerNode, redistributeWithNoWork)
-{
-    InnerNode n("100", 0, 100);
-    InnerNode m("200", 150, 200);
-
-    InnerNode::redistribute(n, m);
-    CHECK(n.nofItems() == 1);
-    CHECK(m.nofItems() == 1);
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(m.getLeft(m.beginTable()) == 100);
-    CHECK(m.getRight(m.beginTable()) == 200);
-}
-
-TEST(InnerNode, redistribute)
-{
-    InnerNode n("100", 0, 100);
-    n.insert("400", 400);
-    n.insert("200", 200);
-    n.insert("300", 300);
-    InnerNode m("500", 450, 500);
-
-    InnerNode::redistribute(n, m);
-    CHECK(n.nofItems() == 2);
-    CHECK(m.nofItems() == 3);
-}
-
 TEST(InnerNode, removeLeftMost)
 {
     InnerNode n("100", 0, 100);
@@ -597,4 +570,83 @@ TEST(InnerNode, removeSingleEntryLeft)
     n.remove(Blob("050"));
     CHECK(n.getLeft(n.beginTable()) == 100);
     CHECK(n.nofItems() == 0);
+}
+
+TEST(InnerNode, replaceSingleKeepsSingleEntryCorrect)
+{
+    InnerNode n("100", 0, 100);
+
+    n.remove(Blob("100"));
+    n.insert("075", 100);
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+}
+
+TEST(InnerNode, redistributeLeftPageBigger)
+{
+    InnerNode n("100", 0, 100);
+    n.insert("400", 400);
+    n.insert("200", 200);
+    n.insert("300", 300);
+    InnerNode m("500", 450, 500);
+
+    Blob key("450");
+    key = InnerNode::redistribute(n, m, key);
+    CHECK(key == Blob("300"));
+    CHECK(n.nofItems() == 2);
+    CHECK(m.nofItems() == 3);
+
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+    CHECK(n.getRight(n.beginTable() + 1) == 200);
+
+    CHECK(m.getLeft(m.beginTable()) == 300);
+    CHECK(m.getRight(m.beginTable()) == 400);
+    CHECK(m.getRight(m.beginTable() + 1) == 450);
+    CHECK(m.getRight(m.beginTable() + 2) == 500);
+}
+
+TEST(InnerNode, redistributeLeftPageSmaller)
+{
+    InnerNode n("100", 0, 100);
+    InnerNode m("200", 150, 200);
+    m.insert("400", 400);
+    m.insert("300", 300);
+    m.insert("500", 500);
+
+    Blob key("150");
+    key = InnerNode::redistribute(n, m, key);
+    CHECK(key == Blob("300"));
+    CHECK(n.nofItems() == 3);
+    CHECK(m.nofItems() == 2);
+
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+    CHECK(n.getRight(n.beginTable() + 1) == 150);
+    CHECK(n.getRight(n.beginTable() + 2) == 200);
+
+    CHECK(m.getLeft(m.beginTable()) == 300);
+    CHECK(m.getRight(m.beginTable()) == 400);
+    CHECK(m.getRight(m.beginTable() + 1) == 500);
+}
+
+TEST(InnerNode, mergeWithRightPage)
+{
+    InnerNode n("100", 0, 100);
+    InnerNode m("200", 150, 200);
+    m.insert("400", 400);
+    m.insert("300", 300);
+    m.insert("500", 500);
+
+    Blob key("150");
+    n.mergeWidth(m, key);
+    CHECK(n.nofItems() == 6);
+
+    CHECK(n.getLeft(n.beginTable()) == 0);
+    CHECK(n.getRight(n.beginTable()) == 100);
+    CHECK(n.getRight(n.beginTable()+1) == 150);
+    CHECK(n.getRight(n.beginTable() + 2) == 200);
+    CHECK(n.getRight(n.beginTable() + 3) == 300);
+    CHECK(n.getRight(n.beginTable() + 4) == 400);
+    CHECK(n.getRight(n.beginTable() + 5) == 500);
 }
