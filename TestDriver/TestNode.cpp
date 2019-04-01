@@ -639,12 +639,12 @@ TEST(InnerNode, mergeWithRightPage)
     m.insert("500", 500);
 
     Blob key("150");
-    n.mergeWidth(m, key);
+    n.mergeWith(m, key);
     CHECK(n.nofItems() == 6);
 
     CHECK(n.getLeft(n.beginTable()) == 0);
     CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(n.getRight(n.beginTable()+1) == 150);
+    CHECK(n.getRight(n.beginTable() + 1) == 150);
     CHECK(n.getRight(n.beginTable() + 2) == 200);
     CHECK(n.getRight(n.beginTable() + 3) == 300);
     CHECK(n.getRight(n.beginTable() + 4) == 400);

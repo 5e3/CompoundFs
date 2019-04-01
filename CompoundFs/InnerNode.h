@@ -98,6 +98,16 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
+    uint16_t* findKey(BlobRef key) const noexcept
+    {
+        KeyCmp keyCmp(m_data);
+        auto it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        assert(nofItems() > 0);
+        if (it == endTable())
+            --it;
+        return it;
+    }
+
     PageIndex findPage(const Blob& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
@@ -248,12 +258,12 @@ public:
         assert(m_begin <= m_end);
     }
 
-    bool canMergeWidth(const InnerNode& right, BlobRef parentKey) noexcept
+    bool canMergeWith(const InnerNode& right, BlobRef parentKey) noexcept
     {
         return bytesLeft() >= (right.size() + parentKey.size() + sizeof(PageIndex) + sizeof(uint16_t));
     }
 
-    void mergeWidth(const InnerNode& right, BlobRef parentKey) noexcept
+    void mergeWith(const InnerNode& right, BlobRef parentKey) noexcept
     {
         insert(parentKey, right.m_leftMost);
         copyToBack(right, right.beginTable(), right.endTable());

@@ -109,15 +109,11 @@ TEST(BTree, canControlReplacementWithStrategy)
         return true;
     });
 
-    auto res = bt.insert("TestKey", "TestValue1", [](const BlobRef&, const BlobRef&) {
-        return false;
-    });
+    auto res = bt.insert("TestKey", "TestValue1", [](const BlobRef&, const BlobRef&) { return false; });
 
     CHECK(std::get<BTree::Unchanged>(res).m_currentValue.current().second == Blob("TestValue"));
 
-    res = bt.insert("TestKey", "TestValue2", [](const BlobRef&, const BlobRef&) {
-        return true;
-    });
+    res = bt.insert("TestKey", "TestValue2", [](const BlobRef&, const BlobRef&) { return true; });
 
     CHECK(std::get<BTree::Replaced>(res).m_beforeValue == Blob("TestValue"));
     CHECK(bt.find("TestKey").value() == Blob("TestValue2"));
@@ -221,17 +217,17 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
     BTree bt(cm);
 
     std::vector<uint32_t> keys;
-    keys.reserve(3000);
-    for (uint32_t i = 0; i < 3000; i++)
+    keys.reserve(MANYITERATION);
+    for (uint32_t i = 0; i < MANYITERATION; i++)
         keys.push_back(i);
 
-    for (auto key : keys)
+    for (auto key: keys)
     {
         std::string s = std::to_string(key);
         bt.insert(s.c_str(), "TestData");
     }
 
-    for (auto key : keys)
+    for (auto key: keys)
     {
         std::string s = std::to_string(key);
         auto res = bt.remove(s.c_str());
@@ -240,7 +236,6 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
     }
 
     CHECK(!bt.begin(""));
-
 }
 
 TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
@@ -254,7 +249,7 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
     for (uint32_t i = 0; i < 500; i++)
         keys.push_back(i);
 
-    for (auto key : keys)
+    for (auto key: keys)
     {
         std::string s = std::to_string(key);
         bt.insert(s.c_str(), (s + " Test").c_str());
@@ -263,4 +258,3 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
     CHECK(!bt.remove("Test"));
     CHECK(bt.remove("399").value() == Blob("399 Test"));
 }
-
