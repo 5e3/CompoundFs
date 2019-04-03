@@ -32,6 +32,8 @@ public:
 
     constexpr PageIndex getNext() const noexcept { return m_next; }
     constexpr void setNext(PageIndex next) noexcept { m_next = next; }
+    constexpr PageIndex getPrev() const noexcept { return m_prev; }
+    constexpr void setPrev(PageIndex prev) noexcept { m_prev = prev; }
     constexpr bool empty() const noexcept { return m_begin == 0; }
 
     constexpr size_t nofItems() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }

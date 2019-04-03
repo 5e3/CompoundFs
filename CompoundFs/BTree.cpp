@@ -10,11 +10,11 @@
 using namespace TxFs;
 
 //////////////////////////////////////////////////////////////////////////
-constexpr Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it)
+Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept
     : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
 {}
 
-std::pair<BlobRef, BlobRef> Cursor::current() const
+std::pair<BlobRef, BlobRef> Cursor::current() const noexcept
 {
     const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;
@@ -73,6 +73,46 @@ BTree::InsertResult BTree::insert(const Blob& key, const Blob& value, ReplacePol
     return result;
 }
 
+void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
+{
+    if (leaf->getPrev() != PageIdx::INVALID)
+    {
+        auto left = m_cacheManager.loadPage<Leaf>(leaf->getPrev());
+        m_cacheManager.makePageWritable(left).m_page->setNext(leaf->getNext());
+    }
+    if (leaf->getNext() != PageIdx::INVALID)
+    {
+        auto right = m_cacheManager.loadPage<Leaf>(leaf->getNext());
+        m_cacheManager.makePageWritable(right).m_page->setPrev(leaf->getPrev());
+    }
+}
+
+std::optional<PageIndex> BTree::handleUnderflow(PageDef<InnerNode>& inner, const Blob& key, const InnerNodeStack& stack)
+{
+    assert(inner.m_page->nofItems() == 1);
+    assert(stack.size() >= 2);
+
+    auto parent = m_cacheManager.makePageWritable(*(stack.end() - 2));
+    assert(parent.m_page->findPage(key) == inner.m_index);
+
+    auto it = parent.m_page->findKey(key);
+    assert(parent.m_page->getLeft(it) == inner.m_index || parent.m_page->getRight(it) == inner.m_index);
+    auto left = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(parent.m_page->getLeft(it)));
+    auto right = m_cacheManager.loadPage<InnerNode>(parent.m_page->getRight(it));
+    auto parentKey = parent.m_page->getKey(it);
+    if (!left.m_page->canMergeWith(*right.m_page, parentKey))
+    {
+        auto rightPage = m_cacheManager.makePageWritable(right).m_page;
+        auto newParentKey = InnerNode::redistribute(*left.m_page, *rightPage, parentKey);
+        parent.m_page->remove(parentKey);
+        parent.m_page->insert(newParentKey, right.m_index);
+        return std::nullopt;
+    }
+
+    left.m_page->mergeWith(*right.m_page, parentKey);
+    return right.m_index;
+}
+
 std::optional<Blob> BTree::remove(const Blob& key)
 {
     InnerNodeStack stack;
@@ -89,6 +129,7 @@ std::optional<Blob> BTree::remove(const Blob& key)
     if (leaf->nofItems() > 0)
         return beforeValue;
 
+    unlinkLeaveNode(leaf);
     auto freePage = leafDef.m_index;
     while (stack.size() > 0)
     {
@@ -109,44 +150,15 @@ std::optional<Blob> BTree::remove(const Blob& key)
         else if (stack.size() == 1)
             return beforeValue;
 
-        // handle underflow
-        assert(inner.m_page->nofItems() == 1);
-        assert(stack.size() >= 2);
-
-        auto parent = m_cacheManager.makePageWritable(*(stack.end() - 2));
-        assert(parent.m_page->findPage(key) == inner.m_index);
-
-        auto it = parent.m_page->findKey(key);
-        auto left = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(parent.m_page->getLeft(it)));
-        auto right = m_cacheManager.loadPage<InnerNode>(parent.m_page->getRight(it));
-        auto parentKey = parent.m_page->getKey(it);
-        if (!left.m_page->canMergeWith(*right.m_page, parentKey))
-        {
-            auto rightPage = m_cacheManager.makePageWritable(right).m_page;
-            auto newParentKey = InnerNode::redistribute(*left.m_page, *rightPage, parentKey);
-            parent.m_page->remove(parentKey);
-            parent.m_page->insert(newParentKey, right.m_index);
+        auto optFreePage = handleUnderflow(inner, key, stack);
+        if (!optFreePage)
             return beforeValue;
-        }
 
-        left.m_page->mergeWith(*right.m_page, parentKey);
-        freePage = right.m_index;
+        freePage = *optFreePage;
         stack.pop_back();
     }
 
     return beforeValue;
-}
-
-Cursor BTree::find(const Blob& key) const
-{
-    InnerNodeStack stack;
-    stack.reserve(5);
-
-    auto leafDef = findLeaf(key, stack);
-    auto it = leafDef.m_page->find(key);
-    if (it == leafDef.m_page->endTable())
-        return Cursor();
-    return Cursor(leafDef.m_page, it);
 }
 
 ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const
@@ -182,6 +194,18 @@ void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex 
     }
 
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
+}
+
+Cursor BTree::find(const Blob& key) const
+{
+    InnerNodeStack stack;
+    stack.reserve(5);
+
+    auto leafDef = findLeaf(key, stack);
+    auto it = leafDef.m_page->find(key);
+    if (it == leafDef.m_page->endTable())
+        return Cursor();
+    return Cursor(leafDef.m_page, it);
 }
 
 Cursor BTree::begin(const Blob& key) const
