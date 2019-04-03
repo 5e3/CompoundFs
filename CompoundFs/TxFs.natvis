@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  <Type Name="TxFs::BlobRef">
+    <DisplayString>{(m_data+1),[*m_data]}</DisplayString>
+    <Expand>
+      <Item Name="[size]" ExcludeView="simple">*m_data</Item>
+    </Expand>
+  </Type>
+  <Type Name="TxFs::ConstPageDef&lt;*&gt;">
+    <DisplayString>{{index={m_index}}}</DisplayString>
+    <Expand>
+      <Item Name="[page]" ExcludeView="simple">*m_page</Item>
+    </Expand>
+  </Type>
+  <Type Name="TxFs::PageDef&lt;*&gt;">
+    <DisplayString>{{index={m_index}}}</DisplayString>
+    <Expand>
+      <Item Name="[page]" ExcludeView="simple">*m_page</Item>
+    </Expand>
+  </Type>
+  <Type Name="TxFs::InnerNode">
+    <DisplayString>{{ nofItems={(sizeof(m_data) - m_end) / sizeof(uint16_t)} }}</DisplayString>
+    <Expand>
+      <Item Name="[byteSize]" ExcludeView="simple">sizeof(m_data) - (m_end - m_begin)</Item>
+      <Item Name="[bytesLeft]" ExcludeView="simple">(m_end - m_begin)</Item>
+      <Item Name="[LeftMost]" ExcludeView="simple">m_leftMost</Item>
+      <IndexListItems>
+        <Size>(sizeof(m_data) - m_end) / sizeof(uint16_t)</Size>
+        <ValueNode>(m_data + 1 + *(((uint16_t*)(m_data+m_end))+$i)), [*(m_data + *(((uint16_t*)(m_data+m_end))+$i))]</ValueNode>
+      </IndexListItems>
+      <IndexListItems>
+        <Size>(sizeof(m_data) - m_end) / sizeof(uint16_t)</Size>
+        <ValueNode>*(uint32_t*)((m_data + 1 + *(((uint16_t*)(m_data+m_end))+$i))+*(m_data + *(((uint16_t*)(m_data+m_end))+$i)))</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+  <Type Name="TxFs::Leaf">
+    <DisplayString>{{ nofItems={(sizeof(m_data) - m_end) / sizeof(uint16_t)} }}</DisplayString>
+    <Expand>
+      <Item Name="[previous]" ExcludeView="simple">m_prev</Item>
+      <Item Name="[next]" ExcludeView="simple">m_next</Item>
+      <Item Name="[byteSize]" ExcludeView="simple">sizeof(m_data) - (m_end - m_begin)</Item>
+      <Item Name="[bytesLeft]" ExcludeView="simple">(m_end - m_begin)</Item>
+      <IndexListItems>
+        <Size>(sizeof(m_data) - m_end) / sizeof(uint16_t)</Size>
+        <ValueNode>(m_data + 1 + *(((uint16_t*)(m_data+m_end))+$i)), [*(m_data + *(((uint16_t*)(m_data+m_end))+$i))]</ValueNode>
+      </IndexListItems>
+      <IndexListItems>
+        <Size>(sizeof(m_data) - m_end) / sizeof(uint16_t)</Size>
+        <ValueNode>((m_data + 2 + *(((uint16_t*)(m_data+m_end))+$i))+*(m_data + *(((uint16_t*)(m_data+m_end))+$i))), [*((m_data + 1 + *(((uint16_t*)(m_data+m_end))+$i))+*(m_data + *(((uint16_t*)(m_data+m_end))+$i)))]</ValueNode>
+      </IndexListItems>
+    </Expand>
+  </Type>
+</AutoVisualizer>

@@ -210,6 +210,7 @@ TEST(BTree, cursorKeepsPageInMemory)
     CHECK(pagesStillInMem == 0);
 }
 
+#include <iostream>
 TEST(BTree, removeAllKeysLeavesTreeEmpty)
 {
     SimpleFile sf;
@@ -217,25 +218,37 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
     BTree bt(cm);
 
     std::vector<uint32_t> keys;
-    keys.reserve(MANYITERATION);
-    for (uint32_t i = 0; i < MANYITERATION; i++)
+    // keys.reserve(MANYITERATION);
+    keys.reserve(200000);
+    // for (uint32_t i = 0; i < MANYITERATION; i++)
+    for (uint32_t i = 0; i < 200000; i++)
         keys.push_back(i);
 
     for (auto key: keys)
     {
         std::string s = std::to_string(key);
-        bt.insert(s.c_str(), "TestData");
+        bt.insert(s.c_str(), s.c_str());
     }
+
+    auto size = sf.m_file.size();
 
     for (auto key: keys)
     {
+        if (key == 57819)
+            __debugbreak();
         std::string s = std::to_string(key);
         auto res = bt.remove(s.c_str());
+
+        if (!bt.find(Blob("57820")))
+            __debugbreak();
+        if (!res)
+            std::cout << s;
         CHECK(res);
-        CHECK(res == Blob("TestData"));
+        CHECK(res == Blob(s.c_str()));
     }
 
     CHECK(!bt.begin(""));
+    CHECK(bt.getFreePages().size() == size - 1); // every page except root
 }
 
 TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
@@ -257,4 +270,139 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
 
     CHECK(!bt.remove("Test"));
     CHECK(bt.remove("399").value() == Blob("399 Test"));
+}
+
+TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    std::vector<std::string> keys;
+
+    keys.reserve(3000);
+    for (size_t i = 0; i < 3000; i++)
+    {
+        keys.push_back(std::to_string(i));
+        bt.insert(keys.back().c_str(), keys.back().c_str());
+    }
+
+    std::shuffle(keys.begin(), keys.end(), std::mt19937(std::random_device()()));
+    for (size_t i = 1000; i < 3000; i++)
+    {
+        auto res = bt.remove(keys[i].c_str());
+        CHECK(res);
+    }
+    sf.clearPages(bt.getFreePages());
+
+    for (size_t i = 0; i < 1000; i++)
+    {
+        auto res = bt.find(keys[i].c_str());
+        CHECK(res);
+    }
+
+    for (size_t i = 1000; i < 3000; i++)
+    {
+        auto res = bt.find(keys[i].c_str());
+        CHECK(!res);
+    }
+
+    std::sort(keys.begin(), keys.begin() + 1000);
+
+    // make sure at least one page is completely empty
+    auto size = bt.getFreePages().size();
+    for (size_t i = 800; i < 1000; i++)
+    {
+        auto res = bt.remove(keys[i].c_str());
+        CHECK(res);
+    }
+    CHECK(bt.getFreePages().size() > size);
+    sf.clearPages(bt.getFreePages());
+
+    auto cursor = bt.begin("");
+    for (size_t i = 0; i < 800; i++)
+    {
+        CHECK(cursor.key() == Blob(keys[i].c_str()));
+        cursor = bt.next(cursor);
+    }
+    CHECK(!cursor);
+}
+
+TEST(BTree, insertAfterRemoveWorks)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    std::vector<std::string> keys;
+
+    keys.reserve(3000);
+    for (size_t i = 0; i < 3000; i++)
+    {
+        keys.push_back(std::to_string(i));
+        bt.insert(keys.back().c_str(), keys.back().c_str());
+    }
+
+    std::shuffle(keys.begin(), keys.end(), std::mt19937(std::random_device()()));
+    for (size_t i = 500; i < 3000; i++)
+    {
+        auto res = bt.remove(keys[i].c_str());
+        CHECK(res);
+    }
+
+    for (size_t i = 500; i < 3000; i++)
+    {
+        auto res = bt.insert(keys[i].c_str(), keys[i].c_str());
+        CHECK(!res);
+    }
+
+    for (size_t i = 0; i < 3000; i++)
+    {
+        auto res = bt.find(keys[i].c_str());
+        CHECK(res);
+    }
+
+    std::sort(keys.begin(), keys.end());
+
+    auto cursor = bt.begin("");
+    for (size_t i = 0; i < 3000; i++)
+    {
+        CHECK(cursor.key() == Blob(keys[i].c_str()));
+        cursor = bt.next(cursor);
+    }
+    CHECK(!cursor);
+}
+
+TEST(BTree, removeInReverseOrder)
+{
+    SimpleFile sf;
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm);
+
+    std::vector<std::string> keys;
+
+    keys.reserve(3000);
+    for (size_t i = 0; i < 3000; i++)
+    {
+        keys.push_back(std::to_string(i));
+        bt.insert(keys.back().c_str(), keys.back().c_str());
+    }
+
+    std::reverse(keys.begin(), keys.end());
+    for (size_t i = 1000; i < 3000; i++)
+    {
+        auto res = bt.remove(keys[i].c_str());
+        CHECK(res);
+    }
+    CHECK(bt.getFreePages().size() > 0);
+
+    std::reverse(keys.begin(), keys.end());
+    auto cursor = bt.begin("");
+    for (size_t i = 2000; i < 3000; i++)
+    {
+        CHECK(cursor.key() == Blob(keys[i].c_str()));
+        CHECK(bt.find(Blob(keys[i].c_str())) == cursor);
+        cursor = bt.next(cursor);
+    }
+    CHECK(!cursor);
 }

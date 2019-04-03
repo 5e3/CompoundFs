@@ -59,6 +59,12 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
+    void clearPages(const std::vector<PageIndex>& pages)
+    {
+        for (auto page : pages)
+            memset(m_file.at(page).get(), 0, 4096);
+    }
+
     std::vector<std::shared_ptr<uint8_t>> m_file;
     PageAllocator m_allocator;
 };
