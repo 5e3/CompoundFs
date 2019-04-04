@@ -86,7 +86,7 @@ public:
     }
 
     InsertResult insert(const Blob& key, const Blob& value, ReplacePolicy replacePolicy);
-    std::optional<Blob> remove(const Blob& key);
+    std::optional<Blob> remove(Blob key);
 
     Cursor find(const Blob& key) const;
     Cursor begin(const Blob& key) const;
@@ -97,7 +97,8 @@ public:
 private:
     void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
     ConstPageDef<Leaf> findLeaf(const Blob& key, InnerNodeStack& stack) const;
-    std::optional<PageIndex> handleUnderflow(PageDef<InnerNode>& inner, const Blob& key, const InnerNodeStack& stack);
+    std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, const Blob& key,
+                                                     const InnerNodeStack& stack);
     void unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf);
 
 private:

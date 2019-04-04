@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "SimpleFile.h"
+#include "MinimalTreeBuilder.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/BTree.h"
 #include "../CompoundFs/Blob.h"
@@ -210,7 +211,6 @@ TEST(BTree, cursorKeepsPageInMemory)
     CHECK(pagesStillInMem == 0);
 }
 
-#include <iostream>
 TEST(BTree, removeAllKeysLeavesTreeEmpty)
 {
     SimpleFile sf;
@@ -218,10 +218,8 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
     BTree bt(cm);
 
     std::vector<uint32_t> keys;
-    // keys.reserve(MANYITERATION);
-    keys.reserve(200000);
-    // for (uint32_t i = 0; i < MANYITERATION; i++)
-    for (uint32_t i = 0; i < 200000; i++)
+    keys.reserve(MANYITERATION);
+    for (uint32_t i = 0; i < MANYITERATION; i++)
         keys.push_back(i);
 
     for (auto key: keys)
@@ -234,21 +232,14 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
 
     for (auto key: keys)
     {
-        if (key == 57819)
-            __debugbreak();
         std::string s = std::to_string(key);
         auto res = bt.remove(s.c_str());
-
-        if (!bt.find(Blob("57820")))
-            __debugbreak();
-        if (!res)
-            std::cout << s;
         CHECK(res);
         CHECK(res == Blob(s.c_str()));
     }
 
     CHECK(!bt.begin(""));
-    CHECK(bt.getFreePages().size() == size - 1); // every page except root
+    CHECK(bt.getFreePages().size() == size);
 }
 
 TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
@@ -405,4 +396,26 @@ TEST(BTree, removeInReverseOrder)
         cursor = bt.next(cursor);
     }
     CHECK(!cursor);
+}
+
+TEST(BTree, leftMergeWithDeletionOnTheLeft)
+{
+    SimpleFile sf;
+    auto root = MinimalTreeBuilder(&sf).buildTree(4);
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm, root);
+
+    bt.remove("0001");
+    CHECK(bt.find("0003"));
+}
+
+TEST(BTree, leftMergeWithDeletionOnTheRight)
+{
+    SimpleFile sf;
+    auto root = MinimalTreeBuilder(&sf).buildTree(4);
+    auto cm = std::make_shared<CacheManager>(&sf);
+    BTree bt(cm, root);
+
+    bt.remove("0035");
+    CHECK(bt.find("0033"));
 }

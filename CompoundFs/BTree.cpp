@@ -87,7 +87,8 @@ void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
     }
 }
 
-std::optional<PageIndex> BTree::handleUnderflow(PageDef<InnerNode>& inner, const Blob& key, const InnerNodeStack& stack)
+std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, const Blob& key,
+                                                        const InnerNodeStack& stack)
 {
     assert(inner.m_page->nofItems() == 1);
     assert(stack.size() >= 2);
@@ -106,14 +107,15 @@ std::optional<PageIndex> BTree::handleUnderflow(PageDef<InnerNode>& inner, const
         auto newParentKey = InnerNode::redistribute(*left.m_page, *rightPage, parentKey);
         parent.m_page->remove(parentKey);
         parent.m_page->insert(newParentKey, right.m_index);
-        return std::nullopt;
+        return nullptr;
     }
 
     left.m_page->mergeWith(*right.m_page, parentKey);
-    return right.m_index;
+    m_freePages.push_back(right.m_index);
+    return right.m_page;
 }
 
-std::optional<Blob> BTree::remove(const Blob& key)
+std::optional<Blob> BTree::remove(Blob key)
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -130,10 +132,9 @@ std::optional<Blob> BTree::remove(const Blob& key)
         return beforeValue;
 
     unlinkLeaveNode(leaf);
-    auto freePage = leafDef.m_index;
+    m_freePages.push_back(leafDef.m_index);
     while (stack.size() > 0)
     {
-        m_freePages.push_back(freePage);
         auto inner = m_cacheManager.makePageWritable(stack.back());
         inner.m_page->remove(key);
 
@@ -150,11 +151,11 @@ std::optional<Blob> BTree::remove(const Blob& key)
         else if (stack.size() == 1)
             return beforeValue;
 
-        auto optFreePage = handleUnderflow(inner, key, stack);
-        if (!optFreePage)
+        auto freePage = handleUnderflow(inner, key, stack);
+        if (!freePage)
             return beforeValue;
 
-        freePage = *optFreePage;
+        key = freePage->getKey(freePage->beginTable());
         stack.pop_back();
     }
 
