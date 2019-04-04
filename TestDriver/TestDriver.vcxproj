@@ -154,6 +154,7 @@
     <ClInclude Include="Test.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MinimalTreeBuilder.h" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestBlobTransformation.cpp" />
     <ClCompile Include="TestBTree.cpp" />

@@ -5,6 +5,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Test.h" />
     <ClInclude Include="SimpleFile.h" />
+    <ClInclude Include="MinimalTreeBuilder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />
