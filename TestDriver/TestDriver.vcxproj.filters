@@ -19,5 +19,6 @@
     <ClCompile Include="TestCacheManager.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
     <ClCompile Include="TestBlobTransformation.cpp" />
+    <ClCompile Include="TestDirectoryStructure.cpp" />
   </ItemGroup>
 </Project>

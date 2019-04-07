@@ -159,6 +159,7 @@
     <ClCompile Include="TestBlobTransformation.cpp" />
     <ClCompile Include="TestBTree.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
+    <ClCompile Include="TestDirectoryStructure.cpp" />
     <ClCompile Include="TestDriver.cpp" />
     <ClCompile Include="TestFile.cpp" />
     <ClCompile Include="TestFileTable.cpp" />

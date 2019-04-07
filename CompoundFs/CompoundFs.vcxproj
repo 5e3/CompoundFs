@@ -42,6 +42,7 @@
     <ClCompile Include="BlobTransformation.cpp" />
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
   </ItemGroup>
   <ItemGroup>

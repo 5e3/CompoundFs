@@ -25,6 +25,7 @@
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="BlobTransformation.cpp" />
+    <ClCompile Include="DirectoryStructure.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />
