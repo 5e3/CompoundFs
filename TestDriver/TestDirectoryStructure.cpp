@@ -74,3 +74,22 @@ TEST(DirectoryStructure, recursiveRemove)
     auto nof = ds.remove("subFolder");
     CHECK(nof == 5);
 }
+
+TEST(DirectoryStructure, recursiveRemove2)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder("subFolder").value();
+    auto subFolder2 = ds.makeSubFolder("subFolder2").value();
+    ds.makeSubFolder("subsub1", subFolder2);
+
+    ds.makeSubFolder("subsub1", subFolder);
+    ds.makeSubFolder("subsub2", subFolder);
+    ds.makeSubFolder("subsub3", subFolder);
+    ds.makeSubFolder("subsub4", subFolder);
+    auto nof = ds.remove("subFolder");
+    CHECK(nof == 5);
+    CHECK(!ds.subFolder("subsub1", subFolder));
+    CHECK(!ds.subFolder("subsub2", subFolder));
+    CHECK(ds.subFolder("subsub1", subFolder2));
+}

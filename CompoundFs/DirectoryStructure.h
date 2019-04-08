@@ -12,6 +12,8 @@ namespace TxFs
 
 enum class Folder : uint32_t;
 
+///
+
 class DirectoryStructure
 {
 public:
