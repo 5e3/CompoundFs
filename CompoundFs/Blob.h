@@ -34,6 +34,10 @@ public:
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
     }
+    bool isPreFix(const BlobRef& rhs) const noexcept
+    {
+        return std::mismatch(begin() + 1, end(), rhs.begin() + 1).first == end();
+    }
 
     constexpr uint8_t* begin() noexcept { return m_data; }
     constexpr uint8_t* end() noexcept { return begin() + size(); }
@@ -152,8 +156,6 @@ public:
         pushBack(begin, end);
     }
 };
-
-
 
 //////////////////////////////////////////////////////////////////////////
 

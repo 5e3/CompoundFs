@@ -34,6 +34,7 @@ public:
     BlobRef key() const noexcept { return current().first; }
     BlobRef value() const noexcept { return current().second; }
     constexpr explicit operator bool() const noexcept { return m_position.has_value(); }
+    // constexpr bool hasValue() const noexcept { return m_position.has_value(); }
 
 private:
     struct Position

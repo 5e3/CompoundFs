@@ -23,7 +23,9 @@ public:
 
     std::optional<Folder> makeSubFolder(std::string_view name, Folder folder = Root);
     std::optional<Folder> subFolder(std::string_view name, Folder folder = Root) const;
-    size_t removeFolder(Folder folder);
+    size_t remove(std::string_view name, Folder folder);
+    size_t remove(BlobRef key);
+    size_t remove(Folder folder);
 
     std::optional<FileDescriptor> createFile(std::string_view name, Folder folder = Root);
     std::optional<FileDescriptor> appendFile(std::string_view name, Folder folder = Root);

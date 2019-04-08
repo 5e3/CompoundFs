@@ -6,7 +6,6 @@
 #include "MinimalTreeBuilder.h"
 #include "../CompoundFs/DirectoryStructure.h"
 
-
 using namespace TxFs;
 
 DirectoryStructure makeDirectoryStructure()
@@ -19,14 +18,12 @@ DirectoryStructure makeDirectoryStructure()
     return DirectoryStructure(cm, fsfd);
 }
 
-
 TEST(DirectoryStructure, FoldersAreNotFound)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
     auto res = ds.subFolder("test");
     CHECK(!res);
-
 }
 
 TEST(DirectoryStructure, makeFolderReturnsFolder)
@@ -35,11 +32,11 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
 
     auto res = ds.makeSubFolder("test");
     CHECK(res);
-    CHECK(*res == Folder{ 1 });
+    CHECK(*res == Folder { 1 });
 
     res = ds.makeSubFolder("test");
     CHECK(res);
-    CHECK(*res == Folder{ 1 });
+    CHECK(*res == Folder { 1 });
 
     CHECK(ds.subFolder("test") == *res);
 }
@@ -54,3 +51,26 @@ TEST(DirectoryStructure, makeSubFolder)
     CHECK(subsub == ds.subFolder("subsub", *subFolder));
 }
 
+TEST(DirectoryStructure, simpleRemove)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder("subFolder");
+    auto subsub = ds.makeSubFolder("subsub", *subFolder);
+    auto nof = ds.remove("subsub", *subFolder);
+    CHECK(nof == 1);
+    CHECK(!ds.subFolder("subsub", *subFolder));
+}
+
+TEST(DirectoryStructure, recursiveRemove)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder("subFolder");
+    ds.makeSubFolder("subsub1", *subFolder);
+    ds.makeSubFolder("subsub2", *subFolder);
+    ds.makeSubFolder("subsub3", *subFolder);
+    ds.makeSubFolder("subsub4", *subFolder);
+    auto nof = ds.remove("subFolder", DirectoryStructure::Root);
+    CHECK(nof == 5);
+}

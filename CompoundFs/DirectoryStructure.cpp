@@ -38,7 +38,6 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
     FixedBlob key;
     key.pushBack(folder);
     key.pushBack(name);
-    auto value = BlobTransformation::toBlob(Folder { m_maxFolderId + 1 });
     auto cursor = m_btree.find(key);
     if (!cursor || BlobTransformation::getBlobType(cursor.value()) != TransformationTypeEnum::Folder)
         return std::nullopt;
@@ -47,7 +46,48 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
     return subFolder;
 }
 
-size_t DirectoryStructure::removeFolder(Folder folder)
+size_t DirectoryStructure::remove(Folder folder)
 {
-    return 0;
+    FixedBlob key;
+    key.pushBack(folder);
+    size_t nof = 0;
+    std::vector<Blob> keysToDelete;
+    for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
+    {
+        if (!key.isPreFix(cursor.key()))
+            return nof;
+        keysToDelete.push_back(cursor.key());
+        nof++;
+    }
+
+    for (const auto& k: keysToDelete)
+        remove(k);
+
+    return nof;
+}
+
+size_t DirectoryStructure::remove(std::string_view name, Folder folder)
+{
+    FixedBlob key;
+    key.pushBack(folder);
+    key.pushBack(name);
+    return remove(key);
+}
+
+size_t DirectoryStructure::remove(BlobRef key)
+{
+    auto res = m_btree.remove(key);
+    if (!res)
+        return 0;
+
+    switch (auto type = BlobTransformation::getBlobType(*res); type)
+    {
+    case TransformationTypeEnum::Folder: return remove(BlobTransformation::toValue<Folder>(*res)) + 1;
+
+    case TransformationTypeEnum::File:
+        m_freeStore.deleteFile(BlobTransformation::toValue<FileDescriptor>(*res));
+        return 1;
+
+    default: return 1;
+    }
 }
