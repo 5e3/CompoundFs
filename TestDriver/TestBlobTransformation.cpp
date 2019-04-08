@@ -11,7 +11,7 @@ namespace
 //     std::string>;
 
 BlobTransformation::Types g_values
-    = { { 1, 2, 100 }, { 1 }, { 1, 2, 3 }, { 1.5 }, { std::make_pair(1., 2.) }, { 5 }, { "test" } };
+    = { { 1, 2, 100 }, Folder { 1 }, { 1, 2, 3 }, { 1.5 }, { std::make_pair(1., 2.) }, { 5 }, { "test" } };
 
 template <TransformationTypeEnum IType>
 struct TransformationTester
@@ -55,7 +55,7 @@ TEST(BlobTransformation, TransformFolder)
     Blob b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
-    CHECK(tt.get(b).m_folderId == tt.m_value.m_folderId);
+    CHECK(tt.get(b) == tt.m_value);
     CHECK(tt.getTypeName(b) == "Folder");
 }
 

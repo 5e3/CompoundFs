@@ -140,8 +140,15 @@ public:
     template <typename T>
     constexpr void pushBack(const T& value)
     {
-        auto begin = (uint8_t*)&value;
+        auto begin = (uint8_t*) &value;
         auto end = begin + sizeof(T);
+        pushBack(begin, end);
+    }
+
+    void pushBack(std::string_view str)
+    {
+        auto begin = (uint8_t*) &str[0];
+        auto end = begin + str.size();
         pushBack(begin, end);
     }
 };
