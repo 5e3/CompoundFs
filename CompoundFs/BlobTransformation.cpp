@@ -7,39 +7,6 @@ namespace
 {
 //////////////////////////////////////////////////////////////////////////
 
-struct FixedBlob : BlobRef
-{
-    uint8_t m_buffer[UINT8_MAX];
-    uint8_t* m_iterator;
-
-    FixedBlob() noexcept
-        : m_iterator(m_buffer + 1)
-    {
-        m_buffer[0] = 0;
-        m_data = m_buffer;
-    }
-
-    void pushBack(const uint8_t* valBegin, const uint8_t* valEnd)
-    {
-        assert(valEnd >= valBegin);
-        uint8_t* endIterator = m_iterator + (valEnd - valBegin);
-        if (endIterator > (m_buffer + sizeof(m_buffer)))
-            throw std::runtime_error("Data exceeds max Blob size");
-        m_iterator = std::copy(valBegin, valEnd, m_iterator);
-        m_data[0] = uint8_t(m_iterator - begin() - 1);
-    }
-
-    template <typename T>
-    constexpr void pushBack(const T& value)
-    {
-        auto begin = (uint8_t*) &value;
-        auto end = begin + sizeof(T);
-        pushBack(begin, end);
-    }
-};
-
-//////////////////////////////////////////////////////////////////////////
-
 template <typename T>
 void valueToBlob(FixedBlob& blob, const T& value)
 {
