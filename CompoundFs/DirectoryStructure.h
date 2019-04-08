@@ -18,10 +18,10 @@ public:
     static constexpr Folder Root { 0 };
 
 public:
-    DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID,
-                       uint32_t maxFolderId = 1);
+    DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
+                       PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 1);
 
-    Folder makeSubFolder(std::string_view name, Folder folder = Root);
+    std::optional<Folder> makeSubFolder(std::string_view name, Folder folder = Root);
     std::optional<Folder> subFolder(std::string_view name, Folder folder = Root) const;
     size_t removeFolder(Folder folder);
 
