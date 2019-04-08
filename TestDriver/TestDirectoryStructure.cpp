@@ -55,22 +55,22 @@ TEST(DirectoryStructure, simpleRemove)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder");
-    auto subsub = ds.makeSubFolder("subsub", *subFolder);
-    auto nof = ds.remove("subsub", *subFolder);
+    auto subFolder = ds.makeSubFolder("subFolder").value();
+    auto subsub = ds.makeSubFolder("subsub", subFolder);
+    auto nof = ds.remove("subsub", subFolder);
     CHECK(nof == 1);
-    CHECK(!ds.subFolder("subsub", *subFolder));
+    CHECK(!ds.subFolder("subsub", subFolder));
 }
 
 TEST(DirectoryStructure, recursiveRemove)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder");
-    ds.makeSubFolder("subsub1", *subFolder);
-    ds.makeSubFolder("subsub2", *subFolder);
-    ds.makeSubFolder("subsub3", *subFolder);
-    ds.makeSubFolder("subsub4", *subFolder);
-    auto nof = ds.remove("subFolder", DirectoryStructure::Root);
+    auto subFolder = ds.makeSubFolder("subFolder").value();
+    ds.makeSubFolder("subsub1", subFolder);
+    ds.makeSubFolder("subsub2", subFolder);
+    ds.makeSubFolder("subsub3", subFolder);
+    ds.makeSubFolder("subsub4", subFolder);
+    auto nof = ds.remove("subFolder");
     CHECK(nof == 5);
 }
