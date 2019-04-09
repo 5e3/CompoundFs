@@ -34,7 +34,7 @@ public:
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
     }
-    bool isPreFix(const BlobRef& rhs) const noexcept
+    bool isPrefix(const BlobRef& rhs) const noexcept
     {
         return std::mismatch(begin() + 1, end(), rhs.begin() + 1).first == end();
     }

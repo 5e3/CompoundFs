@@ -54,7 +54,7 @@ size_t DirectoryStructure::remove(Folder folder)
     std::vector<Blob> keysToDelete;
     for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
     {
-        if (!key.isPreFix(cursor.key()))
+        if (!key.isPrefix(cursor.key()))
             break;
         keysToDelete.push_back(cursor.key());
         nof++;
@@ -80,14 +80,16 @@ size_t DirectoryStructure::remove(BlobRef key)
     if (!res)
         return 0;
 
-    switch (auto type = BlobTransformation::getBlobType(*res); type)
+    switch (BlobTransformation::getBlobType(*res))
     {
-    case TransformationTypeEnum::Folder: return remove(BlobTransformation::toValue<Folder>(*res)) + 1;
+    case TransformationTypeEnum::Folder:
+        return remove(BlobTransformation::toValue<Folder>(*res)) + 1;
 
     case TransformationTypeEnum::File:
         m_freeStore.deleteFile(BlobTransformation::toValue<FileDescriptor>(*res));
         return 1;
 
-    default: return 1;
+    default:
+        return 1;
     }
 }
