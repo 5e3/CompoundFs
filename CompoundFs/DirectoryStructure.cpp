@@ -55,7 +55,7 @@ size_t DirectoryStructure::remove(Folder folder)
     for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
     {
         if (!key.isPreFix(cursor.key()))
-            return nof;
+            break;
         keysToDelete.push_back(cursor.key());
         nof++;
     }
