@@ -87,9 +87,45 @@ TEST(DirectoryStructure, recursiveRemove2)
     ds.makeSubFolder("subsub2", subFolder);
     ds.makeSubFolder("subsub3", subFolder);
     ds.makeSubFolder("subsub4", subFolder);
+    ds.addAttribute("test", "attrib", subFolder);
     auto nof = ds.remove("subFolder");
-    CHECK(nof == 5);
+    CHECK(nof == 6);
     CHECK(!ds.subFolder("subsub1", subFolder));
     CHECK(!ds.subFolder("subsub2", subFolder));
+    CHECK(!ds.getAttribute("attrib", subFolder));
     CHECK(ds.subFolder("subsub1", subFolder2));
 }
+
+TEST(DirectoryStructure, addGetAttribute)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    CHECK(ds.addAttribute("test", "attrib"));
+    auto res = ds.getAttribute("attrib");
+    CHECK(res);
+    CHECK(std::get<std::string>(*res) == "test");
+
+    CHECK(ds.addAttribute(42, "attrib"));
+    res = ds.getAttribute("attrib");
+    CHECK(res);
+    CHECK(std::get<int>(*res) == 42);
+}
+
+TEST(DirectoryStructure, attributesDoNotReplaceFolders)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder("subFolder").value();
+    CHECK(!ds.addAttribute("test", "subFolder"));
+    auto res = ds.getAttribute("subFolder");
+    CHECK(!res);
+}
+
+TEST(DirectoryStructure, foldersDoNotReplaceAttributes)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    CHECK(ds.addAttribute("test", "subFolder"));
+    CHECK(!ds.makeSubFolder("subFolder"));
+}
+

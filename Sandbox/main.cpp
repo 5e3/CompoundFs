@@ -280,6 +280,11 @@ auto fromBlob(const BlobRef& blob, const uint8_t* begin = nullptr)
 }
 
 std::tuple<int, float, double, std::string> types;
+using Var = std::variant<std::string, int>;
+using Var2 = std::variant<std::string, int, double>;
+
+void func(const Var& var)
+{}
 
 int main()
 {
@@ -287,4 +292,9 @@ int main()
     fromBlob<std::vector<float>>(b);
     fromBlob<std::string>(b);
     fromBlob<int>(b);
+
+    func(5);
+    func("test");
+    Var v = "test";
+    // Var2 v2 = *v;
 }

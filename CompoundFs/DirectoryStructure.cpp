@@ -46,6 +46,35 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
     return subFolder;
 }
 
+bool DirectoryStructure::addAttribute(const BlobTransformation::Variant& attribute, std::string_view name,
+                                      Folder folder)
+{
+    FixedBlob key;
+    key.pushBack(folder);
+    key.pushBack(name);
+    auto value = BlobTransformation::toBlob(attribute);
+    auto res = m_btree.insert(key, value, [](const BlobRef&, const BlobRef& rhs) {
+        auto type = BlobTransformation::getBlobType(rhs);
+        return type != TransformationTypeEnum::Folder && type != TransformationTypeEnum::File;
+    });
+    return !std::holds_alternative<BTree::Unchanged>(res);
+}
+
+std::optional<BlobTransformation::Variant> DirectoryStructure::getAttribute(std::string_view name, Folder folder) const
+{
+    FixedBlob key;
+    key.pushBack(folder);
+    key.pushBack(name);
+    auto cursor = m_btree.find(key);
+    if (!cursor)
+        return std::nullopt;
+
+    auto type = BlobTransformation::getBlobType(cursor.value());
+    if (type == TransformationTypeEnum::Folder || type == TransformationTypeEnum::File)
+        return std::nullopt;
+    return BlobTransformation::toVariant(cursor.value());
+}
+
 size_t DirectoryStructure::remove(Folder folder)
 {
     FixedBlob key;
