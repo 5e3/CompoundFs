@@ -3,7 +3,7 @@
 #include "Test.h"
 #include "SimpleFile.h"
 #include "../CompoundFs/FreeStore.h"
-#include "../CompoundFs/File.h"
+#include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/Blob.h"
 #include "../CompoundFs/TypedCacheManager.h"
 

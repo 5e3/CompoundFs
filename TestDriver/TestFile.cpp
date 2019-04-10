@@ -2,7 +2,8 @@
 #include "Test.h"
 #include "SimpleFile.h"
 
-#include "../CompoundFs/File.h"
+#include "../CompoundFs/FileReader.h"
+#include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/Blob.h"
 #include <string>
 
