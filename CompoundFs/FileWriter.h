@@ -13,10 +13,10 @@
 namespace TxFs
 {
 
-class RawFileWriter
+class FileWriter
 {
 public:
-    RawFileWriter(const std::shared_ptr<CacheManager>& cacheManager, size_t highWaterMark = 250000)
+    FileWriter(const std::shared_ptr<CacheManager>& cacheManager, size_t highWaterMark = 250000)
         : m_cacheManager(cacheManager)
         , m_highWaterMark(highWaterMark)
     {

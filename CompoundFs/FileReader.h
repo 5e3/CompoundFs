@@ -13,10 +13,10 @@ namespace TxFs
 
 //////////////////////////////////////////////////////////////////////////
 
-class RawFileReader
+class FileReader
 {
 public:
-    RawFileReader(const std::shared_ptr<CacheManager>& cacheManager)
+    FileReader(const std::shared_ptr<CacheManager>& cacheManager)
         : m_cacheManager(cacheManager)
         , m_curFilePos(0)
         , m_fileSize(0)
