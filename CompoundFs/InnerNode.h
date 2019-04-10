@@ -203,7 +203,7 @@ public:
         else
         {
             const InnerNode tmp = left;
-            size_t splitPoint = left.m_begin - (left.m_begin - right.m_begin) / 2;
+            size_t splitPoint = left.m_begin - size_t(left.m_begin - right.m_begin) / 2;
             const uint16_t* const sp = tmp.findSplitPoint(splitPoint);
             assert(sp != tmp.endTable());
             left.reset();

@@ -125,7 +125,8 @@ class FixedBlob : public BlobRef
 
 public:
     FixedBlob() noexcept
-        : m_iterator(m_buffer + 1)
+        : BlobRef(m_buffer)
+        , m_iterator(m_buffer + 1)
     {
         m_buffer[0] = 0;
         m_data = m_buffer;
