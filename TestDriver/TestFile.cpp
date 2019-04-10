@@ -2,18 +2,19 @@
 #include "Test.h"
 #include "SimpleFile.h"
 
-#include "../CompoundFs/File.h"
+#include "../CompoundFs/FileReader.h"
+#include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/Blob.h"
 #include <string>
 
 using namespace TxFs;
 
-TEST(RawFileWriter, CtorCreatesEmptyFileDesc)
+TEST(FileWriter, CtorCreatesEmptyFileDesc)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     FileDescriptor fd = f.close();
     CHECK(fd == FileDescriptor());
 
@@ -22,12 +23,12 @@ TEST(RawFileWriter, CtorCreatesEmptyFileDesc)
     CHECK(fd == FileDescriptor());
 }
 
-TEST(RawFileWriter, WriteCloseCreatesFileDescriptor)
+TEST(FileWriter, WriteCloseCreatesFileDescriptor)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
@@ -37,13 +38,13 @@ TEST(RawFileWriter, WriteCloseCreatesFileDescriptor)
     CHECK(fd.m_first == fd.m_last);
 }
 
-TEST(RawFileWriter, WriteCloseCreatesFileTablePage)
+TEST(FileWriter, WriteCloseCreatesFileTablePage)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
@@ -58,12 +59,12 @@ TEST(RawFileWriter, WriteCloseCreatesFileTablePage)
     CHECK(is.front() == Interval(0, 1));
 }
 
-TEST(RawFileWriter, MultipleWritesCreatesDescOfAppropriateSize)
+TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
 
     for (int i = 0; i < 10; i++)
@@ -76,12 +77,12 @@ TEST(RawFileWriter, MultipleWritesCreatesDescOfAppropriateSize)
     CHECK(fd.m_first == fd.m_last);
 }
 
-TEST(RawFileWriter, MultipleOpenCreatesDescOfAppropriateSize)
+TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
 
     for (int i = 0; i < 10; i++)
@@ -100,13 +101,13 @@ TEST(RawFileWriter, MultipleOpenCreatesDescOfAppropriateSize)
     CHECK(fd.m_first == fd.m_last);
 }
 
-TEST(RawFileWriter, SmallWritesOverPageBoundery)
+TEST(FileWriter, SmallWritesOverPageBoundery)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
     for (int i = 0; i < 1000; i++)
         f.write(data.begin(), data.end());
@@ -124,13 +125,13 @@ TEST(RawFileWriter, SmallWritesOverPageBoundery)
     CHECK(is.front() == Interval(0, 2));
 }
 
-TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
+TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     Blob data("Test");
     for (int i = 0; i < 1000; i++)
         f.write(data.begin(), data.end());
@@ -157,14 +158,14 @@ TEST(RawFileWriter, SmallWritesWithAppendOverPageBoundery)
     CHECK(is.back() == Interval(3, 4));
 }
 
-TEST(RawFileWriter, PageSizeWrites)
+TEST(FileWriter, PageSizeWrites)
 {
     std::string str(4096, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     for (int i = 0; i < 10; i++)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
@@ -178,14 +179,14 @@ TEST(RawFileWriter, PageSizeWrites)
     CHECK(is.front() == Interval(0, 10));
 }
 
-TEST(RawFileWriter, OverPageSizeWrites)
+TEST(FileWriter, OverPageSizeWrites)
 {
     std::string str(4097, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     for (int i = 0; i < 10; i++)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
@@ -199,14 +200,14 @@ TEST(RawFileWriter, OverPageSizeWrites)
     CHECK(is.front() == Interval(0, 11));
 }
 
-TEST(RawFileWriter, UnderPageSizeWrites)
+TEST(FileWriter, UnderPageSizeWrites)
 {
     std::string str(4095, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     for (int i = 0; i < 10; i++)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
@@ -220,14 +221,14 @@ TEST(RawFileWriter, UnderPageSizeWrites)
     CHECK(is.front() == Interval(0, 10));
 }
 
-TEST(RawFileWriter, LargePageSizeWrites)
+TEST(FileWriter, LargePageSizeWrites)
 {
     std::string str(8192, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     for (int i = 0; i < 10; i++)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
@@ -241,14 +242,14 @@ TEST(RawFileWriter, LargePageSizeWrites)
     CHECK(is.front() == Interval(0, 20));
 }
 
-TEST(RawFileWriter, LargeSizeWrites)
+TEST(FileWriter, LargeSizeWrites)
 {
     std::string str(20000, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
+    FileWriter f(cm);
     for (int i = 0; i < 10; i++)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
@@ -262,15 +263,15 @@ TEST(RawFileWriter, LargeSizeWrites)
     CHECK(is.front() == Interval(0, uint32_t(10 * str.size() / 4096 + 1)));
 }
 
-TEST(RawFileWriter, LargeSizeWritesMultiFiles)
+TEST(FileWriter, LargeSizeWritesMultiFiles)
 {
     std::string str(20000, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
-    RawFileWriter f2(cm);
+    FileWriter f(cm);
+    FileWriter f2(cm);
     for (int i = 0; i < 10; i++)
     {
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
@@ -293,15 +294,15 @@ TEST(RawFileWriter, LargeSizeWritesMultiFiles)
     CHECK(is2.totalLength() == 10 * str.size() / 4096 + 1);
 }
 
-TEST(RawFileWriter, FillPageTable)
+TEST(FileWriter, FillPageTable)
 {
     std::string str(4096, 'X');
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
     TypedCacheManager tcm(cm);
 
-    RawFileWriter f(cm);
-    RawFileWriter f2(cm);
+    FileWriter f(cm);
+    FileWriter f2(cm);
     for (int i = 0; i < 2000; i++)
     {
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
@@ -334,7 +335,7 @@ TEST(RawPageReader, ReadNullFile)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
-    RawFileReader f(cm);
+    FileReader f(cm);
 
     CHECK(f.read(0, 0) == 0);
 
@@ -354,8 +355,8 @@ std::vector<uint8_t> makeRandomVector(size_t size)
 
 FileDescriptor writeFragmentedFile(const std::vector<uint8_t>& v, std::shared_ptr<CacheManager> cacheManager)
 {
-    RawFileWriter fr(cacheManager);
-    RawFileWriter fr2(cacheManager);
+    FileWriter fr(cacheManager);
+    FileWriter fr2(cacheManager);
     size_t s = (v.size() / 4096) * 4096;
     auto it = v.begin();
     for (auto it = v.begin(); it < (v.begin() + s); it += 4096)
@@ -385,14 +386,14 @@ std::vector<uint8_t> makeVector(size_t size)
 
 FileDescriptor writeFile(const std::vector<uint8_t>& v, std::shared_ptr<CacheManager> cacheManager)
 {
-    RawFileWriter fr(cacheManager);
+    FileWriter fr(cacheManager);
     fr.writeIterator(v.begin(), v.end());
     return fr.close();
 }
 
 uint8_t* readFile(FileDescriptor fd, std::vector<uint8_t>& v, std::shared_ptr<CacheManager> cacheManager, size_t sizes)
 {
-    RawFileReader fr(cacheManager);
+    FileReader fr(cacheManager);
     fr.open(fd);
     uint8_t* begin = &v[0];
     while (fr.bytesLeft())
@@ -402,7 +403,7 @@ uint8_t* readFile(FileDescriptor fd, std::vector<uint8_t>& v, std::shared_ptr<Ca
     return begin;
 }
 
-TEST(RawFileReader, ReadSmallFile)
+TEST(FileReader, ReadSmallFile)
 {
     std::vector<uint8_t> v = makeRandomVector(1000);
     SimpleFile sf;
@@ -434,7 +435,7 @@ TEST(RawFileReader, ReadSmallFile)
     }
 }
 
-TEST(RawFileReader, ReadPageSizedFile)
+TEST(FileReader, ReadPageSizedFile)
 {
     std::vector<uint8_t> v = makeRandomVector(5 * 4096);
     SimpleFile sf;
@@ -478,7 +479,7 @@ TEST(RawFileReader, ReadPageSizedFile)
     }
 }
 
-TEST(RawFileReader, ReadBigFile)
+TEST(FileReader, ReadBigFile)
 {
     std::vector<uint8_t> v = makeRandomVector(17 * 4097);
     SimpleFile sf;
@@ -522,7 +523,7 @@ TEST(RawFileReader, ReadBigFile)
     }
 }
 
-TEST(RawFileReader, ReadFragmentedFile)
+TEST(FileReader, ReadFragmentedFile)
 {
     std::vector<uint8_t> v = makeVector(2200 * 4097); // => 3 filetable pages
     SimpleFile sf;

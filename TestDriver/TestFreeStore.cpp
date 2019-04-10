@@ -3,7 +3,7 @@
 #include "Test.h"
 #include "SimpleFile.h"
 #include "../CompoundFs/FreeStore.h"
-#include "../CompoundFs/File.h"
+#include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/Blob.h"
 #include "../CompoundFs/TypedCacheManager.h"
 
@@ -13,7 +13,7 @@ using namespace TxFs;
 
 FileDescriptor createFile(std::shared_ptr<CacheManager> cm)
 {
-    RawFileWriter rfw(cm);
+    FileWriter rfw(cm);
     Blob data("X");
     rfw.write(data.begin(), data.end());
     return rfw.close();
@@ -22,7 +22,7 @@ FileDescriptor createFile(std::shared_ptr<CacheManager> cm)
 std::vector<FileDescriptor> createFiles(std::shared_ptr<CacheManager> cm, size_t files, size_t pages)
 {
     std::vector<uint8_t> data(4096, 'Y');
-    std::vector<RawFileWriter> writers(files, cm);
+    std::vector<FileWriter> writers(files, cm);
     for (size_t i = 0; i < pages; i++)
         for (auto& writer: writers)
             writer.writeIterator(data.begin(), data.end());

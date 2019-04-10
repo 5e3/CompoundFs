@@ -4,7 +4,6 @@
     <ClInclude Include="Blob.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />
-    <ClInclude Include="File.h" />
     <ClInclude Include="FileDescriptor.h" />
     <ClInclude Include="FileTable.h" />
     <ClInclude Include="FreeStore.h" />
@@ -19,6 +18,8 @@
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="BlobTransformation.h" />
     <ClInclude Include="DirectoryStructure.h" />
+    <ClInclude Include="FileReader.h" />
+    <ClInclude Include="FileWriter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
