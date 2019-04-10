@@ -1,7 +1,7 @@
 
 
 #include "DirectoryStructure.h"
-#include "BlobTransformation.h"
+#include "DirectoryObjects.h"
 
 using namespace TxFs;
 
@@ -18,7 +18,7 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(std::string_view name, F
     MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
-    auto value = BlobTransformation::toBlob(Folder { m_maxFolderId });
+    auto value = ByteStringOps::toByteString(Folder { m_maxFolderId });
     auto res = m_btree.insert(key, value, [](const ByteStringView&, const ByteStringView&) { return false; });
 
     auto inserted = std::get_if<BTree::Inserted>(&res);
@@ -26,10 +26,10 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(std::string_view name, F
         return Folder { m_maxFolderId++ };
 
     auto unchanged = std::get<BTree::Unchanged>(res);
-    if (BlobTransformation::getBlobType(unchanged.m_currentValue.value()) != TransformationTypeEnum::Folder)
+    if (ByteStringOps::getType(unchanged.m_currentValue.value()) != DirectoryObjType::Folder)
         return std::nullopt;
 
-    auto origValue = BlobTransformation::toValue<Folder>(unchanged.m_currentValue.value());
+    auto origValue = ByteStringOps::toValue<Folder>(unchanged.m_currentValue.value());
     return origValue;
 }
 
@@ -39,28 +39,28 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
     key.pushBack(folder);
     key.pushBack(name);
     auto cursor = m_btree.find(key);
-    if (!cursor || BlobTransformation::getBlobType(cursor.value()) != TransformationTypeEnum::Folder)
+    if (!cursor || ByteStringOps::getType(cursor.value()) != DirectoryObjType::Folder)
         return std::nullopt;
 
-    auto subFolder = BlobTransformation::toValue<Folder>(cursor.value());
+    auto subFolder = ByteStringOps::toValue<Folder>(cursor.value());
     return subFolder;
 }
 
-bool DirectoryStructure::addAttribute(const BlobTransformation::Variant& attribute, std::string_view name,
+bool DirectoryStructure::addAttribute(const ByteStringOps::Variant& attribute, std::string_view name,
                                       Folder folder)
 {
     MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
-    auto value = BlobTransformation::toBlob(attribute);
+    auto value = ByteStringOps::toByteString(attribute);
     auto res = m_btree.insert(key, value, [](const ByteStringView&, const ByteStringView& rhs) {
-        auto type = BlobTransformation::getBlobType(rhs);
-        return type != TransformationTypeEnum::Folder && type != TransformationTypeEnum::File;
+        auto type = ByteStringOps::getType(rhs);
+        return type != DirectoryObjType::Folder && type != DirectoryObjType::File;
     });
     return !std::holds_alternative<BTree::Unchanged>(res);
 }
 
-std::optional<BlobTransformation::Variant> DirectoryStructure::getAttribute(std::string_view name, Folder folder) const
+std::optional<ByteStringOps::Variant> DirectoryStructure::getAttribute(std::string_view name, Folder folder) const
 {
     MutableByteString key;
     key.pushBack(folder);
@@ -69,10 +69,10 @@ std::optional<BlobTransformation::Variant> DirectoryStructure::getAttribute(std:
     if (!cursor)
         return std::nullopt;
 
-    auto type = BlobTransformation::getBlobType(cursor.value());
-    if (type == TransformationTypeEnum::Folder || type == TransformationTypeEnum::File)
+    auto type = ByteStringOps::getType(cursor.value());
+    if (type == DirectoryObjType::Folder || type == DirectoryObjType::File)
         return std::nullopt;
-    return BlobTransformation::toVariant(cursor.value());
+    return ByteStringOps::toVariant(cursor.value());
 }
 
 size_t DirectoryStructure::remove(Folder folder)
@@ -109,13 +109,13 @@ size_t DirectoryStructure::remove(ByteStringView key)
     if (!res)
         return 0;
 
-    switch (BlobTransformation::getBlobType(*res))
+    switch (ByteStringOps::getType(*res))
     {
-    case TransformationTypeEnum::Folder:
-        return remove(BlobTransformation::toValue<Folder>(*res)) + 1;
+    case DirectoryObjType::Folder:
+        return remove(ByteStringOps::toValue<Folder>(*res)) + 1;
 
-    case TransformationTypeEnum::File:
-        m_freeStore.deleteFile(BlobTransformation::toValue<FileDescriptor>(*res));
+    case DirectoryObjType::File:
+        m_freeStore.deleteFile(ByteStringOps::toValue<FileDescriptor>(*res));
         return 1;
 
     default:

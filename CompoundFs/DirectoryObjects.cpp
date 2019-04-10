@@ -1,5 +1,5 @@
 
-#include "BlobTransformation.h"
+#include "DirectoryObjects.h"
 
 using namespace TxFs;
 
@@ -8,12 +8,12 @@ namespace
 //////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-void valueToBlob(MutableByteString& blob, const T& value)
+void valueToByteString(MutableByteString& blob, const T& value)
 {
     blob.pushBack(value);
 }
 
-void valueToBlob(MutableByteString& blob, const std::string& value)
+void valueToByteString(MutableByteString& blob, const std::string& value)
 {
     auto begin = (const uint8_t*) &value[0];
     blob.pushBack(begin, begin + value.size());
@@ -22,23 +22,23 @@ void valueToBlob(MutableByteString& blob, const std::string& value)
 //////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-BlobTransformation::Variant BlobToVariant(const ByteStringView& blob)
+ByteStringOps::Variant byteStringToVariant(const ByteStringView& blob)
 {
     T value;
     std::copy(blob.begin() + 2, blob.end(), (uint8_t*) &value);
-    return BlobTransformation::Variant(value);
+    return ByteStringOps::Variant(value);
 }
 
 template <>
-BlobTransformation::Variant BlobToVariant<std::string>(const ByteStringView& blob)
+ByteStringOps::Variant byteStringToVariant<std::string>(const ByteStringView& blob)
 {
     auto begin = (const char*) blob.begin() + 2;
     auto end = (const char*) blob.end();
     std::string s(begin, end);
-    return BlobTransformation::Variant(std::move(s));
+    return ByteStringOps::Variant(std::move(s));
 }
 
-using ToVariantFunc = BlobTransformation::Variant (*)(const ByteStringView&);
+using ToVariantFunc = ByteStringOps::Variant (*)(const ByteStringView&);
 
 template <typename T>
 struct ToVariantFuncArray;
@@ -46,27 +46,27 @@ struct ToVariantFuncArray;
 template <typename... Args>
 struct ToVariantFuncArray<std::tuple<Args...>>
 {
-    inline static const ToVariantFunc g_funcs[] = { BlobToVariant<Args>... };
+    inline static const ToVariantFunc g_funcs[] = { byteStringToVariant<Args>... };
 };
 
 }
 
 //////////////////////////////////////////////////////////////////////////
 
-ByteString BlobTransformation::variantToBlob(const Variant& v)
+ByteString ByteStringOps::variantToByteString(const Variant& v)
 {
-    auto idx = static_cast<BlobTransformation::TypeEnum>(v.index());
+    auto idx = static_cast<ByteStringOps::TypeEnum>(v.index());
     return std::visit(
         [idx = idx](const auto& value) {
             MutableByteString blob;
             blob.pushBack(idx);
-            valueToBlob(blob, value);
+            valueToByteString(blob, value);
             return ByteString(blob);
         },
         v);
 }
 
-BlobTransformation::TypeEnum BlobTransformation::getBlobType(const ByteStringView& blob)
+ByteStringOps::TypeEnum ByteStringOps::getType(const ByteStringView& blob)
 {
     if (blob.size() < 2)
         return TypeEnum::Undefined;
@@ -75,13 +75,13 @@ BlobTransformation::TypeEnum BlobTransformation::getBlobType(const ByteStringVie
     return TypeEnum(type);
 }
 
-std::string BlobTransformation::getBlobTypeName(const ByteStringView& blob)
+std::string ByteStringOps::getTypeName(const ByteStringView& blob)
 {
-    auto idx = int(getBlobType(blob));
+    auto idx = int(getType(blob));
     return TypeNames[idx];
 }
 
-BlobTransformation::Variant BlobTransformation::toVariant(const ByteStringView& blob)
+ByteStringOps::Variant ByteStringOps::toVariant(const ByteStringView& blob)
 {
-    return ToVariantFuncArray<BlobTransformation::Types>::g_funcs[*(blob.begin() + 1)](blob);
+    return ToVariantFuncArray<ByteStringOps::Types>::g_funcs[*(blob.begin() + 1)](blob);
 }

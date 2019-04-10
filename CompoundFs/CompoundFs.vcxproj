@@ -20,9 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ByteString.h" />
-    <ClInclude Include="BlobTransformation.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />
+    <ClInclude Include="DirectoryObjects.h" />
     <ClInclude Include="DirectoryStructure.h" />
     <ClInclude Include="FileDescriptor.h" />
     <ClInclude Include="FileReader.h" />
@@ -40,9 +40,9 @@
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BlobTransformation.cpp" />
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="DirectoryObjects.cpp" />
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
   </ItemGroup>

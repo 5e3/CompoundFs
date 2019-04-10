@@ -4,7 +4,7 @@
 #include "CacheManager.h"
 #include "FreeStore.h"
 #include "BTree.h"
-#include "BlobTransformation.h"
+#include "DirectoryObjects.h"
 #include <memory>
 #include <cstdint>
 
@@ -27,8 +27,8 @@ public:
     std::optional<Folder> makeSubFolder(std::string_view name, Folder folder = Root);
     std::optional<Folder> subFolder(std::string_view name, Folder folder = Root) const;
 
-    bool addAttribute(const BlobTransformation::Variant& attribute, std::string_view name, Folder folder = Root);
-    std::optional<BlobTransformation::Variant> getAttribute(std::string_view name, Folder folder = Root) const;
+    bool addAttribute(const ByteStringOps::Variant& attribute, std::string_view name, Folder folder = Root);
+    std::optional<ByteStringOps::Variant> getAttribute(std::string_view name, Folder folder = Root) const;
 
     size_t remove(std::string_view name, Folder folder = Root);
     size_t remove(ByteStringView key);

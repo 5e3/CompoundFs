@@ -47,7 +47,7 @@ struct Version
 
 //////////////////////////////////////////////////////////////////////////
 
-class BlobTransformation
+class ByteStringOps
 {
     inline static char const* TypeNames[]
         = { "File", "Folder", "Version", "Double", "DoublePair", "Int", "String", "Undefined" /*last entry!*/ };
@@ -67,13 +67,13 @@ public:
     using Variant = Private::ToVariant<Types>::Variant;
 
     template <typename T>
-    static ByteString toBlob(const T& value)
+    static ByteString toByteString(const T& value)
     {
-        return variantToBlob(value);
+        return variantToByteString(value);
     }
 
-    static TypeEnum getBlobType(const ByteStringView& blob);
-    static std::string getBlobTypeName(const ByteStringView& blob);
+    static TypeEnum getType(const ByteStringView& blob);
+    static std::string getTypeName(const ByteStringView& blob);
     static Variant toVariant(const ByteStringView& blob);
     template <typename T>
     static T toValue(const ByteStringView& blob)
@@ -82,11 +82,11 @@ public:
     }
 
 private:
-    static ByteString variantToBlob(const Variant& v);
+    static ByteString variantToByteString(const Variant& v);
 };
 
 //////////////////////////////////////////////////////////////////////////
 
-using TransformationTypeEnum = BlobTransformation::TypeEnum;
+using DirectoryObjType = ByteStringOps::TypeEnum;
 
 }
