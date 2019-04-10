@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FileDescriptor.h"
-#include "Blob.h"
+#include "ByteString.h"
 
 #include <variant>
 #include <tuple>
@@ -67,22 +67,22 @@ public:
     using Variant = Private::ToVariant<Types>::Variant;
 
     template <typename T>
-    static Blob toBlob(const T& value)
+    static ByteString toBlob(const T& value)
     {
         return variantToBlob(value);
     }
 
-    static TypeEnum getBlobType(const BlobRef& blob);
-    static std::string getBlobTypeName(const BlobRef& blob);
-    static Variant toVariant(const BlobRef& blob);
+    static TypeEnum getBlobType(const ByteStringView& blob);
+    static std::string getBlobTypeName(const ByteStringView& blob);
+    static Variant toVariant(const ByteStringView& blob);
     template <typename T>
-    static T toValue(const BlobRef& blob)
+    static T toValue(const ByteStringView& blob)
     {
         return std::get<T>(toVariant(blob));
     }
 
 private:
-    static Blob variantToBlob(const Variant& v);
+    static ByteString variantToBlob(const Variant& v);
 };
 
 //////////////////////////////////////////////////////////////////////////

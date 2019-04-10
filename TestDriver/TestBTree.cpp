@@ -6,7 +6,7 @@
 #include "MinimalTreeBuilder.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/BTree.h"
-#include "../CompoundFs/Blob.h"
+#include "../CompoundFs/ByteString.h"
 #include <algorithm>
 #include <random>
 
@@ -61,13 +61,13 @@ TEST(BTree, insertReplacesOriginal)
     }
 
     // value has same size => inplace
-    Blob value("Te$tData");
+    ByteString value("Te$tData");
     bt.insert("2233", value);
     auto res = bt.find("2233");
     CHECK(value == res.value());
 
     // value has different size => remove, add
-    value = Blob("Data");
+    value = ByteString("Data");
     bt.insert("1122", value);
     res = bt.find("1122");
     CHECK(value == res.value());
@@ -85,7 +85,7 @@ TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
         bt.insert(s.c_str(), "TestData");
     }
 
-    auto res = bt.insert("TestKey", "TestValue", [](const BlobRef&, const BlobRef&) {
+    auto res = bt.insert("TestKey", "TestValue", [](const ByteStringView&, const ByteStringView&) {
         throw std::runtime_error("");
         return true;
     });
@@ -105,19 +105,19 @@ TEST(BTree, canControlReplacementWithStrategy)
         bt.insert(s.c_str(), "TestData");
     }
 
-    bt.insert("TestKey", "TestValue", [](const BlobRef&, const BlobRef&) {
+    bt.insert("TestKey", "TestValue", [](const ByteStringView&, const ByteStringView&) {
         throw std::runtime_error("");
         return true;
     });
 
-    auto res = bt.insert("TestKey", "TestValue1", [](const BlobRef&, const BlobRef&) { return false; });
+    auto res = bt.insert("TestKey", "TestValue1", [](const ByteStringView&, const ByteStringView&) { return false; });
 
-    CHECK(std::get<BTree::Unchanged>(res).m_currentValue.current().second == Blob("TestValue"));
+    CHECK(std::get<BTree::Unchanged>(res).m_currentValue.current().second == ByteString("TestValue"));
 
-    res = bt.insert("TestKey", "TestValue2", [](const BlobRef&, const BlobRef&) { return true; });
+    res = bt.insert("TestKey", "TestValue2", [](const ByteStringView&, const ByteStringView&) { return true; });
 
-    CHECK(std::get<BTree::Replaced>(res).m_beforeValue == Blob("TestValue"));
-    CHECK(bt.find("TestKey").value() == Blob("TestValue2"));
+    CHECK(std::get<BTree::Replaced>(res).m_beforeValue == ByteString("TestValue"));
+    CHECK(bt.find("TestKey").value() == ByteString("TestValue2"));
 }
 
 TEST(BTree, emptyTreeReturnsFalseCursor)
@@ -144,8 +144,8 @@ TEST(BTree, cursorPointsToCurrentItem)
     }
 
     auto cur = bt.begin("100");
-    CHECK(cur.current().first == Blob("100"));
-    CHECK(cur.current().second == Blob("100 Test"));
+    CHECK(cur.current().first == ByteString("100"));
+    CHECK(cur.current().second == ByteString("100 Test"));
 }
 
 TEST(BTree, cursorIterates)
@@ -184,7 +184,7 @@ TEST(BTree, cursorNextPointsToNext)
 
     auto cur = bt.begin("100");
     cur = bt.next(cur);
-    CHECK(cur.current().first == Blob("101"));
+    CHECK(cur.current().first == ByteString("101"));
 }
 
 TEST(BTree, cursorKeepsPageInMemory)
@@ -203,8 +203,8 @@ TEST(BTree, cursorKeepsPageInMemory)
     auto pagesStillInMem = cm->trim(0);
 
     CHECK(pagesStillInMem == 1);
-    CHECK(cur.current().first == Blob("250"));
-    CHECK(cur.current().second == Blob("250 Test"));
+    CHECK(cur.current().first == ByteString("250"));
+    CHECK(cur.current().second == ByteString("250 Test"));
 
     cur = Cursor();
     pagesStillInMem = cm->trim(0);
@@ -235,7 +235,7 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
         std::string s = std::to_string(key);
         auto res = bt.remove(s.c_str());
         CHECK(res);
-        CHECK(res == Blob(s.c_str()));
+        CHECK(res == ByteString(s.c_str()));
     }
 
     CHECK(!bt.begin(""));
@@ -260,7 +260,7 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
     }
 
     CHECK(!bt.remove("Test"));
-    CHECK(bt.remove("399").value() == Blob("399 Test"));
+    CHECK(bt.remove("399").value() == ByteString("399 Test"));
 }
 
 TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
@@ -313,7 +313,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 800; i++)
     {
-        CHECK(cursor.key() == Blob(keys[i].c_str()));
+        CHECK(cursor.key() == ByteString(keys[i].c_str()));
         cursor = bt.next(cursor);
     }
     CHECK(!cursor);
@@ -358,7 +358,7 @@ TEST(BTree, insertAfterRemoveWorks)
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 3000; i++)
     {
-        CHECK(cursor.key() == Blob(keys[i].c_str()));
+        CHECK(cursor.key() == ByteString(keys[i].c_str()));
         cursor = bt.next(cursor);
     }
     CHECK(!cursor);
@@ -391,8 +391,8 @@ TEST(BTree, removeInReverseOrder)
     auto cursor = bt.begin("");
     for (size_t i = 2000; i < 3000; i++)
     {
-        CHECK(cursor.key() == Blob(keys[i].c_str()));
-        CHECK(bt.find(Blob(keys[i].c_str())) == cursor);
+        CHECK(cursor.key() == ByteString(keys[i].c_str()));
+        CHECK(bt.find(ByteString(keys[i].c_str())) == cursor);
         cursor = bt.next(cursor);
     }
     CHECK(!cursor);

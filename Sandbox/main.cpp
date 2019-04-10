@@ -1,4 +1,4 @@
-#include "../CompoundFs/Blob.h"
+#include "../CompoundFs/ByteString.h"
 #include "../CompoundFs/FileDescriptor.h"
 #include <memory>
 #include <tuple>
@@ -233,15 +233,15 @@ constexpr auto supportsPushBack(...) -> std::false_type
 }
 
 template <typename T>
-Blob convertToBlob(T* value)
+ByteString convertToBlob(T* value)
 {
     if constexpr (supportsPushBack(value))
     {
-        return Blob();
+        return ByteString();
     }
     else
     {
-        return Blob();
+        return ByteString();
     }
 }
 
@@ -256,7 +256,7 @@ struct IsClassTemplate<Tmpl<Args...>, Tmpl> : std::true_type
 #include <array>
 
 template <typename T>
-auto fromBlob(const BlobRef& blob, const uint8_t* begin = nullptr)
+auto fromBlob(const ByteStringView& blob, const uint8_t* begin = nullptr)
 {
     if (!begin)
         begin = blob.begin() + 1;
@@ -288,7 +288,7 @@ void func(const Var& var)
 
 int main()
 {
-    Blob b;
+    ByteString b;
     fromBlob<std::vector<float>>(b);
     fromBlob<std::string>(b);
     fromBlob<int>(b);

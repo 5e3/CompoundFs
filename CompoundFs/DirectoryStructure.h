@@ -31,7 +31,7 @@ public:
     std::optional<BlobTransformation::Variant> getAttribute(std::string_view name, Folder folder = Root) const;
 
     size_t remove(std::string_view name, Folder folder = Root);
-    size_t remove(BlobRef key);
+    size_t remove(ByteStringView key);
     size_t remove(Folder folder);
 
     std::optional<FileDescriptor> createFile(std::string_view name, Folder folder = Root);

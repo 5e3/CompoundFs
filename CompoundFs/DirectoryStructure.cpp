@@ -15,11 +15,11 @@ DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cach
 
 std::optional<Folder> DirectoryStructure::makeSubFolder(std::string_view name, Folder folder)
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
     auto value = BlobTransformation::toBlob(Folder { m_maxFolderId });
-    auto res = m_btree.insert(key, value, [](const BlobRef&, const BlobRef&) { return false; });
+    auto res = m_btree.insert(key, value, [](const ByteStringView&, const ByteStringView&) { return false; });
 
     auto inserted = std::get_if<BTree::Inserted>(&res);
     if (inserted)
@@ -35,7 +35,7 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(std::string_view name, F
 
 std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folder folder) const
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
     auto cursor = m_btree.find(key);
@@ -49,11 +49,11 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
 bool DirectoryStructure::addAttribute(const BlobTransformation::Variant& attribute, std::string_view name,
                                       Folder folder)
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
     auto value = BlobTransformation::toBlob(attribute);
-    auto res = m_btree.insert(key, value, [](const BlobRef&, const BlobRef& rhs) {
+    auto res = m_btree.insert(key, value, [](const ByteStringView&, const ByteStringView& rhs) {
         auto type = BlobTransformation::getBlobType(rhs);
         return type != TransformationTypeEnum::Folder && type != TransformationTypeEnum::File;
     });
@@ -62,7 +62,7 @@ bool DirectoryStructure::addAttribute(const BlobTransformation::Variant& attribu
 
 std::optional<BlobTransformation::Variant> DirectoryStructure::getAttribute(std::string_view name, Folder folder) const
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
     auto cursor = m_btree.find(key);
@@ -77,10 +77,10 @@ std::optional<BlobTransformation::Variant> DirectoryStructure::getAttribute(std:
 
 size_t DirectoryStructure::remove(Folder folder)
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     size_t nof = 0;
-    std::vector<Blob> keysToDelete;
+    std::vector<ByteString> keysToDelete;
     for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
     {
         if (!key.isPrefix(cursor.key()))
@@ -97,13 +97,13 @@ size_t DirectoryStructure::remove(Folder folder)
 
 size_t DirectoryStructure::remove(std::string_view name, Folder folder)
 {
-    FixedBlob key;
+    MutableByteString key;
     key.pushBack(folder);
     key.pushBack(name);
     return remove(key);
 }
 
-size_t DirectoryStructure::remove(BlobRef key)
+size_t DirectoryStructure::remove(ByteStringView key)
 {
     auto res = m_btree.remove(key);
     if (!res)

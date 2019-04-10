@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Blob.h" />
+    <ClInclude Include="ByteString.h" />
     <ClInclude Include="BlobTransformation.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />

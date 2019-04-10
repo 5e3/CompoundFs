@@ -14,7 +14,7 @@ Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noex
     : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
 {}
 
-std::pair<BlobRef, BlobRef> Cursor::current() const noexcept
+std::pair<ByteStringView, ByteStringView> Cursor::current() const noexcept
 {
     const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;
@@ -31,7 +31,7 @@ BTree::BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIn
         m_rootIndex = m_cacheManager.newPage<Leaf>(PageIdx::INVALID, PageIdx::INVALID).m_index;
 }
 
-BTree::InsertResult BTree::insert(const Blob& key, const Blob& value, ReplacePolicy replacePolicy)
+BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value, ReplacePolicy replacePolicy)
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -43,7 +43,7 @@ BTree::InsertResult BTree::insert(const Blob& key, const Blob& value, ReplacePol
     if (it != leafDef.m_page->endTable())
     {
         // there is already an entry for that key
-        BlobRef ventry = leafDef.m_page->getValue(it);
+        ByteStringView ventry = leafDef.m_page->getValue(it);
         if (!replacePolicy(value, ventry))
             return Unchanged { Cursor(leafDef.m_page, it) };
 
@@ -87,7 +87,7 @@ void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
     }
 }
 
-std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, const Blob& key,
+std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, const ByteString& key,
                                                         const InnerNodeStack& stack)
 {
     assert(inner.m_page->nofItems() == 1);
@@ -115,7 +115,7 @@ std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inne
     return right.m_page;
 }
 
-std::optional<Blob> BTree::remove(Blob key)
+std::optional<ByteString> BTree::remove(ByteString key)
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -125,7 +125,7 @@ std::optional<Blob> BTree::remove(Blob key)
     if (it == leafDef.m_page->endTable())
         return std::nullopt;
 
-    Blob beforeValue = leafDef.m_page->getValue(it);
+    ByteString beforeValue = leafDef.m_page->getValue(it);
     auto leaf = m_cacheManager.makePageWritable(leafDef).m_page;
     leaf->remove(key);
     if (leaf->nofItems() > 0)
@@ -162,7 +162,7 @@ std::optional<Blob> BTree::remove(Blob key)
     return beforeValue;
 }
 
-ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const
+ConstPageDef<Leaf> BTree::findLeaf(const ByteString& key, InnerNodeStack& stack) const
 {
     PageIndex id = m_rootIndex;
     while (true)
@@ -175,9 +175,9 @@ ConstPageDef<Leaf> BTree::findLeaf(const Blob& key, InnerNodeStack& stack) const
     }
 }
 
-void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right)
+void BTree::propagate(InnerNodeStack& stack, const ByteString& keyToInsert, PageIndex left, PageIndex right)
 {
-    Blob key = keyToInsert;
+    ByteString key = keyToInsert;
     while (!stack.empty())
     {
         auto inner = m_cacheManager.makePageWritable(stack.back());
@@ -197,7 +197,7 @@ void BTree::propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex 
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
 }
 
-Cursor BTree::find(const Blob& key) const
+Cursor BTree::find(const ByteString& key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -209,7 +209,7 @@ Cursor BTree::find(const Blob& key) const
     return Cursor(leafDef.m_page, it);
 }
 
-Cursor BTree::begin(const Blob& key) const
+Cursor BTree::begin(const ByteString& key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);

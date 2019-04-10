@@ -62,11 +62,11 @@ struct MinimalTreeBuilder
         return { leftKey, rightKey, node.m_index };
     }
 
-    Blob makeKey(int i)
+    ByteString makeKey(int i)
     {
         char buf[10];
         sprintf_s(buf, "%04d", i);
-        return Blob(buf);
+        return ByteString(buf);
     }
 };
 }

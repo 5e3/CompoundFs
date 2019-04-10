@@ -6,7 +6,7 @@
 
 #include "PageDef.h"
 #include "TypedCacheManager.h"
-#include "Blob.h"
+#include "ByteString.h"
 
 #include <vector>
 #include <memory>
@@ -30,9 +30,9 @@ public:
     Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept;
     bool operator==(const Cursor rhs) const { return m_position == rhs.m_position; }
 
-    std::pair<BlobRef, BlobRef> current() const noexcept;
-    BlobRef key() const noexcept { return current().first; }
-    BlobRef value() const noexcept { return current().second; }
+    std::pair<ByteStringView, ByteStringView> current() const noexcept;
+    ByteStringView key() const noexcept { return current().first; }
+    ByteStringView value() const noexcept { return current().second; }
     constexpr explicit operator bool() const noexcept { return m_position.has_value(); }
     // constexpr bool hasValue() const noexcept { return m_position.has_value(); }
 
@@ -63,7 +63,7 @@ public:
 
     struct Replaced
     {
-        Blob m_beforeValue;
+        ByteString m_beforeValue;
     };
 
     struct Unchanged
@@ -72,33 +72,33 @@ public:
     };
 
     using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
-    using ReplacePolicy = bool (*)(const BlobRef& newValue, const BlobRef& beforValue);
+    using ReplacePolicy = bool (*)(const ByteStringView& newValue, const ByteStringView& beforValue);
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
 
-    std::optional<Blob> insert(const Blob& key, const Blob& value)
+    std::optional<ByteString> insert(const ByteString& key, const ByteString& value)
     {
-        auto res = insert(key, value, [](const BlobRef&, const BlobRef&) { return true; });
+        auto res = insert(key, value, [](const ByteStringView&, const ByteStringView&) { return true; });
         auto replaced = std::get_if<Replaced>(&res);
         if (replaced)
             return replaced->m_beforeValue;
         return std::nullopt;
     }
 
-    InsertResult insert(const Blob& key, const Blob& value, ReplacePolicy replacePolicy);
-    std::optional<Blob> remove(Blob key);
+    InsertResult insert(const ByteString& key, const ByteString& value, ReplacePolicy replacePolicy);
+    std::optional<ByteString> remove(ByteString key);
 
-    Cursor find(const Blob& key) const;
-    Cursor begin(const Blob& key) const;
+    Cursor find(const ByteString& key) const;
+    Cursor begin(const ByteString& key) const;
     Cursor next(Cursor cursor) const;
 
     const std::vector<PageIndex>& getFreePages() const noexcept { return m_freePages; }
 
 private:
-    void propagate(InnerNodeStack& stack, const Blob& keyToInsert, PageIndex left, PageIndex right);
-    ConstPageDef<Leaf> findLeaf(const Blob& key, InnerNodeStack& stack) const;
-    std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, const Blob& key,
+    void propagate(InnerNodeStack& stack, const ByteString& keyToInsert, PageIndex left, PageIndex right);
+    ConstPageDef<Leaf> findLeaf(const ByteString& key, InnerNodeStack& stack) const;
+    std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, const ByteString& key,
                                                      const InnerNodeStack& stack);
     void unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf);
 

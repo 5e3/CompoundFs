@@ -8,7 +8,7 @@
 #include <assert.h>
 
 #include "Node.h"
-#include "Blob.h"
+#include "ByteString.h"
 
 namespace TxFs
 {
@@ -44,7 +44,7 @@ public:
         return m_end - m_begin;
     }
 
-    constexpr bool hasSpace(const Blob& key, const Blob& value) const noexcept
+    constexpr bool hasSpace(const ByteString& key, const ByteString& value) const noexcept
     {
         size_t size = sizeof(uint16_t) + key.size() + value.size();
         return size <= bytesLeft();
@@ -58,25 +58,25 @@ public:
 
     constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    constexpr BlobRef getKey(const uint16_t* it) const noexcept
+    constexpr ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return BlobRef(m_data + *it);
+        return ByteStringView(m_data + *it);
     }
 
-    constexpr BlobRef getLowestKey() const noexcept
+    constexpr ByteStringView getLowestKey() const noexcept
     {
         assert(beginTable() != endTable());
-        return BlobRef(m_data + *beginTable());
+        return ByteStringView(m_data + *beginTable());
     }
 
-    constexpr BlobRef getValue(const uint16_t* it) const noexcept
+    constexpr ByteStringView getValue(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return BlobRef(getKey(it).end());
+        return ByteStringView(getKey(it).end());
     }
 
-    void insert(const Blob& key, const Blob& value) noexcept
+    void insert(const ByteString& key, const ByteString& value) noexcept
     {
         assert(hasSpace(key, value));
 
@@ -93,37 +93,37 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
-    uint16_t* lowerBound(const Blob& key) const noexcept
+    uint16_t* lowerBound(const ByteString& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         return std::lower_bound(beginTable(), endTable(), key, keyCmp);
     }
 
-    uint16_t* find(const Blob& key) const noexcept
+    uint16_t* find(const ByteString& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return it;
-        BlobRef kentry(&m_data[*it]);
+        ByteStringView kentry(&m_data[*it]);
         if (kentry == key)
             return it;
         return endTable();
     }
 
-    void remove(const Blob& key) noexcept
+    void remove(const ByteString& key) noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return;
-        BlobRef kentry(&m_data[*it]);
+        ByteStringView kentry(&m_data[*it]);
         if (kentry != key)
             return;
 
         uint16_t index = *it;
         // copy what comes after to this place
-        BlobRef ventry(kentry.end());
+        ByteStringView ventry(kentry.end());
         uint16_t size = kentry.size() + ventry.size();
         std::copy(ventry.end(), &m_data[m_begin], kentry.begin());
         m_begin -= size;
@@ -138,7 +138,7 @@ public:
                 *it -= size;
     }
 
-    void split(Leaf* rightLeaf, const Blob& key, const Blob& value) noexcept
+    void split(Leaf* rightLeaf, const ByteString& key, const ByteString& value) noexcept
     {
         Leaf tmp = *this;
         const uint16_t* it = tmp.findSplitPoint();
@@ -159,9 +159,9 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            BlobRef keyEntry(m_data + *it);
+            ByteStringView keyEntry(m_data + *it);
             size += keyEntry.size();
-            BlobRef valueEntry(keyEntry.end());
+            ByteStringView valueEntry(keyEntry.end());
             size += valueEntry.size();
             if (size > (m_begin / 2U))
                 return it;
@@ -178,8 +178,8 @@ private:
         uint8_t* data = (uint8_t*) leaf.m_data;
         for (const uint16_t* it = begin; it < end; ++it)
         {
-            BlobRef key(data + *it);
-            BlobRef value(key.end());
+            ByteStringView key(data + *it);
+            ByteStringView value(key.end());
             std::copy(key.begin(), value.end(), m_data + m_begin);
             *destTable = m_begin;
             destTable++;

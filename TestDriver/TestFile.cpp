@@ -4,7 +4,7 @@
 
 #include "../CompoundFs/FileReader.h"
 #include "../CompoundFs/FileWriter.h"
-#include "../CompoundFs/Blob.h"
+#include "../CompoundFs/ByteString.h"
 #include <string>
 
 using namespace TxFs;
@@ -29,7 +29,7 @@ TEST(FileWriter, WriteCloseCreatesFileDescriptor)
     auto cm = std::make_shared<CacheManager>(&sf);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
 
@@ -45,7 +45,7 @@ TEST(FileWriter, WriteCloseCreatesFileTablePage)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
     CHECK(fd.m_first == fd.m_last);
@@ -65,7 +65,7 @@ TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
     auto cm = std::make_shared<CacheManager>(&sf);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
 
     for (int i = 0; i < 10; i++)
         f.write(data.begin(), data.end());
@@ -83,7 +83,7 @@ TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
     auto cm = std::make_shared<CacheManager>(&sf);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
 
     for (int i = 0; i < 10; i++)
         f.write(data.begin(), data.end());
@@ -108,7 +108,7 @@ TEST(FileWriter, SmallWritesOverPageBoundery)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
     for (int i = 0; i < 1000; i++)
         f.write(data.begin(), data.end());
 
@@ -132,7 +132,7 @@ TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    Blob data("Test");
+    ByteString data("Test");
     for (int i = 0; i < 1000; i++)
         f.write(data.begin(), data.end());
 

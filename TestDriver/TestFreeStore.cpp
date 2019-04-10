@@ -4,7 +4,7 @@
 #include "SimpleFile.h"
 #include "../CompoundFs/FreeStore.h"
 #include "../CompoundFs/FileWriter.h"
-#include "../CompoundFs/Blob.h"
+#include "../CompoundFs/ByteString.h"
 #include "../CompoundFs/TypedCacheManager.h"
 
 #include <random>
@@ -14,7 +14,7 @@ using namespace TxFs;
 FileDescriptor createFile(std::shared_ptr<CacheManager> cm)
 {
     FileWriter rfw(cm);
-    Blob data("X");
+    ByteString data("X");
     rfw.write(data.begin(), data.end());
     return rfw.close();
 }

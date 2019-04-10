@@ -19,8 +19,8 @@ struct TransformationTester
     using Type = typename std::tuple_element<size_t(IType), BlobTransformation::Types>::type;
     Type m_value = std::get<Type>(g_values);
     TransformationTypeEnum m_enum = IType;
-    Type get(const BlobRef& blob) { return std::get<Type>(BlobTransformation::toVariant(blob)); }
-    std::string getTypeName(const BlobRef& blob) const { return BlobTransformation::getBlobTypeName(blob); }
+    Type get(const ByteStringView& blob) { return std::get<Type>(BlobTransformation::toVariant(blob)); }
+    std::string getTypeName(const ByteStringView& blob) const { return BlobTransformation::getBlobTypeName(blob); }
 };
 
 template <typename T>
@@ -42,7 +42,7 @@ size_t getTypeSize(const std::string& s)
 TEST(BlobTransformation, TransformFile)
 {
     TransformationTester<TransformationTypeEnum::File> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -52,7 +52,7 @@ TEST(BlobTransformation, TransformFile)
 TEST(BlobTransformation, TransformFolder)
 {
     TransformationTester<TransformationTypeEnum::Folder> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -62,7 +62,7 @@ TEST(BlobTransformation, TransformFolder)
 TEST(BlobTransformation, TransformVersion)
 {
     TransformationTester<TransformationTypeEnum::Version> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -72,7 +72,7 @@ TEST(BlobTransformation, TransformVersion)
 TEST(BlobTransformation, TransformDouble)
 {
     TransformationTester<TransformationTypeEnum::Double> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -82,7 +82,7 @@ TEST(BlobTransformation, TransformDouble)
 TEST(BlobTransformation, TransformFileDoublePair)
 {
     TransformationTester<TransformationTypeEnum::DoublePair> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -92,7 +92,7 @@ TEST(BlobTransformation, TransformFileDoublePair)
 TEST(BlobTransformation, TransformInt)
 {
     TransformationTester<TransformationTypeEnum::Int> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -102,7 +102,7 @@ TEST(BlobTransformation, TransformInt)
 TEST(BlobTransformation, TransformString)
 {
     TransformationTester<TransformationTypeEnum::String> tt;
-    Blob b = BlobTransformation::toBlob(tt.m_value);
+    ByteString b = BlobTransformation::toBlob(tt.m_value);
     CHECK(b.size() == getTypeSize(tt.m_value) + 2);
     CHECK(BlobTransformation::getBlobType(b) == tt.m_enum);
     CHECK(tt.get(b) == tt.m_value);
@@ -113,7 +113,7 @@ TEST(BlobTransformation, TransformString)
 
 TEST(BlobTransformation, WrongTypeThrows)
 {
-    Blob b = BlobTransformation::toBlob("test");
+    ByteString b = BlobTransformation::toBlob("test");
     std::string s = BlobTransformation::toValue<std::string>(b);
     CHECK(s == "test");
     try
@@ -127,13 +127,13 @@ TEST(BlobTransformation, WrongTypeThrows)
 
 TEST(BlobTransformation, EmptyBlobIsUndefined)
 {
-    Blob b;
+    ByteString b;
     CHECK(BlobTransformation::getBlobType(b) == TransformationTypeEnum::Undefined);
 }
 
 TEST(BlobTransformation, EmptyStringIsLegal)
 {
-    Blob b = BlobTransformation::toBlob("");
+    ByteString b = BlobTransformation::toBlob("");
     CHECK(BlobTransformation::getBlobType(b) == TransformationTypeEnum::String);
     std::string s = BlobTransformation::toValue<std::string>(b);
     CHECK(s.empty());
@@ -143,7 +143,7 @@ TEST(BlobTransformation, TooLongStringThrows)
 {
     try
     {
-        Blob b = BlobTransformation::toBlob(std::string(300, 'X'));
+        ByteString b = BlobTransformation::toBlob(std::string(300, 'X'));
         CHECK(false);
     }
     catch(std::exception&)

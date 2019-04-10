@@ -8,7 +8,7 @@
 #include <assert.h>
 
 #include "Node.h"
-#include "Blob.h"
+#include "ByteString.h"
 
 namespace TxFs
 {
@@ -28,7 +28,7 @@ public:
         m_data[0] = 0;
     }
 
-    InnerNode(const Blob& key, PageIndex left, PageIndex right) noexcept
+    InnerNode(const ByteString& key, PageIndex left, PageIndex right) noexcept
         : Node(0, sizeof(m_data), NodeType::Inner)
     {
         std::copy(key.begin(), key.end(), m_data + m_begin);
@@ -49,7 +49,7 @@ public:
         return m_end - m_begin;
     }
 
-    constexpr bool hasSpace(const Blob& key) const noexcept
+    constexpr bool hasSpace(const ByteString& key) const noexcept
     {
         size_t size = key.size() + sizeof(PageIndex) + sizeof(uint16_t);
         return size <= bytesLeft();
@@ -63,10 +63,10 @@ public:
 
     constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    constexpr BlobRef getKey(const uint16_t* it) const noexcept
+    constexpr ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return BlobRef(m_data + *it);
+        return ByteStringView(m_data + *it);
     }
 
     constexpr PageIndex getLeft(const uint16_t* it) const noexcept
@@ -82,7 +82,7 @@ public:
         return getPageId(getKey(it).end());
     }
 
-    void insert(const Blob& key, PageIndex right) noexcept
+    void insert(const ByteString& key, PageIndex right) noexcept
     {
         assert(hasSpace(key));
 
@@ -98,7 +98,7 @@ public:
         m_end -= sizeof(uint16_t);
     }
 
-    uint16_t* findKey(BlobRef key) const noexcept
+    uint16_t* findKey(ByteStringView key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         auto it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
@@ -108,19 +108,19 @@ public:
         return it;
     }
 
-    PageIndex findPage(const Blob& key) const noexcept
+    PageIndex findPage(const ByteString& key) const noexcept
     {
         KeyCmp keyCmp(m_data);
         uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
         if (it == endTable())
             return getLeft(it);
-        BlobRef kentry(m_data + *it);
+        ByteStringView kentry(m_data + *it);
         if (kentry == key)
             return getRight(it);
         return getLeft(it);
     }
 
-    void remove(const Blob& key) noexcept
+    void remove(const ByteString& key) noexcept
     {
         assert(nofItems() > 0);
 
@@ -132,7 +132,7 @@ public:
             --it;
         else
         {
-            if (BlobRef(m_data + *it) != key)
+            if (ByteStringView(m_data + *it) != key)
             {
                 // must be the left PageId
                 if (it == beginTable())
@@ -143,7 +143,7 @@ public:
         }
         assert(getRight(it) == findPage(key));
 
-        BlobRef kentry(m_data + *it);
+        ByteStringView kentry(m_data + *it);
         uint16_t index = *it;
         // copy what comes after to this place
         uint16_t size = kentry.size() + sizeof(PageIndex);
@@ -162,19 +162,19 @@ public:
     }
 
     // returns middle key
-    Blob split(InnerNode* rightNode) noexcept
+    ByteString split(InnerNode* rightNode) noexcept
     {
         const InnerNode tmp = *this;
         const uint16_t* const it = tmp.findSplitPoint(m_begin / 2U);
         assert(it != tmp.endTable());
         fill(tmp, tmp.beginTable(), it);
         rightNode->fill(tmp, it + 1, tmp.endTable());
-        Blob middleKey(tmp.m_data + *it);
+        ByteString middleKey(tmp.m_data + *it);
         return middleKey;
     }
 
     // returns middle key
-    Blob split(InnerNode* rightNode, const Blob& key, PageIndex page) noexcept
+    ByteString split(InnerNode* rightNode, const ByteString& key, PageIndex page) noexcept
     {
         auto keyMiddle = split(rightNode);
 
@@ -186,7 +186,7 @@ public:
         return keyMiddle;
     }
 
-    static Blob redistribute(InnerNode& left, InnerNode& right, BlobRef parentKey) noexcept
+    static ByteString redistribute(InnerNode& left, InnerNode& right, ByteStringView parentKey) noexcept
     {
         if (left.size() < right.size())
         {
@@ -229,7 +229,7 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            BlobRef key(from.m_data + *it);
+            ByteStringView key(from.m_data + *it);
             data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
             idx++;
         }
@@ -248,7 +248,7 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            BlobRef key(from.m_data + *it);
+            ByteStringView key(from.m_data + *it);
             data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
             idx++;
         }
@@ -258,12 +258,12 @@ public:
         assert(m_begin <= m_end);
     }
 
-    bool canMergeWith(const InnerNode& right, BlobRef parentKey) noexcept
+    bool canMergeWith(const InnerNode& right, ByteStringView parentKey) noexcept
     {
         return bytesLeft() >= (right.size() + parentKey.size() + sizeof(PageIndex) + sizeof(uint16_t));
     }
 
-    void mergeWith(const InnerNode& right, BlobRef parentKey) noexcept
+    void mergeWith(const InnerNode& right, ByteStringView parentKey) noexcept
     {
         insert(parentKey, right.m_leftMost);
         copyToBack(right, right.beginTable(), right.endTable());
@@ -289,7 +289,7 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            BlobRef keyEntry(m_data + *it);
+            ByteStringView keyEntry(m_data + *it);
             size += keyEntry.size() + sizeof(PageIndex);
             if (size > splitPoint)
                 return it;

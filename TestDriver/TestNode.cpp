@@ -6,19 +6,19 @@
 
 using namespace TxFs;
 
-TEST(Blob, Ctor)
+TEST(ByteString, Ctor)
 {
-    Blob a;
+    ByteString a;
     CHECK(a.size() == 1);
 
-    Blob b("Nils");
+    ByteString b("Nils");
     CHECK(b.size() == 5);
 
-    Blob c("Senta");
+    ByteString c("Senta");
     CHECK(!(b == c));
     CHECK(b == b);
 
-    Blob d = c;
+    ByteString d = c;
     CHECK(d == c);
     CHECK(d.begin() != c.begin());
 
@@ -26,18 +26,18 @@ TEST(Blob, Ctor)
     CHECK(b == c);
     CHECK(b.begin() != c.begin());
 
-    Blob e(b.begin());
+    ByteString e(b.begin());
     CHECK(e == b);
     CHECK(e.begin() != b.begin());
 }
 
-TEST(BlobRef, Transformations)
+TEST(ByteStringView, Transformations)
 {
-    Blob b("Senta");
-    BlobRef br = b;
+    ByteString b("Senta");
+    ByteStringView br = b;
     CHECK(br.begin() == b.begin());
 
-    Blob c(std::move(b));
+    ByteString c(std::move(b));
     CHECK(br.begin() == c.begin());
 
     b = br; // reassignment after move is legal
@@ -99,7 +99,7 @@ TEST(Leaf, keysAreSorted)
     i = 0;
     for (uint16_t* it = l.beginTable(); it < l.endTable(); ++it)
     {
-        CHECK(l.getKey(it) == Blob(strs[i++].c_str()));
+        CHECK(l.getKey(it) == ByteString(strs[i++].c_str()));
     }
 }
 
@@ -244,12 +244,12 @@ TEST(Leaf, split)
     i = 0;
     for (uint16_t* it = l.beginTable(); it < l.endTable(); ++it)
     {
-        CHECK(l.getKey(it) == Blob(strs[i++].c_str()));
+        CHECK(l.getKey(it) == ByteString(strs[i++].c_str()));
     }
 
     for (uint16_t* it = m.beginTable(); it < m.endTable(); ++it)
     {
-        CHECK(m.getKey(it) == Blob(strs[i++].c_str()));
+        CHECK(m.getKey(it) == ByteString(strs[i++].c_str()));
     }
 }
 
@@ -300,22 +300,22 @@ TEST(InnerNode, leftAndRight)
     uint16_t* it = n.beginTable();
     CHECK(n.getLeft(it) == 0);
     CHECK(n.getRight(it) == 100);
-    CHECK(n.getKey(it) == Blob("100"));
+    CHECK(n.getKey(it) == ByteString("100"));
     ++it;
 
     CHECK(n.getLeft(it) == 100);
     CHECK(n.getRight(it) == 200);
-    CHECK(n.getKey(it) == Blob("200"));
+    CHECK(n.getKey(it) == ByteString("200"));
     ++it;
 
     CHECK(n.getLeft(it) == 200);
     CHECK(n.getRight(it) == 300);
-    CHECK(n.getKey(it) == Blob("300"));
+    CHECK(n.getKey(it) == ByteString("300"));
     ++it;
 
     CHECK(n.getLeft(it) == 300);
     CHECK(n.getRight(it) == 400);
-    CHECK(n.getKey(it) == Blob("400"));
+    CHECK(n.getKey(it) == ByteString("400"));
     ++it;
 
     CHECK(it == n.endTable());
@@ -331,11 +331,11 @@ TEST(InnerNode, split)
     n.insert("300", 300);
 
     InnerNode right;
-    Blob key = n.split(&right);
+    ByteString key = n.split(&right);
 
     CHECK(n.nofItems() == 2);
     CHECK(right.nofItems() == 2);
-    CHECK(key == Blob("300"));
+    CHECK(key == ByteString("300"));
 
     uint16_t* it = n.beginTable();
     CHECK(n.getLeft(it) == 0);
@@ -365,9 +365,9 @@ TEST(InnerNode, splitInsertsTheNewKeyLeft)
     n.insert("300", 300);
 
     InnerNode right;
-    Blob key = n.split(&right, Blob("250"), 250);
+    ByteString key = n.split(&right, ByteString("250"), 250);
 
-    CHECK(key == Blob("300"));
+    CHECK(key == ByteString("300"));
     CHECK(n.nofItems() == 3);
     CHECK(right.nofItems() == 2);
     auto it = n.endTable() - 1;
@@ -384,9 +384,9 @@ TEST(InnerNode, splitInsertsTheNewKeyRight)
     n.insert("300", 300);
 
     InnerNode right;
-    Blob key = n.split(&right, Blob("350"), 350);
+    ByteString key = n.split(&right, ByteString("350"), 350);
 
-    CHECK(key == Blob("300"));
+    CHECK(key == ByteString("300"));
     CHECK(n.nofItems() == 2);
     CHECK(right.nofItems() == 3);
     auto it = right.beginTable();
@@ -482,13 +482,13 @@ TEST(InnerNode, copyToBack)
 
     n.copyToBack(m, m.beginTable(), m.beginTable() + 1);
     CHECK(n.nofItems() == 6);
-    CHECK(n.findPage(Blob("600")) == 600);
+    CHECK(n.findPage(ByteString("600")) == 600);
 
     n.copyToBack(m, m.beginTable() + 1, m.endTable());
     CHECK(n.nofItems() == 8);
-    CHECK(n.findPage(Blob("600")) == 600);
-    CHECK(n.findPage(Blob("700")) == 700);
-    CHECK(n.findPage(Blob("800")) == 800);
+    CHECK(n.findPage(ByteString("600")) == 600);
+    CHECK(n.findPage(ByteString("700")) == 700);
+    CHECK(n.findPage(ByteString("800")) == 800);
 }
 
 TEST(InnerNode, copyToFront)
@@ -508,7 +508,7 @@ TEST(InnerNode, copyToFront)
 
     m.copyToFront(n, n.endTable() - 1, n.endTable());
     CHECK(m.nofItems() == 4);
-    CHECK(m.findPage(Blob("500")) == 500);
+    CHECK(m.findPage(ByteString("500")) == 500);
     CHECK(m.getLeft(m.beginTable()) == 400);
 
     m.copyToFront(n, n.beginTable(), n.endTable() - 1);
@@ -528,7 +528,7 @@ TEST(InnerNode, removeLeftMost)
     InnerNode n("100", 0, 100);
     n.insert("200", 200);
 
-    n.remove(Blob("000"));
+    n.remove(ByteString("000"));
     CHECK(n.getLeft(n.beginTable()) == 100);
     CHECK(n.getRight(n.beginTable()) == 200);
 }
@@ -538,7 +538,7 @@ TEST(InnerNode, removeRightOfFirstNode)
     InnerNode n("100", 0, 100);
     n.insert("200", 200);
 
-    n.remove(Blob("100"));
+    n.remove(ByteString("100"));
     CHECK(n.getLeft(n.beginTable()) == 0);
     CHECK(n.getRight(n.beginTable()) == 200);
 }
@@ -548,7 +548,7 @@ TEST(InnerNode, removeRightMost)
     InnerNode n("100", 0, 100);
     n.insert("200", 200);
 
-    n.remove(Blob("300"));
+    n.remove(ByteString("300"));
     CHECK(n.getLeft(n.beginTable()) == 0);
     CHECK(n.getRight(n.beginTable()) == 100);
     CHECK(n.nofItems() == 1);
@@ -558,7 +558,7 @@ TEST(InnerNode, removeSingleEntryRight)
 {
     InnerNode n("100", 0, 100);
 
-    n.remove(Blob("300"));
+    n.remove(ByteString("300"));
     CHECK(n.getLeft(n.beginTable()) == 0);
     CHECK(n.nofItems() == 0);
 }
@@ -567,7 +567,7 @@ TEST(InnerNode, removeSingleEntryLeft)
 {
     InnerNode n("100", 0, 100);
 
-    n.remove(Blob("050"));
+    n.remove(ByteString("050"));
     CHECK(n.getLeft(n.beginTable()) == 100);
     CHECK(n.nofItems() == 0);
 }
@@ -576,7 +576,7 @@ TEST(InnerNode, replaceSingleKeepsSingleEntryCorrect)
 {
     InnerNode n("100", 0, 100);
 
-    n.remove(Blob("100"));
+    n.remove(ByteString("100"));
     n.insert("075", 100);
     CHECK(n.getLeft(n.beginTable()) == 0);
     CHECK(n.getRight(n.beginTable()) == 100);
@@ -590,9 +590,9 @@ TEST(InnerNode, redistributeLeftPageBigger)
     n.insert("300", 300);
     InnerNode m("500", 450, 500);
 
-    Blob key("450");
+    ByteString key("450");
     key = InnerNode::redistribute(n, m, key);
-    CHECK(key == Blob("300"));
+    CHECK(key == ByteString("300"));
     CHECK(n.nofItems() == 2);
     CHECK(m.nofItems() == 3);
 
@@ -614,9 +614,9 @@ TEST(InnerNode, redistributeLeftPageSmaller)
     m.insert("300", 300);
     m.insert("500", 500);
 
-    Blob key("150");
+    ByteString key("150");
     key = InnerNode::redistribute(n, m, key);
-    CHECK(key == Blob("300"));
+    CHECK(key == ByteString("300"));
     CHECK(n.nofItems() == 3);
     CHECK(m.nofItems() == 2);
 
@@ -638,7 +638,7 @@ TEST(InnerNode, mergeWithRightPage)
     m.insert("300", 300);
     m.insert("500", 500);
 
-    Blob key("150");
+    ByteString key("150");
     n.mergeWith(m, key);
     CHECK(n.nofItems() == 6);
 

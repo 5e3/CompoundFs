@@ -12,29 +12,29 @@
 namespace TxFs
 {
 
-class BlobRef
+class ByteStringView
 {
     inline static uint8_t g_default = 0;
 
 public:
-    constexpr BlobRef() noexcept
+    constexpr ByteStringView() noexcept
         : m_data(&g_default)
     {}
 
-    constexpr BlobRef(const uint8_t* val) noexcept
+    constexpr ByteStringView(const uint8_t* val) noexcept
         : m_data((uint8_t*) val)
     {}
 
     constexpr uint16_t size() const noexcept { return *m_data + 1; }
     constexpr const uint8_t* begin() const noexcept { return m_data; }
     constexpr const uint8_t* end() const noexcept { return begin() + size(); }
-    bool operator==(const BlobRef& rhs) const noexcept { return std::equal(begin(), end(), rhs.begin()); }
-    bool operator!=(const BlobRef& rhs) const noexcept { return !(*this == rhs); }
-    bool operator<(const BlobRef& rhs) const noexcept
+    bool operator==(const ByteStringView& rhs) const noexcept { return std::equal(begin(), end(), rhs.begin()); }
+    bool operator!=(const ByteStringView& rhs) const noexcept { return !(*this == rhs); }
+    bool operator<(const ByteStringView& rhs) const noexcept
     {
         return std::lexicographical_compare(begin() + 1, end(), rhs.begin() + 1, rhs.end());
     }
-    bool isPrefix(const BlobRef& rhs) const noexcept
+    bool isPrefix(const ByteStringView& rhs) const noexcept
     {
         return std::mismatch(begin() + 1, end(), rhs.begin() + 1).first == end();
     }
@@ -48,12 +48,12 @@ protected:
 
 //////////////////////////////////////////////////////////////////////////
 
-class Blob : public BlobRef
+class ByteString : public ByteStringView
 {
 public:
-    Blob() noexcept = default;
+    ByteString() noexcept = default;
 
-    Blob(const char* str)
+    ByteString(const char* str)
         : m_container(strlen(str) + 1)
     {
         assert(m_container.size() <= UINT8_MAX);
@@ -62,51 +62,51 @@ public:
         std::copy(str, str + size() - 1, begin() + 1);
     }
 
-    Blob(const uint8_t* val)
+    ByteString(const uint8_t* val)
         : m_container(*val + size_t(1))
     {
         m_data = &m_container[0];
         std::copy(val, val + m_container.size(), m_data);
     }
 
-    Blob(const BlobRef& br)
-        : Blob(br.begin())
+    ByteString(const ByteStringView& br)
+        : ByteString(br.begin())
     {}
 
-    Blob(const Blob& val)
+    ByteString(const ByteString& val)
         : m_container(val.m_container)
     {
         m_data = &m_container[0];
     }
 
-    Blob(Blob&& val) noexcept
+    ByteString(ByteString&& val) noexcept
         : m_container(std::move(val.m_container))
     {
         m_data = &m_container[0];
     }
 
-    Blob& operator=(const Blob& val)
+    ByteString& operator=(const ByteString& val)
     {
         auto tmp = val;
         swap(tmp);
         return *this;
     }
 
-    Blob& operator=(const BlobRef& ref)
+    ByteString& operator=(const ByteStringView& ref)
     {
-        Blob val(ref);
+        ByteString val(ref);
         swap(val);
         return *this;
     }
 
-    Blob& operator=(Blob&& val) noexcept
+    ByteString& operator=(ByteString&& val) noexcept
     {
         m_container = std::move(val.m_container);
         m_data = &m_container[0];
         return *this;
     }
 
-    void swap(Blob& val) noexcept
+    void swap(ByteString& val) noexcept
     {
         std::swap(m_container, val.m_container);
         std::swap(m_data, val.m_data);
@@ -118,14 +118,14 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 
-class FixedBlob : public BlobRef
+class MutableByteString : public ByteStringView
 {
     uint8_t m_buffer[UINT8_MAX + 1];
     uint8_t* m_iterator;
 
 public:
-    FixedBlob() noexcept
-        : BlobRef(m_buffer)
+    MutableByteString() noexcept
+        : ByteStringView(m_buffer)
         , m_iterator(m_buffer + 1)
     {
         m_buffer[0] = 0;
@@ -170,20 +170,20 @@ public:
 
     bool operator()(uint16_t left, uint16_t right) const noexcept
     {
-        BlobRef l(m_data + left);
-        BlobRef r(m_data + right);
+        ByteStringView l(m_data + left);
+        ByteStringView r(m_data + right);
         return l < r;
     }
 
-    bool operator()(uint16_t left, const BlobRef& right) const noexcept
+    bool operator()(uint16_t left, const ByteStringView& right) const noexcept
     {
-        BlobRef l(m_data + left);
+        ByteStringView l(m_data + left);
         return l < right;
     }
 
-    bool operator()(const BlobRef& left, uint16_t right) const noexcept
+    bool operator()(const ByteStringView& left, uint16_t right) const noexcept
     {
-        BlobRef r(m_data + right);
+        ByteStringView r(m_data + right);
         return left < r;
     }
 
