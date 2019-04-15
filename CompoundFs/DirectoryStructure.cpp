@@ -46,8 +46,7 @@ std::optional<Folder> DirectoryStructure::subFolder(std::string_view name, Folde
     return subFolder;
 }
 
-bool DirectoryStructure::addAttribute(const ByteStringOps::Variant& attribute, std::string_view name,
-                                      Folder folder)
+bool DirectoryStructure::addAttribute(const ByteStringOps::Variant& attribute, std::string_view name, Folder folder)
 {
     MutableByteString key;
     key.pushBack(folder);
@@ -79,20 +78,18 @@ size_t DirectoryStructure::remove(Folder folder)
 {
     MutableByteString key;
     key.pushBack(folder);
-    size_t nof = 0;
     std::vector<ByteString> keysToDelete;
     for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
     {
         if (!key.isPrefix(cursor.key()))
             break;
         keysToDelete.push_back(cursor.key());
-        nof++;
     }
 
     for (const auto& k: keysToDelete)
         remove(k);
 
-    return nof;
+    return keysToDelete.size();
 }
 
 size_t DirectoryStructure::remove(std::string_view name, Folder folder)
