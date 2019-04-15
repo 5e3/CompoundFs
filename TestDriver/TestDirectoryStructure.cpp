@@ -22,7 +22,7 @@ TEST(DirectoryStructure, FoldersAreNotFound)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto res = ds.subFolder("test");
+    auto res = ds.subFolder(DirectoryKey("test"));
     CHECK(!res);
 }
 
@@ -30,48 +30,50 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto res = ds.makeSubFolder("test");
+    auto res = ds.makeSubFolder(DirectoryKey("test"));
     CHECK(res);
     CHECK(*res == Folder { 1 });
 
-    res = ds.makeSubFolder("test");
+    res = ds.makeSubFolder(DirectoryKey("test"));
     CHECK(res);
     CHECK(*res == Folder { 1 });
 
-    CHECK(ds.subFolder("test") == *res);
+    CHECK(ds.subFolder(DirectoryKey("test")) == *res);
 }
 
 TEST(DirectoryStructure, makeSubFolder)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder");
-    auto subsub = ds.makeSubFolder("subsub", *subFolder);
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder"));
+    auto subsub = ds.makeSubFolder(DirectoryKey(*subFolder, "subsub"));
     CHECK(subsub);
-    CHECK(subsub == ds.subFolder("subsub", *subFolder));
+    CHECK(subsub == ds.subFolder(DirectoryKey(*subFolder, "subsub")));
 }
 
 TEST(DirectoryStructure, simpleRemove)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder").value();
-    auto subsub = ds.makeSubFolder("subsub", subFolder);
-    auto nof = ds.remove("subsub", subFolder);
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    auto subsub = ds.makeSubFolder(DirectoryKey(subFolder, "subsub"));
+    DirectoryKey dkey(subFolder, "subsub");
+    auto nof = ds.remove(dkey.getByteStringView());
     CHECK(nof == 1);
-    CHECK(!ds.subFolder("subsub", subFolder));
+    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub")));
 }
 
 TEST(DirectoryStructure, recursiveRemove)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder").value();
-    ds.makeSubFolder("subsub1", subFolder);
-    ds.makeSubFolder("subsub2", subFolder);
-    ds.makeSubFolder("subsub3", subFolder);
-    ds.makeSubFolder("subsub4", subFolder);
-    auto nof = ds.remove("subFolder");
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub1"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub2"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub3"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
+    DirectoryKey dkey("subFolder");
+    auto nof = ds.remove(dkey.getByteStringView());
     CHECK(nof == 5);
 }
 
@@ -79,34 +81,35 @@ TEST(DirectoryStructure, recursiveRemove2)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder").value();
-    auto subFolder2 = ds.makeSubFolder("subFolder2").value();
-    ds.makeSubFolder("subsub1", subFolder2);
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    auto subFolder2 = ds.makeSubFolder(DirectoryKey("subFolder2")).value();
+    ds.makeSubFolder(DirectoryKey(subFolder2, "subsub1"));
 
-    ds.makeSubFolder("subsub1", subFolder);
-    ds.makeSubFolder("subsub2", subFolder);
-    ds.makeSubFolder("subsub3", subFolder);
-    ds.makeSubFolder("subsub4", subFolder);
-    ds.addAttribute("test", "attrib", subFolder);
-    auto nof = ds.remove("subFolder");
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub1"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub2"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub3"));
+    ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
+    ds.addAttribute(DirectoryKey(subFolder, "attrib"), "test");
+    DirectoryKey dkey("subFolder");
+    auto nof = ds.remove(dkey.getByteStringView());
     CHECK(nof == 6);
-    CHECK(!ds.subFolder("subsub1", subFolder));
-    CHECK(!ds.subFolder("subsub2", subFolder));
-    CHECK(!ds.getAttribute("attrib", subFolder));
-    CHECK(ds.subFolder("subsub1", subFolder2));
+    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
+    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
+    CHECK(!ds.getAttribute(DirectoryKey(subFolder, "attrib")));
+    CHECK(ds.subFolder(DirectoryKey(subFolder2, "subsub1")));
 }
 
 TEST(DirectoryStructure, addGetAttribute)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    CHECK(ds.addAttribute("test", "attrib"));
-    auto res = ds.getAttribute("attrib");
+    CHECK(ds.addAttribute(DirectoryKey("attrib"), "test"));
+    auto res = ds.getAttribute(DirectoryKey("attrib"));
     CHECK(res);
     CHECK(std::get<std::string>(*res) == "test");
 
-    CHECK(ds.addAttribute(42, "attrib"));
-    res = ds.getAttribute("attrib");
+    CHECK(ds.addAttribute(DirectoryKey("attrib"), 42));
+    res = ds.getAttribute(DirectoryKey("attrib"));
     CHECK(res);
     CHECK(std::get<int>(*res) == 42);
 }
@@ -115,9 +118,9 @@ TEST(DirectoryStructure, attributesDoNotReplaceFolders)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    auto subFolder = ds.makeSubFolder("subFolder").value();
-    CHECK(!ds.addAttribute("test", "subFolder"));
-    auto res = ds.getAttribute("subFolder");
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    CHECK(!ds.addAttribute(DirectoryKey("subFolder"), "test"));
+    auto res = ds.getAttribute(DirectoryKey("subFolder"));
     CHECK(!res);
 }
 
@@ -125,7 +128,6 @@ TEST(DirectoryStructure, foldersDoNotReplaceAttributes)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    CHECK(ds.addAttribute("test", "subFolder"));
-    CHECK(!ds.makeSubFolder("subFolder"));
+    CHECK(ds.addAttribute(DirectoryKey("subFolder"), "test"));
+    CHECK(!ds.makeSubFolder(DirectoryKey("subFolder")));
 }
-
