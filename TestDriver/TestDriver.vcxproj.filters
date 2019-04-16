@@ -20,5 +20,6 @@
     <ClCompile Include="TestTypedCacheManager.cpp" />
     <ClCompile Include="TestDirectoryStructure.cpp" />
     <ClCompile Include="TestDirectoryObjects.cpp" />
+    <ClCompile Include="TestFileSystem.cpp" />
   </ItemGroup>
 </Project>

@@ -20,6 +20,7 @@
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="ByteString.h" />
     <ClInclude Include="DirectoryObjects.h" />
+    <ClInclude Include="FileSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
@@ -27,6 +28,7 @@
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="DirectoryObjects.cpp" />
+    <ClCompile Include="FileSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

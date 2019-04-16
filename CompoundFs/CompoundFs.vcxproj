@@ -26,6 +26,7 @@
     <ClInclude Include="DirectoryStructure.h" />
     <ClInclude Include="FileDescriptor.h" />
     <ClInclude Include="FileReader.h" />
+    <ClInclude Include="FileSystem.h" />
     <ClInclude Include="FileTable.h" />
     <ClInclude Include="FileWriter.h" />
     <ClInclude Include="FreeStore.h" />
@@ -44,6 +45,7 @@
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="DirectoryObjects.cpp" />
     <ClCompile Include="DirectoryStructure.cpp" />
+    <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
   </ItemGroup>
   <ItemGroup>
