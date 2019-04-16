@@ -132,3 +132,51 @@ TEST(DirectoryStructure, foldersDoNotReplaceAttributes)
     CHECK(!ds.makeSubFolder(DirectoryKey("subFolder")));
 }
 
+TEST(DirectoryStructure, createFile)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+    DirectoryKey dkey("test.file");
+
+    CHECK(ds.createFile(dkey));
+    FileDescriptor desc(100);
+    CHECK(ds.updateFile(dkey, desc));
+
+    CHECK(*ds.openFile(dkey) == desc);
+    CHECK(ds.createFile(dkey));
+    CHECK(*ds.openFile(dkey) == FileDescriptor());
+}
+
+TEST(DirectoryStructure, appendFile)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+    DirectoryKey dkey("test.file");
+
+    CHECK(*ds.appendFile(dkey) == FileDescriptor());
+
+    FileDescriptor desc(100);
+    CHECK(ds.updateFile(dkey, desc));
+
+    CHECK(*ds.appendFile(dkey) == desc);
+}
+
+TEST(DirectoryStructure, updateFileNeedsExistingFile)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+    DirectoryKey dkey("test.file");
+
+    FileDescriptor desc(100);
+    CHECK(!ds.updateFile(dkey, desc));
+}
+
+TEST(DirectoryStructure, nonFileEntryPrefentsCreationOfFile)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+    DirectoryKey dkey("test.file");
+    ds.addAttribute(dkey, 1);
+
+    CHECK(!ds.createFile(dkey));
+    CHECK(!ds.appendFile(dkey));
+    FileDescriptor desc(100);
+    CHECK(!ds.updateFile(dkey, desc));
+}
+

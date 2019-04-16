@@ -106,3 +106,66 @@ size_t DirectoryStructure::remove(ByteStringView key)
         return 1;
     }
 }
+
+std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& dkey) const
+{
+    auto cursor = m_btree.find(dkey.getByteStringView());
+    if (!cursor || ByteStringOps::getType(cursor.value()) != DirectoryObjType::File)
+        return std::nullopt;
+
+    return ByteStringOps::toValue<FileDescriptor>(cursor.value());
+}
+
+bool DirectoryStructure::createFile(const DirectoryKey& dkey)
+{
+    auto value = ByteStringOps::toByteString(FileDescriptor());
+    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs)
+    {
+        return ByteStringOps::getType(rhs) == DirectoryObjType::File;
+    });
+
+    if (std::holds_alternative<BTree::Unchanged>(res))
+        return false;
+
+    auto replaced = std::get_if<BTree::Replaced>(&res);
+    if (replaced)
+        m_freeStore.deleteFile(ByteStringOps::toValue<FileDescriptor>(replaced->m_beforeValue));
+
+    return true;
+}
+
+std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey& dkey)
+{
+    auto value = ByteStringOps::toByteString(FileDescriptor());
+    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView&)
+    {
+        return false;
+    });
+
+    if (std::holds_alternative<BTree::Inserted>(res))
+        return FileDescriptor();
+
+    auto cursor = std::get<BTree::Unchanged>(res).m_currentValue;
+    if (ByteStringOps::getType(cursor.value()) != DirectoryObjType::File)
+        return std::nullopt;
+    return ByteStringOps::toValue<FileDescriptor>(cursor.value());
+}
+
+bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
+{
+    auto value = ByteStringOps::toByteString(desc);
+    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs)
+    {
+        return ByteStringOps::getType(rhs) == DirectoryObjType::File;
+    });
+
+    if (std::holds_alternative<BTree::Unchanged>(res))
+        return false;
+
+    auto inserted = std::get_if<BTree::Inserted>(&res);
+    if (inserted)
+        return false;
+
+    return true;
+}
+

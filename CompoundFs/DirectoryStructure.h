@@ -61,9 +61,9 @@ public:
     size_t remove(Folder folder);
 
     std::optional<FileDescriptor> openFile(const DirectoryKey& dkey) const;
-    std::optional<FileDescriptor> createFile(const DirectoryKey& dkey);
+    bool createFile(const DirectoryKey& dkey);
     std::optional<FileDescriptor> appendFile(const DirectoryKey& dkey);
-    bool updateFile(const DirectoryKey& dkey);
+    bool updateFile(const DirectoryKey& dkey, FileDescriptor desc);
 
 
 private:
