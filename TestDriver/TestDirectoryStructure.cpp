@@ -131,3 +131,4 @@ TEST(DirectoryStructure, foldersDoNotReplaceAttributes)
     CHECK(ds.addAttribute(DirectoryKey("subFolder"), "test"));
     CHECK(!ds.makeSubFolder(DirectoryKey("subFolder")));
 }
+
