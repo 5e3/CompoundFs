@@ -81,6 +81,12 @@ size_t DirectoryStructure::remove(Folder folder)
     return keysToDelete.size();
 }
 
+size_t DirectoryStructure::remove(const DirectoryKey& dkey)
+{
+    return remove(dkey.getByteStringView());
+}
+
+
 size_t DirectoryStructure::remove(ByteStringView key)
 {
     auto res = m_btree.remove(key);

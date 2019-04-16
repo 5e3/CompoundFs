@@ -56,11 +56,15 @@ public:
     bool addAttribute(const DirectoryKey& dkey, const ByteStringOps::Variant& attribute);
     std::optional<ByteStringOps::Variant> getAttribute(const DirectoryKey& dkey) const;
 
+    size_t remove(const DirectoryKey& dkey);
     size_t remove(ByteStringView key);
     size_t remove(Folder folder);
 
+    std::optional<FileDescriptor> openFile(const DirectoryKey& dkey) const;
     std::optional<FileDescriptor> createFile(const DirectoryKey& dkey);
     std::optional<FileDescriptor> appendFile(const DirectoryKey& dkey);
+    bool updateFile(const DirectoryKey& dkey);
+
 
 private:
     std::shared_ptr<CacheManager> m_cacheManager;

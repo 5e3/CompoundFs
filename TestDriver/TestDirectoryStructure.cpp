@@ -58,7 +58,7 @@ TEST(DirectoryStructure, simpleRemove)
     auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
     auto subsub = ds.makeSubFolder(DirectoryKey(subFolder, "subsub"));
     DirectoryKey dkey(subFolder, "subsub");
-    auto nof = ds.remove(dkey.getByteStringView());
+    auto nof = ds.remove(dkey);
     CHECK(nof == 1);
     CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub")));
 }
@@ -73,7 +73,7 @@ TEST(DirectoryStructure, recursiveRemove)
     ds.makeSubFolder(DirectoryKey(subFolder, "subsub3"));
     ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
     DirectoryKey dkey("subFolder");
-    auto nof = ds.remove(dkey.getByteStringView());
+    auto nof = ds.remove(dkey);
     CHECK(nof == 5);
 }
 
@@ -91,7 +91,7 @@ TEST(DirectoryStructure, recursiveRemove2)
     ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
     ds.addAttribute(DirectoryKey(subFolder, "attrib"), "test");
     DirectoryKey dkey("subFolder");
-    auto nof = ds.remove(dkey.getByteStringView());
+    auto nof = ds.remove(dkey);
     CHECK(nof == 6);
     CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
     CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
