@@ -331,7 +331,7 @@ TEST(FileWriter, FillPageTable)
     CHECK(is.size() == 4000);
 }
 
-TEST(RawPageReader, ReadNullFile)
+TEST(FileReader, ReadNullFile)
 {
     SimpleFile sf;
     auto cm = std::make_shared<CacheManager>(&sf);
