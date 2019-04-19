@@ -25,18 +25,14 @@ struct Path
 
     std::string_view m_relativePath;
     Folder m_root;
-};
 
-//////////////////////////////////////////////////////////////////////////
-
-class PathWalker
-{
-public:
-    std::optional<ByteStringView> expandPath(Path path, const DirectoryStructure* ds);
-    std::optional<ByteStringView> createPath(Path path, DirectoryStructure* ds);
-
-private:
-    DirectoryKey m_dkey;
+    void create(DirectoryStructure* ds);
+    void reduce(const DirectoryStructure* ds);
+    bool operator==(Path rhs) const
+    {
+        return std::tie(m_root, m_relativePath) == std::tie(rhs.m_root, rhs.m_relativePath);
+    }
+    bool operator!=(Path rhs) const { return !(*this == rhs); }
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -55,9 +51,6 @@ public:
     void close(ReadFile file);
 
 private:
-    std::optional<Path> expandPath(Path path) const;
-    std::optional<Path> createPath(Path path);
-
 private:
     DirectoryStructure m_directoryStructure;
     // std::vector<

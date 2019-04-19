@@ -7,6 +7,9 @@
 
 using namespace TxFs;
 
+namespace
+{
+
 DirectoryStructure makeDirectoryStructure()
 {
     SimpleFile sf;
@@ -15,6 +18,8 @@ DirectoryStructure makeDirectoryStructure()
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);
     return DirectoryStructure(cm, fsfd);
+}
+
 }
 
 TEST(DirectoryStructure, FoldersAreNotFound)
@@ -178,4 +183,3 @@ TEST(DirectoryStructure, nonFileEntryPrefentsCreationOfFile)
     FileDescriptor desc(100);
     CHECK(!ds.updateFile(dkey, desc));
 }
-
