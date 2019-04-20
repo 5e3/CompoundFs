@@ -26,8 +26,8 @@ struct Path
     std::string_view m_relativePath;
     Folder m_root;
 
-    void create(DirectoryStructure* ds);
-    void reduce(const DirectoryStructure* ds);
+    bool create(DirectoryStructure* ds);
+    bool reduce(const DirectoryStructure* ds);
     bool operator==(Path rhs) const
     {
         return std::tie(m_root, m_relativePath) == std::tie(rhs.m_root, rhs.m_relativePath);
@@ -51,9 +51,7 @@ public:
     void close(ReadFile file);
 
 private:
-private:
     DirectoryStructure m_directoryStructure;
-    // std::vector<
 };
 
 }
