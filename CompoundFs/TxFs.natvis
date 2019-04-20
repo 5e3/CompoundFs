@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-  <Type Name="TxFs::BlobRef">
+  <Type Name="TxFs::ByteStringView">
     <DisplayString>{(m_data+1),[*m_data]}</DisplayString>
     <Expand>
       <Item Name="[size]" ExcludeView="simple">*m_data</Item>
