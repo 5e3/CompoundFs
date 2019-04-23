@@ -64,6 +64,14 @@ public:
     void close(WriteHandle file);
     void close(ReadHandle file);
 
+    std::optional<Folder> makeSubFolder(Path path);
+    std::optional<Folder> subFolder(Path path) const;
+
+    bool addAttribute(Path path, const ByteStringOps::Variant& attribute);
+    std::optional<ByteStringOps::Variant> getAttribute(Path path) const;
+
+    size_t remove(Path path);
+
 private:
     struct OpenWriter
     {

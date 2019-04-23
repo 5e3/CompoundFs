@@ -130,3 +130,43 @@ void FileSystem::close(ReadHandle file)
     [[maybe_unused]] auto res = m_openReaders.at(file); // throws if non-existant
     m_openReaders.erase(file);
 }
+
+std::optional<Folder> FileSystem::makeSubFolder(Path path)
+{
+    if (!path.create(&m_directoryStructure))
+        return std::nullopt;
+
+    return m_directoryStructure.makeSubFolder(DirectoryKey(path.m_root, path.m_relativePath));
+}
+
+std::optional<Folder> FileSystem::subFolder(Path path) const
+{
+    if (!path.reduce(&m_directoryStructure))
+        return std::nullopt;
+
+    return m_directoryStructure.subFolder(DirectoryKey(path.m_root, path.m_relativePath));
+}
+
+bool FileSystem::addAttribute(Path path, const ByteStringOps::Variant& attribute)
+{
+    if (!path.create(&m_directoryStructure))
+        return false;
+
+    return m_directoryStructure.addAttribute(DirectoryKey(path.m_root, path.m_relativePath), attribute);
+}
+
+std::optional<ByteStringOps::Variant> FileSystem::getAttribute(Path path) const
+{
+    if (!path.reduce(&m_directoryStructure))
+        return std::nullopt;
+
+    return m_directoryStructure.getAttribute(DirectoryKey(path.m_root, path.m_relativePath));
+}
+
+size_t FileSystem::remove(Path path)
+{
+    if (!path.reduce(&m_directoryStructure))
+        return 0;
+
+    return m_directoryStructure.remove(DirectoryKey(path.m_root, path.m_relativePath));
+}
