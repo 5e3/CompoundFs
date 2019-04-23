@@ -12,8 +12,8 @@ namespace
 
 DirectoryStructure makeDirectoryStructure()
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    auto sf = new SimpleFile;
+    auto cm = std::make_shared<CacheManager>(sf);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);
