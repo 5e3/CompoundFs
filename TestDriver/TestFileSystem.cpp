@@ -187,7 +187,7 @@ TEST(FileSystem, subFolder)
 
     auto folder2 = fs.subFolder("test/folder");
     CHECK(folder2);
-    CHECK(*folder == *folder2);
+    CHECK(folder == folder2);
 }
 
 TEST(FileSystem, attribute)
