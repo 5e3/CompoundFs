@@ -202,3 +202,14 @@ TEST(FileSystem, attribute)
     CHECK(attribute);
     CHECK(*attribute == ByteStringOps::Variant(42.42));
 }
+
+TEST(FileSystem, remove)
+{
+    auto fs = makeFileSystem();
+    auto success = fs.addAttribute("folder/attribute", 42);
+    CHECK(success);
+
+    CHECK(fs.remove("folder/attribute") == 1);
+    auto attribute = fs.getAttribute("folder/attribute");
+    CHECK(!attribute);
+}
