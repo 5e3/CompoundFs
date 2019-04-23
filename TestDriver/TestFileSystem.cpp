@@ -12,12 +12,22 @@ namespace
 
 DirectoryStructure makeDirectoryStructure()
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    auto sf = new SimpleFile;
+    auto cm = std::make_shared<CacheManager>(sf);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);
     return DirectoryStructure(cm, fsfd);
+}
+
+FileSystem makeFileSystem()
+{
+    auto sf = new SimpleFile;
+    auto cm = std::make_shared<CacheManager>(sf);
+    TypedCacheManager tcm(cm);
+    auto freeStorePage = tcm.newPage<FileTable>();
+    FileDescriptor fsfd(freeStorePage.m_index);
+    return FileSystem(cm, fsfd);
 }
 
 }
@@ -79,4 +89,92 @@ TEST(Path, reduceFindsSubFolders)
     CHECK(p == p3);
     CHECK(p.m_root != Path::AbsoluteRoot);
     CHECK(p.m_relativePath == "file.file");
+}
+
+TEST(FileSystem, createFile)
+{
+    auto fs = makeFileSystem();
+    CHECK(fs.createFile("test/file.file"));
+}
+
+TEST(FileSystem, appendFile)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.appendFile("test/file.file");
+    CHECK(handle);
+}
+
+TEST(FileSystem, appendFileWithClose)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.appendFile("test/file.file");
+
+    fs.close(*handle);
+    handle = fs.appendFile("test/file.file");
+    CHECK(handle);
+}
+
+TEST(FileSystem, readAfterWrite)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.appendFile("test/file.file").value();
+    ByteString data("test");
+    auto size = data.size();
+    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    fs.close(handle);
+
+    uint8_t buf[10];
+    auto readHandle = fs.readFile("test/file.file");
+    CHECK(readHandle);
+    CHECK(size == fs.read(*readHandle, buf, sizeof(buf)));
+    CHECK(data == ByteString(buf));
+}
+
+TEST(FileSystem, readAfterAppendAfterWrite)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("test/file.file").value();
+    ByteString data("test");
+    auto size = data.size();
+    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    fs.close(handle);
+    handle = fs.appendFile("test/file.file").value();
+    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    fs.close(handle);
+
+    uint8_t buf[20];
+    auto readHandle = fs.readFile("test/file.file");
+    CHECK(readHandle);
+    CHECK(2 * size == fs.read(*readHandle, buf, sizeof(buf)));
+}
+
+TEST(FileSystem, doubleCloseWriteHandleThrows)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("test/file.file").value();
+    fs.close(handle);
+    try
+    {
+        fs.close(handle);
+        CHECK(false);
+    }
+    catch (std::exception&)
+    {}
+}
+
+TEST(FileSystem, doubleCloseReadHandleThrows)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("test/file.file").value();
+    fs.close(handle);
+
+    auto readHandle = fs.readFile("test/file.file").value();
+    fs.close(readHandle);
+    try
+    {
+        fs.close(readHandle);
+        CHECK(false);
+    }
+    catch (std::exception&)
+    {}
 }
