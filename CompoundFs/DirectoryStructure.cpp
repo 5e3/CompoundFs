@@ -86,7 +86,6 @@ size_t DirectoryStructure::remove(const DirectoryKey& dkey)
     return remove(dkey.getByteStringView());
 }
 
-
 size_t DirectoryStructure::remove(ByteStringView key)
 {
     auto res = m_btree.remove(key);
@@ -119,8 +118,7 @@ std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& d
 bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 {
     auto value = ByteStringOps::toByteString(FileDescriptor());
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs)
-    {
+    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
         return ByteStringOps::getType(rhs) == DirectoryObjType::File;
     });
 
@@ -137,10 +135,8 @@ bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey& dkey)
 {
     auto value = ByteStringOps::toByteString(FileDescriptor());
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView&)
-    {
-        return false;
-    });
+    auto res = m_btree.insert(dkey.getByteStringView(), value,
+                              [](const ByteStringView&, const ByteStringView&) { return false; });
 
     if (std::holds_alternative<BTree::Inserted>(res))
         return FileDescriptor();
@@ -154,8 +150,7 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
 bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
 {
     auto value = ByteStringOps::toByteString(desc);
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs)
-    {
+    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
         return ByteStringOps::getType(rhs) == DirectoryObjType::File;
     });
 
@@ -163,9 +158,9 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
         return false;
 
     auto inserted = std::get_if<BTree::Inserted>(&res);
-    if (inserted)
-        return false;
+    if (!inserted)
+        return true;
 
-    return true;
+    remove(dkey);
+    return false;
 }
-
