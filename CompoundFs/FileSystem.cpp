@@ -3,7 +3,11 @@
 
 using namespace TxFs;
 
-bool Path::create(DirectoryStructure* ds)
+namespace
+{}
+
+template <typename TFunc>
+bool Path::subFolderWalk(TFunc&& func)
 {
     auto pos = m_relativePath.find('/');
     auto relativePath = m_relativePath;
@@ -13,7 +17,7 @@ bool Path::create(DirectoryStructure* ds)
     {
         std::string_view dir = relativePath.substr(0, pos);
         DirectoryKey dkey(root, dir);
-        auto ret = ds->makeSubFolder(dkey);
+        auto ret = func(dkey);
         if (!ret)
             return false;
         root = *ret;
@@ -26,27 +30,14 @@ bool Path::create(DirectoryStructure* ds)
     return true;
 }
 
+bool Path::create(DirectoryStructure* ds)
+{
+    return subFolderWalk([ds = ds](const auto& dkey) { return ds->makeSubFolder(dkey); });
+}
+
 bool Path::reduce(const DirectoryStructure* ds)
 {
-    auto pos = m_relativePath.find('/');
-    auto relativePath = m_relativePath;
-    auto root = m_root;
-
-    while (pos != std::string_view::npos)
-    {
-        std::string_view dir = relativePath.substr(0, pos);
-        DirectoryKey dkey(root, dir);
-        auto ret = ds->subFolder(dkey);
-        if (!ret)
-            return false;
-        root = *ret;
-        relativePath.remove_prefix(pos + 1);
-        pos = relativePath.find('/');
-    }
-
-    m_relativePath = relativePath;
-    m_root = root;
-    return true;
+    return subFolderWalk([ds = ds](const auto& dkey) { return ds->subFolder(dkey); });
 }
 
 //////////////////////////////////////////////////////////////////////////

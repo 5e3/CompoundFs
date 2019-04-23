@@ -40,6 +40,10 @@ struct Path
         return std::tie(m_root, m_relativePath) == std::tie(rhs.m_root, rhs.m_relativePath);
     }
     bool operator!=(Path rhs) const { return !(*this == rhs); }
+
+private:
+    template <typename TFunc>
+    bool subFolderWalk(TFunc&& func);
 };
 
 //////////////////////////////////////////////////////////////////////////
