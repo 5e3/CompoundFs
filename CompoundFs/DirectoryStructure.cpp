@@ -16,7 +16,7 @@ DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cach
 std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey)
 {
     auto value = ByteStringOps::toByteString(Folder { m_maxFolderId });
-    auto res = m_btree.insert(dkey.getByteStringView(), value,
+    auto res = m_btree.insert(dkey.asByteStringView(), value,
                               [](const ByteStringView&, const ByteStringView&) { return false; });
 
     auto inserted = std::get_if<BTree::Inserted>(&res);
@@ -33,7 +33,7 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey
 
 std::optional<Folder> DirectoryStructure::subFolder(const DirectoryKey& dkey) const
 {
-    auto cursor = m_btree.find(dkey.getByteStringView());
+    auto cursor = m_btree.find(dkey.asByteStringView());
     if (!cursor || ByteStringOps::getType(cursor.value()) != DirectoryObjType::Folder)
         return std::nullopt;
 
@@ -44,7 +44,7 @@ std::optional<Folder> DirectoryStructure::subFolder(const DirectoryKey& dkey) co
 bool DirectoryStructure::addAttribute(const DirectoryKey& dkey, const ByteStringOps::Variant& attribute)
 {
     auto value = ByteStringOps::toByteString(attribute);
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
+    auto res = m_btree.insert(dkey.asByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
         auto type = ByteStringOps::getType(rhs);
         return type != DirectoryObjType::Folder && type != DirectoryObjType::File;
     });
@@ -53,7 +53,7 @@ bool DirectoryStructure::addAttribute(const DirectoryKey& dkey, const ByteString
 
 std::optional<ByteStringOps::Variant> DirectoryStructure::getAttribute(const DirectoryKey& dkey) const
 {
-    auto cursor = m_btree.find(dkey.getByteStringView());
+    auto cursor = m_btree.find(dkey.asByteStringView());
     if (!cursor)
         return std::nullopt;
 
@@ -83,7 +83,7 @@ size_t DirectoryStructure::remove(Folder folder)
 
 size_t DirectoryStructure::remove(const DirectoryKey& dkey)
 {
-    return remove(dkey.getByteStringView());
+    return remove(dkey.asByteStringView());
 }
 
 size_t DirectoryStructure::remove(ByteStringView key)
@@ -108,7 +108,7 @@ size_t DirectoryStructure::remove(ByteStringView key)
 
 std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& dkey) const
 {
-    auto cursor = m_btree.find(dkey.getByteStringView());
+    auto cursor = m_btree.find(dkey.asByteStringView());
     if (!cursor || ByteStringOps::getType(cursor.value()) != DirectoryObjType::File)
         return std::nullopt;
 
@@ -118,7 +118,7 @@ std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& d
 bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 {
     auto value = ByteStringOps::toByteString(FileDescriptor());
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
+    auto res = m_btree.insert(dkey.asByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
         return ByteStringOps::getType(rhs) == DirectoryObjType::File;
     });
 
@@ -135,7 +135,7 @@ bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey& dkey)
 {
     auto value = ByteStringOps::toByteString(FileDescriptor());
-    auto res = m_btree.insert(dkey.getByteStringView(), value,
+    auto res = m_btree.insert(dkey.asByteStringView(), value,
                               [](const ByteStringView&, const ByteStringView&) { return false; });
 
     if (std::holds_alternative<BTree::Inserted>(res))
@@ -150,7 +150,7 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
 bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
 {
     auto value = ByteStringOps::toByteString(desc);
-    auto res = m_btree.insert(dkey.getByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
+    auto res = m_btree.insert(dkey.asByteStringView(), value, [](const ByteStringView&, const ByteStringView& rhs) {
         return ByteStringOps::getType(rhs) == DirectoryObjType::File;
     });
 

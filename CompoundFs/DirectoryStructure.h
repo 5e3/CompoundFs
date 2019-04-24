@@ -33,9 +33,9 @@ public:
         m_key.pushBack(name);
     }
 
-    DirectoryKey(Folder folder) { m_key.pushBack(folder); }
+    DirectoryKey(Folder folder) noexcept { m_key.pushBack(folder); }
 
-    ByteStringView getByteStringView() const { return m_key; }
+    constexpr ByteStringView asByteStringView() const noexcept { return m_key; }
 
 private:
     MutableByteString m_key;
@@ -64,7 +64,6 @@ public:
     bool createFile(const DirectoryKey& dkey);
     std::optional<FileDescriptor> appendFile(const DirectoryKey& dkey);
     bool updateFile(const DirectoryKey& dkey, FileDescriptor desc);
-
 
 private:
     std::shared_ptr<CacheManager> m_cacheManager;
