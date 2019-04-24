@@ -72,14 +72,14 @@ public:
     };
 
     using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
-    using ReplacePolicy = bool (*)(const ByteStringView& newValue, const ByteStringView& beforValue);
+    using ReplacePolicy = bool (*)(const ByteStringView& beforValue);
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
 
     std::optional<ByteString> insert(const ByteString& key, const ByteString& value)
     {
-        auto res = insert(key, value, [](const ByteStringView&, const ByteStringView&) { return true; });
+        auto res = insert(key, value, [](const ByteStringView&) { return true; });
         auto replaced = std::get_if<Replaced>(&res);
         if (replaced)
             return replaced->m_beforeValue;

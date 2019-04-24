@@ -85,7 +85,7 @@ TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
         bt.insert(s.c_str(), "TestData");
     }
 
-    auto res = bt.insert("TestKey", "TestValue", [](const ByteStringView&, const ByteStringView&) {
+    auto res = bt.insert("TestKey", "TestValue", [](const ByteStringView&) {
         throw std::runtime_error("");
         return true;
     });
@@ -105,16 +105,16 @@ TEST(BTree, canControlReplacementWithStrategy)
         bt.insert(s.c_str(), "TestData");
     }
 
-    bt.insert("TestKey", "TestValue", [](const ByteStringView&, const ByteStringView&) {
+    bt.insert("TestKey", "TestValue", [](const ByteStringView&) {
         throw std::runtime_error("");
         return true;
     });
 
-    auto res = bt.insert("TestKey", "TestValue1", [](const ByteStringView&, const ByteStringView&) { return false; });
+    auto res = bt.insert("TestKey", "TestValue1", [](const ByteStringView&) { return false; });
 
     CHECK(std::get<BTree::Unchanged>(res).m_currentValue.current().second == ByteString("TestValue"));
 
-    res = bt.insert("TestKey", "TestValue2", [](const ByteStringView&, const ByteStringView&) { return true; });
+    res = bt.insert("TestKey", "TestValue2", [](const ByteStringView&) { return true; });
 
     CHECK(std::get<BTree::Replaced>(res).m_beforeValue == ByteString("TestValue"));
     CHECK(bt.find("TestKey").value() == ByteString("TestValue2"));

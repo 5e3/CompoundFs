@@ -44,7 +44,7 @@ BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value
     {
         // there is already an entry for that key
         ByteStringView ventry = leafDef.m_page->getValue(it);
-        if (!replacePolicy(value, ventry))
+        if (!replacePolicy(ventry))
             return Unchanged { Cursor(leafDef.m_page, it) };
 
         result = Replaced { ventry };
