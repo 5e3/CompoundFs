@@ -21,7 +21,52 @@ class BTree;
 
 //////////////////////////////////////////////////////////////////////////
 
-class Cursor
+
+//////////////////////////////////////////////////////////////////////////
+
+class BTree
+{
+    using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
+
+public:
+    class Cursor;
+    struct Inserted;
+    struct Replaced;
+    struct Unchanged;
+
+
+    using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
+    using ReplacePolicy = bool (*)(const ByteStringView& beforValue);
+
+public:
+    BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
+
+    std::optional<ByteString> insert(const ByteString& key, const ByteString& value);
+    InsertResult insert(const ByteString& key, const ByteString& value, ReplacePolicy replacePolicy);
+    std::optional<ByteString> remove(ByteString key);
+
+    Cursor find(const ByteString& key) const;
+    Cursor begin(const ByteString& key) const;
+    Cursor next(Cursor cursor) const;
+
+    const std::vector<PageIndex>& getFreePages() const noexcept { return m_freePages; }
+
+private:
+    void propagate(InnerNodeStack& stack, const ByteString& keyToInsert, PageIndex left, PageIndex right);
+    ConstPageDef<Leaf> findLeaf(const ByteString& key, InnerNodeStack& stack) const;
+    std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, const ByteString& key,
+                                                     const InnerNodeStack& stack);
+    void unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf);
+
+private:
+    mutable TypedCacheManager m_cacheManager;
+    PageIndex m_rootIndex;
+    std::vector<uint32_t> m_freePages;
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+class BTree::Cursor
 {
     friend class BTree;
 
@@ -51,64 +96,19 @@ private:
     std::optional<Position> m_position;
 };
 
-//////////////////////////////////////////////////////////////////////////
+struct BTree::Inserted
+{};
 
-class BTree
+struct BTree::Replaced
 {
-    using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
-
-public:
-    struct Inserted
-    {};
-
-    struct Replaced
-    {
-        ByteString m_beforeValue;
-    };
-
-    struct Unchanged
-    {
-        Cursor m_currentValue;
-    };
-
-    using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
-    using ReplacePolicy = bool (*)(const ByteStringView& beforValue);
-
-public:
-    BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
-
-    std::optional<ByteString> insert(const ByteString& key, const ByteString& value)
-    {
-        auto res = insert(key, value, [](const ByteStringView&) { return true; });
-        auto replaced = std::get_if<Replaced>(&res);
-        if (replaced)
-            return replaced->m_beforeValue;
-        return std::nullopt;
-    }
-
-    InsertResult insert(const ByteString& key, const ByteString& value, ReplacePolicy replacePolicy);
-    std::optional<ByteString> remove(ByteString key);
-
-    Cursor find(const ByteString& key) const;
-    Cursor begin(const ByteString& key) const;
-    Cursor next(Cursor cursor) const;
-
-    const std::vector<PageIndex>& getFreePages() const noexcept { return m_freePages; }
-
-private:
-    void propagate(InnerNodeStack& stack, const ByteString& keyToInsert, PageIndex left, PageIndex right);
-    ConstPageDef<Leaf> findLeaf(const ByteString& key, InnerNodeStack& stack) const;
-    std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, const ByteString& key,
-                                                     const InnerNodeStack& stack);
-    void unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf);
-
-private:
-    mutable TypedCacheManager m_cacheManager;
-    PageIndex m_rootIndex;
-    std::vector<uint32_t> m_freePages;
+    ByteString m_beforeValue;
 };
 
-//////////////////////////////////////////////////////////////////////////
+struct BTree::Unchanged
+{
+    Cursor m_currentValue;
+};
+
 
 }
 #endif // BTREE_H

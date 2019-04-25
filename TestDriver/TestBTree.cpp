@@ -206,7 +206,7 @@ TEST(BTree, cursorKeepsPageInMemory)
     CHECK(cur.current().first == ByteString("250"));
     CHECK(cur.current().second == ByteString("250 Test"));
 
-    cur = Cursor();
+    cur = BTree::Cursor();
     pagesStillInMem = cm->trim(0);
     CHECK(pagesStillInMem == 0);
 }

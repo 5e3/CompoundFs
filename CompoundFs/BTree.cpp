@@ -10,11 +10,11 @@
 using namespace TxFs;
 
 //////////////////////////////////////////////////////////////////////////
-Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept
+BTree::Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept
     : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
 {}
 
-std::pair<ByteStringView, ByteStringView> Cursor::current() const noexcept
+std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const noexcept
 {
     const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;
@@ -72,6 +72,16 @@ BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value
     propagate(stack, rightLeaf.m_page->getLowestKey(), leafDef.m_index, rightLeaf.m_index);
     return result;
 }
+
+std::optional<ByteString> BTree::insert(const ByteString& key, const ByteString& value)
+{
+    auto res = insert(key, value, [](const ByteStringView&) { return true; });
+    auto replaced = std::get_if<Replaced>(&res);
+    if (replaced)
+        return replaced->m_beforeValue;
+    return std::nullopt;
+}
+
 
 void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
 {
@@ -197,7 +207,7 @@ void BTree::propagate(InnerNodeStack& stack, const ByteString& keyToInsert, Page
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
 }
 
-Cursor BTree::find(const ByteString& key) const
+BTree::Cursor BTree::find(const ByteString& key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -209,7 +219,7 @@ Cursor BTree::find(const ByteString& key) const
     return Cursor(leafDef.m_page, it);
 }
 
-Cursor BTree::begin(const ByteString& key) const
+BTree::Cursor BTree::begin(const ByteString& key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -222,7 +232,7 @@ Cursor BTree::begin(const ByteString& key) const
     return Cursor(leafDef.m_page, it);
 }
 
-Cursor BTree::next(Cursor cursor) const
+BTree::Cursor BTree::next(Cursor cursor) const
 {
     if (!cursor)
         return cursor;
