@@ -45,6 +45,8 @@ private:
 
 class DirectoryStructure
 {
+public:
+    class Cursor;
 
 public:
     DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
@@ -65,10 +67,60 @@ public:
     std::optional<FileDescriptor> appendFile(const DirectoryKey& dkey);
     bool updateFile(const DirectoryKey& dkey, FileDescriptor desc);
 
+    Cursor find(const DirectoryKey& dkey) const;
+    Cursor begin(const DirectoryKey& dkey) const;
+    Cursor next(Cursor cursor) const;
+
 private:
     std::shared_ptr<CacheManager> m_cacheManager;
     BTree m_btree;
     uint32_t m_maxFolderId;
     FreeStore m_freeStore;
 };
+
+//////////////////////////////////////////////////////////////////////////
+
+class DirectoryStructure::Cursor
+{
+    friend class DirectoryStructure;
+
+public:
+    constexpr Cursor() noexcept = default;
+    constexpr Cursor(const BTree::Cursor& cursor) noexcept
+        : m_cursor(cursor)
+    {}
+
+    constexpr bool operator==(const Cursor& rhs) const noexcept { return m_cursor == rhs.m_cursor; }
+    constexpr bool operator!=(const Cursor& rhs) const noexcept { return !(m_cursor == rhs.m_cursor); }
+
+    std::pair<Folder,std::string_view> key() const;
+    ByteStringOps::Variant value() const { return ByteStringOps::toVariant(m_cursor.value());}
+    DirectoryObjType getValueType() const { return ByteStringOps::getType(m_cursor.value()); }
+    std::string getValueTypeName() const { return ByteStringOps::getTypeName(m_cursor.value()); }
+    constexpr explicit operator bool() const noexcept { return m_cursor.operator bool(); }
+
+private:
+    BTree::Cursor m_cursor;
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+inline DirectoryStructure::Cursor DirectoryStructure::find(const DirectoryKey& dkey) const
+{
+    return m_btree.find(dkey.asByteStringView());
+}
+
+inline DirectoryStructure::Cursor DirectoryStructure::begin(const DirectoryKey& dkey) const
+{
+    return m_btree.begin(dkey.asByteStringView());
+}
+
+inline DirectoryStructure::Cursor DirectoryStructure::next(Cursor cursor) const 
+{ 
+    return m_btree.next(cursor.m_cursor); 
+}
+
+
+
+
 }

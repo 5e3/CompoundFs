@@ -183,3 +183,28 @@ TEST(DirectoryStructure, nonFileEntryPrefentsCreationOfFile)
     FileDescriptor desc(100);
     CHECK(!ds.updateFile(dkey, desc));
 }
+
+TEST(Cursor, creation)
+{
+    DirectoryStructure::Cursor cursor;
+    auto cur2 = cursor;
+    CHECK(cur2 == cursor);
+    CHECK(!cursor);
+
+    DirectoryStructure ds = makeDirectoryStructure();
+    CHECK(ds.addAttribute(DirectoryKey("attrib"), "test"));
+    auto cur3 = ds.find(DirectoryKey("attrib"));
+
+    CHECK(cur3);
+    CHECK(cur3 != cur2);
+    auto res = cur3.key();
+    CHECK(res.first == DirectoryKey::Root);
+    CHECK(res.second == "attrib");
+    CHECK(std::get<std::string>(cur3.value()) == "test");
+    CHECK(cur3.getValueType() == DirectoryObjType::String);
+    CHECK(cur3.getValueTypeName() == "String");
+
+    auto cur4 = ds.next(cur3);
+    CHECK(!cur4);
+}
+

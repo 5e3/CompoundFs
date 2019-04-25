@@ -162,3 +162,15 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
     remove(dkey);
     return false;
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const
+{
+    auto key = m_cursor.key();
+    Folder folder;
+    auto name = std::copy(key.begin() + 1, key.begin() + 1 + sizeof(Folder), (uint8_t*)&folder);
+    std::string_view nameView((const char*)key.begin() + 1 + sizeof(Folder), key.size() - sizeof(Folder) -1);
+    return std::pair(folder, nameView);
+}
+

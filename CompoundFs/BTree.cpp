@@ -14,7 +14,7 @@ BTree::Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* i
     : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
 {}
 
-std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const noexcept
+std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const
 {
     const auto& [leaf, index] = *m_position;
     auto it = leaf->beginTable() + index;

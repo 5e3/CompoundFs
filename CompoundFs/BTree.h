@@ -17,10 +17,6 @@ namespace TxFs
 {
 class Leaf;
 class InnerNode;
-class BTree;
-
-//////////////////////////////////////////////////////////////////////////
-
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -33,8 +29,6 @@ public:
     struct Inserted;
     struct Replaced;
     struct Unchanged;
-
-
     using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
     using ReplacePolicy = bool (*)(const ByteStringView& beforValue);
 
@@ -73,13 +67,13 @@ class BTree::Cursor
 public:
     constexpr Cursor() noexcept = default;
     Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept;
-    bool operator==(const Cursor rhs) const { return m_position == rhs.m_position; }
 
-    std::pair<ByteStringView, ByteStringView> current() const noexcept;
-    ByteStringView key() const noexcept { return current().first; }
-    ByteStringView value() const noexcept { return current().second; }
+    constexpr bool operator==(const Cursor& rhs) const noexcept { return m_position == rhs.m_position; }
+
+    std::pair<ByteStringView, ByteStringView> current() const;
+    ByteStringView key() const { return current().first; }
+    ByteStringView value() const { return current().second; }
     constexpr explicit operator bool() const noexcept { return m_position.has_value(); }
-    // constexpr bool hasValue() const noexcept { return m_position.has_value(); }
 
 private:
     struct Position
@@ -87,7 +81,7 @@ private:
         std::shared_ptr<const Leaf> m_leaf;
         uint16_t m_index;
 
-        bool operator==(const Position& rhs) const
+        constexpr bool operator==(const Position& rhs) const noexcept
         {
             return std::tie(m_leaf, m_index) == std::tie(rhs.m_leaf, rhs.m_index);
         }
@@ -96,19 +90,24 @@ private:
     std::optional<Position> m_position;
 };
 
+//////////////////////////////////////////////////////////////////////////
+
 struct BTree::Inserted
 {};
+
+//////////////////////////////////////////////////////////////////////////
 
 struct BTree::Replaced
 {
     ByteString m_beforeValue;
 };
 
+//////////////////////////////////////////////////////////////////////////
+
 struct BTree::Unchanged
 {
     Cursor m_currentValue;
 };
-
 
 }
 #endif // BTREE_H
