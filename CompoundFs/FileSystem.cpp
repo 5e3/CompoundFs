@@ -170,3 +170,19 @@ size_t FileSystem::remove(Path path)
 
     return m_directoryStructure.remove(DirectoryKey(path.m_root, path.m_relativePath));
 }
+
+FileSystem::Cursor FileSystem::find(Path path) const
+{
+    if (!path.reduce(&m_directoryStructure))
+        return Cursor();
+
+    return m_directoryStructure.find(DirectoryKey(path.m_root, path.m_relativePath));
+}
+
+FileSystem::Cursor FileSystem::begin(Path path) const
+{
+    if (!path.reduce(&m_directoryStructure))
+        return Cursor();
+
+    return m_directoryStructure.begin(DirectoryKey(path.m_root, path.m_relativePath));
+}

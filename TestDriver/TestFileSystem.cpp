@@ -213,3 +213,12 @@ TEST(FileSystem, remove)
     auto attribute = fs.getAttribute("folder/attribute");
     CHECK(!attribute);
 }
+
+TEST(FileSystem, Cursor)
+{
+    auto fs = makeFileSystem();
+    CHECK(fs.addAttribute("folder/folder/attrib", 5));
+    auto cur = fs.find("folder/folder/attrib");
+    CHECK(cur);
+    CHECK(std::get<int>(cur.value()) == 5);
+}

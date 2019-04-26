@@ -51,6 +51,9 @@ private:
 class FileSystem
 {
 public:
+    using Cursor = DirectoryStructure::Cursor;
+
+public:
     FileSystem(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
                PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 1);
 
@@ -72,6 +75,10 @@ public:
 
     size_t remove(Path path);
 
+    Cursor find(Path path) const;
+    Cursor begin(Path path) const;
+    Cursor next(Cursor cursor) const;
+
 private:
     struct OpenWriter
     {
@@ -86,5 +93,10 @@ private:
     std::unordered_map<WriteHandle, OpenWriter> m_openWriters;
     uint32_t m_nextHandle = 1;
 };
+
+inline FileSystem::Cursor FileSystem::next(Cursor cursor) const
+{
+    return m_directoryStructure.next(cursor);
+}
 
 }
