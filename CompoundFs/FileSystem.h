@@ -15,17 +15,17 @@ struct Path
 {
     static constexpr Folder AbsoluteRoot = DirectoryKey::Root;
 
-    Path(std::string_view absolutePath)
+    constexpr Path(std::string_view absolutePath) noexcept
         : m_relativePath(absolutePath)
         , m_root(AbsoluteRoot)
     {}
 
-    Path(const char* absolutePath)
+    constexpr Path(const char* absolutePath) noexcept
         : m_relativePath(absolutePath)
         , m_root(AbsoluteRoot)
     {}
 
-    Path(Folder root, std::string_view relativePath)
+    constexpr Path(Folder root, std::string_view relativePath) noexcept
         : m_relativePath(relativePath)
         , m_root(root)
     {}
@@ -35,11 +35,11 @@ struct Path
 
     bool create(DirectoryStructure* ds);
     bool reduce(const DirectoryStructure* ds);
-    bool operator==(Path rhs) const
+    constexpr bool operator==(Path rhs) const noexcept
     {
         return std::tie(m_root, m_relativePath) == std::tie(rhs.m_root, rhs.m_relativePath);
     }
-    bool operator!=(Path rhs) const { return !(*this == rhs); }
+    constexpr bool operator!=(Path rhs) const noexcept { return !(*this == rhs); }
 
 private:
     template <typename TFunc>
