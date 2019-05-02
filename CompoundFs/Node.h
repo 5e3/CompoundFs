@@ -12,10 +12,7 @@ namespace TxFs
 using PageIndex = uint32_t;
 enum PageIdx : PageIndex { INVALID = UINT32_MAX };
 
-struct NodeType
-{
-    enum Type { Undefined, Leaf, Inner };
-};
+enum class NodeType : uint8_t { Undefined, Leaf, Inner };
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -26,9 +23,9 @@ struct Node
 {
     uint16_t m_begin;
     uint16_t m_end;
-    uint8_t m_type;
+    NodeType m_type;
 
-    constexpr Node(uint16_t begin = 0, uint16_t end = 0, NodeType::Type type = NodeType::Undefined) noexcept
+    constexpr Node(uint16_t begin = 0, uint16_t end = 0, NodeType type = NodeType::Undefined) noexcept
         : m_begin(begin)
         , m_end(end)
         , m_type(type)
