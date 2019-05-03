@@ -150,3 +150,14 @@ FileSystem::Cursor FileSystem::begin(Path path) const
 
     return m_directoryStructure.begin(DirectoryKey(path.m_root, path.m_relativePath));
 }
+
+void FileSystem::commit()
+{
+    for (auto& [key, openFile] : m_openWriters)
+    {
+        auto fileDescriptor = openFile.m_fileWriter.close();
+        m_directoryStructure.updateFile(DirectoryKey(openFile.m_folder, openFile.m_name), fileDescriptor);
+    }
+    m_openWriters.clear();
+    m_openReaders.clear();
+}

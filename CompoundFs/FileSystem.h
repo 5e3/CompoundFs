@@ -44,6 +44,8 @@ public:
     Cursor begin(Path path) const;
     Cursor next(Cursor cursor) const;
 
+    void commit();
+
 private:
     struct OpenWriter
     {

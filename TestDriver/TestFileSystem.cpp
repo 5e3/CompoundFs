@@ -154,3 +154,32 @@ TEST(FileSystem, Cursor)
     CHECK(cur);
     CHECK(std::get<int>(cur.value()) == 5);
 }
+
+TEST(FileSystem, commitClosesAllFileHandles)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("folder/file.file").value();
+    fs.close(handle);
+
+    auto readHandle = fs.readFile("folder/file.file").value();
+    auto writeHandle = fs.createFile("folder/file2.file").value();
+    fs.commit();
+    try
+    {
+        fs.close(readHandle);
+        CHECK(false);
+    }
+    catch (std::exception&)
+    {
+    }
+
+    try
+    {
+        fs.close(writeHandle);
+        CHECK(false);
+    }
+    catch (std::exception&)
+    {
+    }
+}
+
