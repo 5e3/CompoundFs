@@ -21,6 +21,7 @@
     <ClInclude Include="ByteString.h" />
     <ClInclude Include="DirectoryObjects.h" />
     <ClInclude Include="FileSystem.h" />
+    <ClInclude Include="Path.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
@@ -29,6 +30,7 @@
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="DirectoryObjects.cpp" />
     <ClCompile Include="FileSystem.cpp" />
+    <ClCompile Include="Path.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

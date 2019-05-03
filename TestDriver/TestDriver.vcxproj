@@ -167,6 +167,7 @@
     <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestNode.cpp" />
+    <ClCompile Include="TestPath.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -21,5 +21,6 @@
     <ClCompile Include="TestDirectoryStructure.cpp" />
     <ClCompile Include="TestDirectoryObjects.cpp" />
     <ClCompile Include="TestFileSystem.cpp" />
+    <ClCompile Include="TestPath.cpp" />
   </ItemGroup>
 </Project>

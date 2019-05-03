@@ -37,6 +37,7 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="PageDef.h" />
+    <ClInclude Include="Path.h" />
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
@@ -47,6 +48,7 @@
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
+    <ClCompile Include="Path.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

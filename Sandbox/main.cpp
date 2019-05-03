@@ -286,15 +286,21 @@ using Var2 = std::variant<std::string, int, double>;
 void func(const Var& var)
 {}
 
+enum class Id : int;
+
+operator Id(int i) { return Id{ i }; }
+
 int main()
 {
-    ByteString b;
-    fromBlob<std::vector<float>>(b);
-    fromBlob<std::string>(b);
-    fromBlob<int>(b);
 
-    func(5);
-    func("test");
-    Var v = "test";
+    Id id(5);
+    //ByteString b;
+    //fromBlob<std::vector<float>>(b);
+    //fromBlob<std::string>(b);
+    //fromBlob<int>(b);
+
+    //func(5);
+    //func("test");
+    //Var v = "test";
     // Var2 v2 = *v;
 }
