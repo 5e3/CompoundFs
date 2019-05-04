@@ -143,7 +143,7 @@ public:
     }
 
     template <typename T>
-    constexpr void pushBack(const T& value)
+    void pushBack(const T& value)
     {
         auto begin = (uint8_t*) &value;
         auto end = begin + sizeof(T);

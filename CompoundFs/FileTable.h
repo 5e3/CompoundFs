@@ -19,23 +19,23 @@ class FileTable
     uint8_t m_data[4088];
 
 public:
-    FileTable()
+    FileTable() noexcept
         : m_begin(0)
         , m_end(sizeof(m_data))
         , m_next(PageIdx::INVALID)
     {
-        m_data[0] = 0;
+        // m_data[0] = 0;
     }
 
-    void setNext(PageIndex next) { m_next = next; }
-    PageIndex getNext() const { return m_next; }
-    void clear()
+    constexpr void setNext(PageIndex next) noexcept { m_next = next; }
+    constexpr PageIndex getNext() const noexcept { return m_next; }
+    constexpr void clear() noexcept
     {
         m_begin = 0;
         m_end = sizeof(m_data);
     }
 
-    void transferFrom(IntervalSequence& is)
+    void transferFrom(IntervalSequence& is) noexcept
     {
         clear();
         while (!is.empty())
@@ -83,14 +83,14 @@ public:
         }
     }
 
-    bool empty() const { return m_begin == 0 && m_end == sizeof(m_data); }
+    constexpr bool empty() const noexcept { return m_begin == 0 && m_end == sizeof(m_data); }
 
 private:
-    uint16_t* beginTable() const { return (uint16_t*) (m_data + m_end); }
-    uint16_t* endTable() const { return (uint16_t*) (m_data + sizeof(m_data)); }
-    PageIndex* beginIds() const { return (PageIndex*) m_data; }
-    PageIndex* endIds() const { return (PageIndex*) (m_data + m_begin); }
-    bool hasSpace(Interval iv) const
+    constexpr uint16_t* beginTable() const noexcept { return (uint16_t*) (m_data + m_end); }
+    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
+    constexpr PageIndex* beginIds() const noexcept { return (PageIndex*) m_data; }
+    constexpr PageIndex* endIds() const noexcept { return (PageIndex*) (m_data + m_begin); }
+    constexpr bool hasSpace(Interval iv) const noexcept
     {
         assert(iv.begin() < iv.end());
         return size_t(m_end - m_begin)
