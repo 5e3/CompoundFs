@@ -12,7 +12,6 @@ class Path;
 
 //////////////////////////////////////////////////////////////////////////
 
-
 class FileSystem
 {
 public:
@@ -45,6 +44,9 @@ public:
     Cursor next(Cursor cursor) const;
 
     void commit();
+
+private:
+    void closeAllFiles();
 
 private:
     struct OpenWriter

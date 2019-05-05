@@ -4,8 +4,6 @@
 
 using namespace TxFs;
 
-
-
 FileSystem::FileSystem(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore, PageIndex rootIndex,
                        uint32_t maxFolderId)
     : m_cacheManager(cacheManager)
@@ -153,7 +151,12 @@ FileSystem::Cursor FileSystem::begin(Path path) const
 
 void FileSystem::commit()
 {
-    for (auto& [key, openFile] : m_openWriters)
+    closeAllFiles();
+}
+
+void FileSystem::closeAllFiles()
+{
+    for (auto& [key, openFile]: m_openWriters)
     {
         auto fileDescriptor = openFile.m_fileWriter.close();
         m_directoryStructure.updateFile(DirectoryKey(openFile.m_folder, openFile.m_name), fileDescriptor);
