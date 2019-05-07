@@ -22,6 +22,7 @@
     <ClInclude Include="DirectoryObjects.h" />
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="Path.h" />
+    <ClInclude Include="LogPage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
