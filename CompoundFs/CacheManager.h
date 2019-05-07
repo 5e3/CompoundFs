@@ -22,8 +22,6 @@ class RawFileInterface;
 
 class CacheManager
 {
-    typedef std::pair<std::shared_ptr<uint8_t>, PageIndex> Page;
-
     struct PageMetaData
     {
         enum { Undefined, Read, New, DirtyRead };
@@ -32,7 +30,7 @@ class CacheManager
         unsigned int m_usageCount : 24;
         unsigned int m_priority : 6;
 
-        PageMetaData(int type, int priority);
+        constexpr PageMetaData(int type, int priority) noexcept;
     };
 
     struct CachedPage : PageMetaData
@@ -47,11 +45,11 @@ public:
     {
         PageIndex m_id;
 
-        PageSortItem(const PageMetaData& pmd, PageIndex id);
-        PageSortItem(int type, int usageCount, int priority, PageIndex id);
+        constexpr PageSortItem(const PageMetaData& pmd, PageIndex id) noexcept;
+        constexpr PageSortItem(int type, int usageCount, int priority, PageIndex id) noexcept;
 
-        bool operator<(PageSortItem rhs) const;
-        bool operator==(PageSortItem rhs) const;
+        constexpr bool operator<(PageSortItem rhs) const noexcept;
+        constexpr bool operator==(PageSortItem rhs) const noexcept;
     };
 
 public:
@@ -89,5 +87,45 @@ private:
     PageAllocator m_pageAllocator;
     uint32_t m_maxPages;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+inline constexpr CacheManager::PageMetaData::PageMetaData(int type, int priority)  noexcept
+    : m_type(type)
+    , m_usageCount(0)
+    , m_priority(priority)
+{}
+
+///////////////////////////////////////////////////////////////////////////////
+
+inline CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page, int type, int priority)
+    : PageMetaData(type, priority)
+    , m_page(page)
+{}
+
+///////////////////////////////////////////////////////////////////////////////
+
+inline constexpr CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, PageIndex id) noexcept
+    : PageMetaData(pmd)
+    , m_id(id)
+{}
+
+inline constexpr CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, PageIndex id) noexcept
+    : PageMetaData(type, priority)
+    , m_id(id)
+{
+    m_usageCount = usageCount;
+}
+
+inline constexpr bool CacheManager::PageSortItem::operator<(const PageSortItem rhs) const noexcept
+{
+    return std::tie(m_type, m_usageCount, m_priority) > std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
+}
+
+inline constexpr bool CacheManager::PageSortItem::operator==(const PageSortItem rhs) const noexcept
+{
+    return std::tie(m_type, m_usageCount, m_priority) == std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
+}
+
 
 }
