@@ -283,17 +283,14 @@ std::tuple<int, float, double, std::string> types;
 using Var = std::variant<std::string, int>;
 using Var2 = std::variant<std::string, int, double>;
 
-void func(const Var& var)
-{}
-
-enum class Id : int;
-
-operator Id(int i) { return Id{ i }; }
+#include <random>
 
 int main()
 {
+    std::random_device rd;
+    std::mt19937_64 mt(rd());
+    mt.seed(1);
 
-    Id id(5);
     //ByteString b;
     //fromBlob<std::vector<float>>(b);
     //fromBlob<std::string>(b);
