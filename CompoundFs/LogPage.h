@@ -46,6 +46,9 @@ public:
         return std::vector<PageCopies>(&m_pageCopies[0], &m_pageCopies[m_size]);
     }
 
+    constexpr const PageCopies* begin() const noexcept { return m_pageCopies; }
+    constexpr const PageCopies* end() const noexcept { return m_pageCopies + m_size; }
+
     constexpr bool pushBack(PageCopies pc) noexcept
     {
         if (m_size < MAX_ENTRIES)

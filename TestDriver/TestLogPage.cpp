@@ -55,3 +55,16 @@ TEST(LogPage, pushBackIterator)
     CHECK(lp.size() == LogPage::MAX_ENTRIES);
     CHECK(!lp.pushBack({ 1, 1 }));
 }
+
+TEST(LogPage, beginEndCanBeUsedToAppend)
+{
+    LogPage lp(100);
+
+    for (uint32_t i = 0; i < LogPage::MAX_ENTRIES; i++)
+        CHECK(lp.pushBack({ i, i }));
+
+    auto pageCopies = lp.getPageCopies();
+    pageCopies.insert(pageCopies.end(), lp.begin(), lp.end());
+
+    CHECK(pageCopies.size() == 2 * LogPage::MAX_ENTRIES);
+}
