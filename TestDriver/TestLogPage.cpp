@@ -51,7 +51,7 @@ TEST(LogPage, pushBackIterator)
         CHECK(lp.pushBack({ i, i }));
 
     auto pageCopies = lp.getPageCopies();
-    CHECK(lp.pushBack(pageCopies.begin(), pageCopies.end()));
+    CHECK(lp.pushBack(pageCopies.begin(), pageCopies.end()) == pageCopies.end());
     CHECK(lp.size() == LogPage::MAX_ENTRIES);
     CHECK(!lp.pushBack({ 1, 1 }));
 }

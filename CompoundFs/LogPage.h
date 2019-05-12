@@ -57,17 +57,12 @@ public:
     }
 
     template <typename ITERATOR>
-    constexpr bool pushBack(ITERATOR begin, ITERATOR end) noexcept
+    constexpr ITERATOR pushBack(ITERATOR begin, ITERATOR end) noexcept
     {
-        size_t size = std::distance(begin, end);
-        if (m_size + size <= MAX_ENTRIES)
-        {
-            for (size_t i = m_size; begin != end; ++begin, i++)
-                m_pageCopies[i] = *begin;
-            m_size += static_cast<uint32_t>(size);
-            return true;
-        }
-        return false;
+        auto size = std::min(size_t(std::distance(begin, end)), MAX_ENTRIES - m_size);
+        std::copy(begin, begin + size, m_pageCopies + m_size);
+        m_size += static_cast<uint32_t>(size);
+        return begin + size;
     }
 
     constexpr size_t size() const noexcept { return m_size; }
