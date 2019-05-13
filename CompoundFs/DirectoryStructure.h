@@ -71,6 +71,8 @@ public:
     Cursor begin(const DirectoryKey& dkey) const;
     Cursor next(Cursor cursor) const;
 
+    void commit();
+
 private:
     std::shared_ptr<CacheManager> m_cacheManager;
     BTree m_btree;

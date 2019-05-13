@@ -210,6 +210,32 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     }
 }
 
+TEST(CacheManager, dirtyPagesGetRedirected)
+{
+    SimpleFile sf;
+    {
+        CacheManager cm(&sf);
+        for (int i = 0; i < 10; i++)
+        {
+            auto p = cm.newPage().m_page;
+            *p = i + 1;
+        }
+        cm.trim(0);
+    }
+
+    CacheManager cm(&sf);
+    for (int i = 0; i < 10; i++)
+    {
+        auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
+        *p = i + 10;
+    }
+    cm.trim(0);
+    auto redirectedPages = cm.getRedirectedPages();
+    CHECK(redirectedPages.size() == 10);
+    for (auto page : redirectedPages)
+        CHECK(page >= 10);
+}
+
 TEST(CacheManager, repurposedPagesCanComeFromCache)
 {
     SimpleFile sf;

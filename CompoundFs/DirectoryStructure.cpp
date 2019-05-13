@@ -163,6 +163,20 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
     return false;
 }
 
+void DirectoryStructure::commit()
+{
+    const auto& freePages = m_btree.getFreePages();
+    for (auto page : freePages)
+        m_freeStore.deallocate(page);
+
+    auto redirectedPages = m_cacheManager->getRedirectedPages();
+    for (auto page : redirectedPages)
+        m_freeStore.deallocate(page);
+
+    m_cacheManager->commit();
+    auto fileDescriptor = m_freeStore.close();
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const

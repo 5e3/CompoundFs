@@ -67,6 +67,8 @@ public:
     size_t trim(uint32_t maxPages);
     RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
     Interval allocatePageInterval(size_t maxPages) noexcept;
+    std::vector<PageIndex> getRedirectedPages() const;
+    void commit();
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }

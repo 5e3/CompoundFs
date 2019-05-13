@@ -128,6 +128,18 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
     return m_rawFileInterface->newInterval(maxPages);
 }
 
+/// Get the pages used temporarily to redirect pages
+std::vector<PageIndex> CacheManager::getRedirectedPages() const
+{
+    std::vector<PageIndex> pages;
+    pages.reserve(m_redirectedPagesMap.size());
+    for (const auto&[originalPage, redirectedPage] : m_redirectedPagesMap)
+        pages.push_back(redirectedPage);
+    
+    return pages;
+}
+
+
 /// Find the page we moved the original page to or return identity.
 PageIndex CacheManager::redirectPage(PageIndex id) const noexcept
 {
@@ -177,4 +189,14 @@ void CacheManager::removeFromCache(std::vector<PageSortItem>::iterator begin, st
 {
     for (auto it = begin; it != end; ++it)
         m_cache.erase(it->m_id);
+}
+
+void CacheManager::commit()
+{
+    // stop allocating from FreeStore
+    m_pageIntervalAllocator = std::function<Interval(size_t)>();
+
+
+
+
 }
