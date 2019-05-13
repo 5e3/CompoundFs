@@ -74,6 +74,7 @@ private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const noexcept;
     std::vector<PageSortItem> getUnpinnedPages() const;
+    void copyDirtyPages();
 
     void trimCheck() noexcept;
     void evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
@@ -92,7 +93,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-inline constexpr CacheManager::PageMetaData::PageMetaData(int type, int priority)  noexcept
+inline constexpr CacheManager::PageMetaData::PageMetaData(int type, int priority) noexcept
     : m_type(type)
     , m_usageCount(0)
     , m_priority(priority)
@@ -128,6 +129,5 @@ inline constexpr bool CacheManager::PageSortItem::operator==(const PageSortItem 
 {
     return std::tie(m_type, m_usageCount, m_priority) == std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
 }
-
 
 }

@@ -1,6 +1,7 @@
 
 #include "CacheManager.h"
 #include "RawFileInterface.h"
+#include "TypedCacheManager.h"
 
 #include <assert.h>
 #include <algorithm>
@@ -133,12 +134,11 @@ std::vector<PageIndex> CacheManager::getRedirectedPages() const
 {
     std::vector<PageIndex> pages;
     pages.reserve(m_redirectedPagesMap.size());
-    for (const auto&[originalPage, redirectedPage] : m_redirectedPagesMap)
+    for (const auto& [originalPage, redirectedPage]: m_redirectedPagesMap)
         pages.push_back(redirectedPage);
-    
+
     return pages;
 }
-
 
 /// Find the page we moved the original page to or return identity.
 PageIndex CacheManager::redirectPage(PageIndex id) const noexcept
@@ -196,7 +196,15 @@ void CacheManager::commit()
     // stop allocating from FreeStore
     m_pageIntervalAllocator = std::function<Interval(size_t)>();
 
+    copyDirtyPages();
+}
 
-
-
+void CacheManager::copyDirtyPages()
+{
+    for (const auto& [originalPage, redirectedPage]: m_redirectedPagesMap)
+    {
+        auto pageDef = loadPage(originalPage);
+        auto id = newPageIndex();
+        m_rawFileInterface->writePage(id, 0, pageDef.m_page.get(), pageDef.m_page.get() + 4096);
+    }
 }
