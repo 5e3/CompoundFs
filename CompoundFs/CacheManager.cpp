@@ -2,6 +2,7 @@
 #include "CacheManager.h"
 #include "RawFileInterface.h"
 #include "TypedCacheManager.h"
+#include "LogPage.h"
 
 #include <assert.h>
 #include <algorithm>
@@ -196,15 +197,47 @@ void CacheManager::commit()
     // stop allocating from FreeStore
     m_pageIntervalAllocator = std::function<Interval(size_t)>();
 
-    copyDirtyPages();
+    auto origToCopyPages = copyDirtyPages();
+    m_rawFileInterface->commit();
+    
+    writePhysicalLogs(origToCopyPages);
+    m_rawFileInterface->commit();
 }
 
-void CacheManager::copyDirtyPages()
+std::vector<std::pair<PageIndex,PageIndex>> CacheManager::copyDirtyPages()
 {
-    for (const auto& [originalPage, redirectedPage]: m_redirectedPagesMap)
+    std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
+    origToCopyPages.reserve(m_redirectedPagesMap.size());
+
+    // stop redirecting loading
+    std::unordered_map<PageIndex, PageIndex> redirectedPagesMap;
+    redirectedPagesMap.swap(m_redirectedPagesMap);
+
+    auto interval = m_rawFileInterface->newInterval(redirectedPagesMap.size());
+    assert(interval.length() == redirectedPagesMap.size());
+    auto nextPage = interval.begin();
+
+    for (const auto& [originalPage, redirectedPage]: redirectedPagesMap)
     {
         auto pageDef = loadPage(originalPage);
-        auto id = newPageIndex();
-        m_rawFileInterface->writePage(id, 0, pageDef.m_page.get(), pageDef.m_page.get() + 4096);
+        m_rawFileInterface->writePage(nextPage, 0, pageDef.m_page.get(), pageDef.m_page.get() + 4096);
+        origToCopyPages.push_back({ originalPage, nextPage++ });
     }
+
+    // restore redirecting
+    redirectedPagesMap.swap(m_redirectedPagesMap);
+    return origToCopyPages;
+}
+
+void CacheManager::writePhysicalLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages)
+{
+    auto begin = origToCopyPages.begin();
+    while (begin != origToCopyPages.end())
+    {
+        auto pageIndex = m_rawFileInterface->newInterval(1).begin();
+        LogPage logPage(pageIndex);
+        //begin = logPage.pushBack(begin, origToCopyPages.end());
+        m_rawFileInterface->writePage(pageIndex, 0, (const uint8_t*)&logPage, ((const uint8_t*)&logPage) + sizeof(LogPage));
+    }
+
 }

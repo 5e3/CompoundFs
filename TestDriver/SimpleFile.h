@@ -59,9 +59,11 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
+    virtual void commit() override {}
+
     void clearPages(const std::vector<PageIndex>& pages)
     {
-        for (auto page : pages)
+        for (auto page: pages)
             memset(m_file.at(page).get(), 0, 4096);
     }
 

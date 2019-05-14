@@ -74,7 +74,8 @@ private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const noexcept;
     std::vector<PageSortItem> getUnpinnedPages() const;
-    void copyDirtyPages();
+    std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages();
+    void writePhysicalLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
 
     void trimCheck() noexcept;
     void evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
