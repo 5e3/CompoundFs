@@ -63,7 +63,10 @@ public:
     constexpr ITERATOR pushBack(ITERATOR begin, ITERATOR end) noexcept
     {
         auto size = std::min(size_t(std::distance(begin, end)), MAX_ENTRIES - m_size);
-        std::copy(begin, begin + size, m_pageCopies + m_size);
+        std::transform(begin, begin + size, m_pageCopies + m_size, [](auto value) {
+            auto [copy, original] = value;
+            return PageCopies { copy, original };
+        });
         m_size += static_cast<uint32_t>(size);
         return begin + size;
     }

@@ -152,6 +152,7 @@ FileSystem::Cursor FileSystem::begin(Path path) const
 void FileSystem::commit()
 {
     closeAllFiles();
+    m_directoryStructure.commit();
 }
 
 void FileSystem::closeAllFiles()

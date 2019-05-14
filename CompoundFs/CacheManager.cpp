@@ -199,12 +199,12 @@ void CacheManager::commit()
 
     auto origToCopyPages = copyDirtyPages();
     m_rawFileInterface->commit();
-    
+
     writePhysicalLogs(origToCopyPages);
     m_rawFileInterface->commit();
 }
 
-std::vector<std::pair<PageIndex,PageIndex>> CacheManager::copyDirtyPages()
+std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
 {
     std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
     origToCopyPages.reserve(m_redirectedPagesMap.size());
@@ -236,8 +236,8 @@ void CacheManager::writePhysicalLogs(const std::vector<std::pair<PageIndex, Page
     {
         auto pageIndex = m_rawFileInterface->newInterval(1).begin();
         LogPage logPage(pageIndex);
-        //begin = logPage.pushBack(begin, origToCopyPages.end());
-        m_rawFileInterface->writePage(pageIndex, 0, (const uint8_t*)&logPage, ((const uint8_t*)&logPage) + sizeof(LogPage));
+        begin = logPage.pushBack(begin, origToCopyPages.end());
+        m_rawFileInterface->writePage(pageIndex, 0, (const uint8_t*) &logPage,
+                                      ((const uint8_t*) &logPage) + sizeof(LogPage));
     }
-
 }
