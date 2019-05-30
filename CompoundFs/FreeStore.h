@@ -154,7 +154,7 @@ private:
         return is;
     }
 
-    /// Pushes the IntervalSequence back into FileTable pages. If more than one page is needed it will reuse its own
+    /// Pushes the IntervalSequence back into FileTable pages. If more than one page is needed it will try reuse its own
     /// pages to store the FileTables.
     FileDescriptor pushFileTables(IntervalSequence& is) const
     {
@@ -167,12 +167,10 @@ private:
         cur.m_page->transferFrom(is);
         while (!is.empty())
         {
-            // let's use one of our pages as a FileTable
-            auto pageId = is.popFront(1).begin();
-
-            // if this happens to be one of our m_freeMetaDataPages let's have the CacheManager decide how to treat
-            // that page otherwise it was not used for meta-data and we can safely enforce it to be of type new.
-            auto next = m_cacheManager.repurpose<FileTable>(pageId, m_freeMetaDataPages.count(pageId) == 0);
+            // let's try to use one of our own pages as a FileTable
+            auto pageId = is.front().begin();
+            auto next = m_freeMetaDataPages.count(pageId) ? m_cacheManager.newPage<FileTable>()
+                                                          : m_cacheManager.repurpose<FileTable>(is.popFront(1).begin());
 
             // rewire the next pointers in the singly linked list
             next.m_page->setNext(cur.m_page->getNext());

@@ -54,6 +54,6 @@ TEST(TypedCacheManager, repurposeCallsCtor)
         CHECK(pdef.m_index == 0);
     }
 
-    auto pdef = tcm.repurpose<FileTable>(0, false);
+    auto pdef = tcm.repurpose<FileTable>(0);
     CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
 }

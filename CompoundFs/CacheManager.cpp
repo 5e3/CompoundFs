@@ -52,7 +52,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 /// setPageDirty(). The page is treated as PageMetaData::New if we find the page in the m_newPageSet otherwise it will
 /// be flagged as PageMetaData::DirtyRead. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
 /// following the dirty-page-protocol.
-PageDef<uint8_t> CacheManager::repurpose(PageIndex origId, bool forceNew)
+PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
     auto id = redirectPage(origId);
     int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::DirtyRead;
