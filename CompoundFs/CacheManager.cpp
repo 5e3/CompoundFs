@@ -214,7 +214,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
     redirectedPagesMap.swap(m_redirectedPagesMap);
 
     auto interval = m_rawFileInterface->newInterval(redirectedPagesMap.size());
-    assert(interval.length() == redirectedPagesMap.size());
+    assert(interval.length() == redirectedPagesMap.size()); // here the file is just growing
     auto nextPage = interval.begin();
 
     for (const auto& [originalPage, redirectedPage]: redirectedPagesMap)

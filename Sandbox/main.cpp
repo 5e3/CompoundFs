@@ -291,13 +291,17 @@ int main()
     std::mt19937_64 mt(rd());
     mt.seed(1);
 
-    //ByteString b;
-    //fromBlob<std::vector<float>>(b);
-    //fromBlob<std::string>(b);
-    //fromBlob<int>(b);
+    std::vector<int> vi;
+    for (auto i: { 0, 100 })
+        vi.push_back(i);
 
-    //func(5);
-    //func("test");
-    //Var v = "test";
+    // ByteString b;
+    // fromBlob<std::vector<float>>(b);
+    // fromBlob<std::string>(b);
+    // fromBlob<int>(b);
+
+    // func(5);
+    // func("test");
+    // Var v = "test";
     // Var2 v2 = *v;
 }
