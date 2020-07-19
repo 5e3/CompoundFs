@@ -172,7 +172,7 @@ TEST(DirectoryStructure, updateFileNeedsExistingFile)
     CHECK(!ds.updateFile(dkey, desc));
 }
 
-TEST(DirectoryStructure, nonFileEntryPrefentsCreationOfFile)
+TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
 {
     DirectoryStructure ds = makeDirectoryStructure();
     DirectoryKey dkey("test.file");
@@ -207,4 +207,3 @@ TEST(Cursor, creation)
     auto cur4 = ds.next(cur3);
     CHECK(!cur4);
 }
-
