@@ -15,11 +15,11 @@ public:
         : m_cacheManager(cacheManager)
     {}
 
-    template <typename TPage, class... Args>
-    PageDef<TPage> newPage(Args&&... args)
+    template <typename TPage, class... Ts>
+    PageDef<TPage> newPage(Ts&&... args)
     {
         auto pdef = m_cacheManager->newPage();
-        auto obj = new (pdef.m_page.get()) TPage(std::forward<Args>(args)...);
+        auto obj = new (pdef.m_page.get()) TPage(std::forward<Ts>(args)...);
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }
 
@@ -37,11 +37,11 @@ public:
         return PageDef<TPage>(std::const_pointer_cast<TPage>(loadedPage.m_page), loadedPage.m_index);
     }
 
-    template <typename TPage, class... Args>
-    PageDef<TPage> repurpose(PageIndex index, Args... args)
+    template <typename TPage, class... Ts>
+    PageDef<TPage> repurpose(PageIndex index, Ts... args)
     {
         auto pdef = m_cacheManager->repurpose(index);
-        auto obj = new (pdef.m_page.get()) TPage(std::forward<Args>(args)...);
+        auto obj = new (pdef.m_page.get()) TPage(std::forward<Ts>(args)...);
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }
 

@@ -59,8 +59,8 @@ public:
         return false;
     }
 
-    template <typename ITERATOR>
-    constexpr ITERATOR pushBack(ITERATOR begin, ITERATOR end) noexcept
+    template <typename TIter>
+    constexpr TIter pushBack(TIter begin, TIter end) noexcept
     {
         auto size = std::min(size_t(std::distance(begin, end)), MAX_ENTRIES - m_size);
         std::transform(begin, begin + size, m_pageCopies + m_size, [](auto value) {
