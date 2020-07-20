@@ -45,7 +45,7 @@ This is why the `CacheManager` first tries to free pages with the lowest priorit
 has at its disposal the better its performance. Avoiding page-evictions altogether results therefore in best performance.
 
 Page State | Priority | Evication Strategy | Future Cost
------------| -------- |  
+-----------| -------- |------------------- | -----------  
 `Read` | 0 | Just release the memory. | Needs to be read-in again if ever needed at a later stage.
 `New` | 1 | Write the page to disk before releasing it. | Needs to be read-in and potentially written again if it will be updated later on. 
 `DirtyRead` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures one more write-operation during the *commit-phase* when it needs to update the original page
