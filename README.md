@@ -5,10 +5,18 @@ CompoundFs is a fully fledged file-system organized in a single operating-system
 directory structure alongside potentially multiple user-supplied data files. The whole compound file structure can easily 
 be moved or send around as it exists in a single OS file.  
 
-### Transactional
-Write-operations can either succeed completely or they appear as if they have never happend at all.
-Application crashes, power-failures or file-system exceptions cannot cripple existing file-data as a result of that.  
-Internal meta data is only manipulated by successfull transactions. Incomplete transactions are ignored and rolled-back.  
+### Transactional Write-Operations
+Write-operations either succeed entirely or appear as if they have never happend at all.
+Application crashes, power-failures or file-system exceptions can never cripple existing file-data. 
+File meta data is only manipulated by successfull transactions. Incomplete transactions are ignored and eventually 
+rolled back.
+
+### Two Phase Write-Operations
+A write-operation can consist of a first phase were any number of directory manipulations and file creation/append/delete 
+or bulk-write operations can take place. The writer's changes are at first only visible for the writer itself while 
+multiple readers still see the state of the file as it was before the beginning of the write operation.  
+The end of the write-operation consists of a short commit-phase which makes all changes visible for everybody. During the
+commit-phase no readers can access the file.
 
 # General Organization
 
