@@ -1,9 +1,9 @@
 # CompoundFs
 
 ### Several Files in One 
-CompoundFs is a fully fledged file-system organized in a single operating-system file. It consists of a user defined 
+CompoundFs is a fully fledged file-system organized in a single Operating-System file. It consists of a user defined 
 directory structure alongside potentially multiple user-supplied data files. The whole compound file structure can easily 
-be moved or send around as it exists in a single OS file.  
+be moved or send around as it exists as a single OS file.  
 
 ### Transactional Write-Operations
 Write-operations either succeed entirely or appear as if they have never happend at all.
@@ -12,11 +12,12 @@ File meta data is only manipulated by successfull transactions. Incomplete trans
 rolled back.
 
 ### Two Phase Write-Operations
-A write-operation can consist of a first phase were any number of directory manipulations and file creation/append/delete 
-or bulk-write operations can take place. The writer's changes are at first only visible for the writer itself while 
-multiple readers still see the state of the file as it was before the beginning of the write operation.  
-The end of the write-operation consists of a short commit-phase which makes all changes visible for everybody. During the
-commit-phase no readers can access the file.
+A write-operation consists of a first phase were any number of directory manipulations and file creation/append/delete 
+or bulk-write operations can take place. Gigabytes of data can be written during this phase.  
+The writer's changes are at first only visible to the writer itself while multiple readers still see the state 
+of the file before the beginning of the write-operation.  
+The end of the write-operation employs a short commit-phase which makes the entire write-operation visible. 
+During the commit-phase the writer has exclusive access to the file and readers have to wait for the writer to complete.
 
 # General Organization
 
@@ -29,7 +30,7 @@ to external storage.
 current write operation.
 - The `CacheManager` manages the pages and keeps track of the memory consumption.
 - At any time at most one write-operation can be active in parallel with an arbitrary number of read-operations.
-- No data is ever changed on existing pages except at the very end of a write-operation the so called *Commit Phase*.
+- No data is ever changed on existing pages except at the very end of the write-operation the so called *Commit Phase*.
 - `New` pages are allocated either by extending the file at the end or by reusing pages that were previously in-use but 
 subsequently deleted.
 - Deleted pages are organized as one big list of free pages in the `FreeStore`.
@@ -39,15 +40,15 @@ pages according to the following cache eviction strategy:
 ### Cache Eviction Strategy
 Memory occupied by pages can be reused if the page is currently not directly referenced (i.e. the page is *not hot* which is 
 determined by a reference counting scheme).  
-Pages are prioretized according to the cost they might incure when they are needed again at a later point in time. 
+Pages are prioretized according to the costs they incure when they are needed again at a later point in time. 
 This is why the `CacheManager` first tries to free pages with the lowest priority. The more memory the `CacheManager` 
-has at its disposal the better its performance. Avoiding page-eviction altogether results therefore in best performance.
+has at its disposal the better its performance. Avoiding page-evictions altogether results therefore in best performance.
 
 Page State | Priority | Evication Strategy | Future Cost
 -----------| -------- |  
 `Read` | 0 | Just release the memory. | Needs to be read-in again if ever needed at a later stage.
-`New` | 1 | Write to disk. | Needs to be read-in and potentially written again if it will be updated later on. 
-`DirtyRead` | 2 | Write to disk to a new, unused location. | Same cost as for `New` pages but incures one more write-operation during the *commit-phase* when it needs to update the original page
+`New` | 1 | Write the page to disk before releasing it. | Needs to be read-in and potentially written again if it will be updated later on. 
+`DirtyRead` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures one more write-operation during the *commit-phase* when it needs to update the original page
 
 
 # The Commit Protocol
