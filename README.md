@@ -25,13 +25,13 @@ pack the maximum amount of data into the tree's nodes.
 
 ## General Organization
 
-- File meta data is organized in pages of 4096 bytes which is exptected to be the atomic size for hardware write-operations 
+- File meta data is organized in pages of 4096 bytes which is expected to be the atomic size for hardware write-operations 
 to external storage.
-- Pages can be in one  of three states: `Read, New, DirtyRead`. 
-  - `Read` pages where brought into memory because we needed  their information.
-  - `New` pages did not exist before.
-  - `DirtyRead` pages were first brought into memory as `Read` pages but need to be updated by the 
-current write operation.
+- Pages can be in one of three states: `Read, New, DirtyRead`. 
+  - `Read` pages are cached to avoid reading them again.
+  - `New` pages did not exist before. They are cached because they might change more than once.
+  - `DirtyRead` pages were first brought into memory as `Read` pages but subsequently changed by the 
+current write operation. They are cached for the same reason as the `New` pages.
 - The `CacheManager` manages the pages and keeps track of the memory consumption.
 - At any time at most one write-operation can be active in parallel with an arbitrary number of read-operations.
 - No data is ever changed on existing pages except at the very end of the write-operation the so called *commit phase*.
@@ -51,14 +51,17 @@ has at its disposal the better its performance. Avoiding page-evictions altogeth
 
 Page State | Priority | Eviction Strategy | Future Cost
 -----------| -------- |------------------ | -----------  
-`Read` | 0 | Just release the memory. | Needs to be read-in again if ever needed at a later stage.
+`Read` | 0 | Just release the memory. | Needs to be read-in again if ever requested at a later stage.
 `New` | 1 | Write the page to disk before releasing it. | Needs to be read-in and potentially written again if it will be updated later on. 
 `DirtyRead` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures two more write-operation during the *commit-phase* when it needs to update the original page
 
-## The Locking Protocol  
-[R]: the Reader lock.  
-[W]: the Writer lock.  
-[X]: the eXclusive commit state lock.  
+## The Locking Protocol 
+
+Several processes might access the file at the same time. To garantie data integrity a file locking scheme is employed:  
+ 
+[R]: Reader lock.  
+[W]: Writer lock.  
+[X]: eXclusive commit state lock.  
 
 
 [] | [R] locked | [W] locked | [X] locked
@@ -68,7 +71,7 @@ Page State | Priority | Eviction Strategy | Future Cost
 **[X] request** | - | X | -
 
 Or in words: There is any number of [R] locks, maximum 1 [W] lock during the first phase of a write-operation which
-is then elevated to an [X] lock during the commit-phase. The [X] lock allows no other locks.
+is then elevated to an [X] lock during the commit-phase. The [X] lock allows access to no other locks.
 
 ## The Commit Protocol  
 
@@ -98,7 +101,8 @@ Here is the commit-phase in greater detail. For the baseline we consider a more 
 evicted some `DirtyRead` pages to temporary new locations. These pages are not needed anymore after commit.
 
 1. Aquire eXclusive File Lock.
-2. Collect all free pages including the `DirtyRead` pages from `CacheManager` and mark them as free in `FreeStore`.
+2. Collect all free pages including the evicted `DirtyRead` pages from `CacheManager` and mark them as 
+free in `FreeStore`.
 3. Close the `FreeStore`. From now on new pages are allocated by growing the file.
 4. FSize = current file size.
 2. Write all `New` pages.
