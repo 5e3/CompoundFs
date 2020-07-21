@@ -76,17 +76,26 @@ is then elevated to an [X] lock during the commit-phase. The [X] lock allows no 
 - During the commit phase log records are written to the file.
 - It consistes of `LogPage` pages which store a list of pairs `{ OriginalPageIndex, CopyPageIndex }`. 
 - `LogPage` pages are at the very end of the file.
-- `LogPage`pages can be savely identified
+- `LogPage`pages can be savely identified.
 
 
 ### The Commit Phase  
 
-- A write operation always creates `DirtyRead` pages.
-- During the commit-phase the file grows temporarily.
-- FSize is an attribute written to the file meta-data. It reflects the file size after a successful write-operations.
 
-For the baseline we consider the most complex situation: `CacheManager` evicted some `DirtyRead` 
-pages to temporary new locations.
+Here is the general idea behind the commit-phase:
+- Before we change any existing meta-data we make a copy of the original information to allow rollback 
+if anything goes wrong.
+- This copy must be temporarily documented somewhere. This is why we write the log file.
+- Now we overwrite existing meta-data with new contents.
+- To mark successful completion of the commit-phase (and to tidy up) we remove the log file.  
+
+Note:
+- A write operation always creates `DirtyRead` pages.
+- During the commit-phase the file grows temporarily (see below).
+- FSize is an attribute written to the file meta-data. It reflects the file size after a successful write-operation.
+
+Here is the commit-phase in greater detail. For the baseline we consider a more complex situation: `CacheManager` 
+evicted some `DirtyRead` pages to temporary new locations. These pages are not needed anymore after commit.
 
 1. Aquire eXclusive File Lock.
 2. Collect all free pages including the `DirtyRead` pages from `CacheManager` and mark them as free in `FreeStore`.
