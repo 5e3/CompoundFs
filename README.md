@@ -6,24 +6,28 @@ directory structure alongside potentially multiple user-supplied data files. The
 be moved or send around as it exists as a single OS file.  
 
 ### Transactional Write-Operations
-Write-operations either succeed entirely or appear as if they have never happend at all.
-Application crashes, power-failures or file-system exceptions can never cripple existing file-data. 
-File meta data is only manipulated by successfull transactions. Incomplete transactions are ignored and eventually 
+Write-operations either succeed entirely or appear as if they never happend at all.
+Application crashes, power-failures or file-system exceptions can not cripple existing file-data as 
+file meta data is only manipulated by successfull transactions. Incomplete transactions are ignored and eventually 
 rolled back.
 
 ### Two Phase Write-Operations
-A write-operation consists of a first phase were any number of directory manipulations and file creation/append/delete 
+A write-operation consists of a first phase where any number of directory manipulations and file creation/append/delete 
 or bulk-write operations can take place. Gigabytes of data can be written during this phase.  
 The writer's changes are at first only visible to the writer itself while multiple readers still see the state 
-of the file before the beginning of the write-operation.  
-The end of the write-operation employs a short commit-phase which makes the entire write-operation visible. 
+of the file before the write-operation.  
+The end of the write-operation employs a short commit-phase which makes the entire write-operation visible in one go. 
 During the commit-phase the writer has exclusive access to the file and readers have to wait for the writer to complete.
+
+### High Performance Directory Structure
+The internal file structure is organized as a B+Tree to ensure short access times. Key-value pairs have dynamic size to
+pack the maximum amount of data into the tree's nodes. 
 
 # General Organization
 
-- All data is organized in pages of 4096 bytes which is exptected to be the atomic size for hardware write-operations 
+- File meta data is organized in pages of 4096 bytes which is exptected to be the atomic size for hardware write-operations 
 to external storage.
-- Pages can be in any of three states: `Read, New, DirtyRead`. 
+- Pages can be in one  of three states: `Read, New, DirtyRead`. 
   - `Read` pages where brought into memory because we needed  their information.
   - `New` pages did not exist before.
   - `DirtyRead` pages were first brought into memory as `Read` pages but need to be updated by the 
