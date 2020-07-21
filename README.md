@@ -6,7 +6,7 @@ directory structure alongside potentially multiple user-supplied data files. The
 be moved or send around as it exists as a single OS file.  
 
 ### Transactional Write-Operations
-Write-operations either succeed entirely or appear as if they never happend at all.
+Write-operations either succeed entirely or appear as if they never have happend at all.
 Application crashes, power-failures or file-system exceptions can not cripple existing file-data as 
 file meta data is only manipulated by successfull transactions. Incomplete transactions are ignored and eventually 
 rolled back.
@@ -23,7 +23,7 @@ During the commit-phase the writer has exclusive access to the file and readers 
 The internal file structure is organized as a B+Tree to ensure short access times. Key-value pairs have dynamic size to
 pack the maximum amount of data into the tree's nodes. 
 
-# General Organization
+## General Organization
 
 - File meta data is organized in pages of 4096 bytes which is exptected to be the atomic size for hardware write-operations 
 to external storage.
@@ -54,8 +54,64 @@ Page State | Priority | Evication Strategy | Future Cost
 `New` | 1 | Write the page to disk before releasing it. | Needs to be read-in and potentially written again if it will be updated later on. 
 `DirtyRead` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures one more write-operation during the *commit-phase* when it needs to update the original page
 
+## The Locking Protocol  
+R: the Reader lock.  
+W: the Writer lock.  
+X: the eXclusive commit state lock.  
 
-# The Commit Protocol
-All data is organized in pages of 4096 bytes size which is exptected to be the atomic size for hardware
-write operations. :
-The `CacheManager` manages the pages
+
+[] | R locked | W locked | X locked
+-- | ----- | ----- | -----
+**R request** | X | X | -
+**W request** | X | - | - 
+**X request** | - | X | -
+
+
+## The Commit Protocol  
+
+### The Log File  
+- During the commit phase log records are written to the file.
+- It consistes of `LogPage` pages which store a list of pairs `{ OriginalPageIndex, CopyPageIndex }`
+- `LogPage` pages are at the very end of the file.
+- `LogPage`pages can be savely identified
+
+
+### The Commit Phase  
+
+For the baseline we consider the most complex situation: `CacheManager` evicted some `DirtyRead` 
+pages to temporary new locations.
+
+1. Aquire eXclusive File Lock
+2. Collect all free pages including the `DirtyRead` pages from `CacheManager` and mark them as free in `FreeStore`.
+3. Close the `FreeStore`. From now on new pages are allocated by growing the file.
+4. FSize = current file size
+2. Write all `New` pages.
+5. Copy original `DirtyRead` pages to new location (by growing the file)
+6. Write `LogPage` pages by growing the file
+7. Flush all pages. 
+8. Copy new `DirtyRead` contents over original pages
+9. Flush all pages
+10. Cut the file size to FSize (throw away `DirtyRead` copies and `LogPage` pages)
+12. Release eXclusive File Lock
+
+### The Rollback Procedure  
+
+If a write-operation gets interrupted before the commit-phase just cut the file to FSize and be done.  
+Up to point 7. in the commit-phase no meta-data page was changed. Again just cut the file.  
+After point 7. we use the LogPage info to restore the original `DirtyRead` pages and then cut the file.  
+
+```
+if (current file size == FSize)
+  return;
+if (last page is not LogPage)
+  cut file to FSize; 
+  return;
+if (LogPage is not complete)
+  cut file to FSize; 
+  return;
+foreach pair {origIdx, copyIdx} in LogPage
+  copyPage from copyIdx to origIdx
+cut file to FSize; 
+return;
+
+```
