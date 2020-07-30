@@ -41,15 +41,15 @@ class CacheManager
     };
 
 public:
-    struct PageSortItem : PageMetaData
+    struct PrioritizedPage : PageMetaData
     {
         PageIndex m_id;
 
-        constexpr PageSortItem(const PageMetaData& pmd, PageIndex id) noexcept;
-        constexpr PageSortItem(int type, int usageCount, int priority, PageIndex id) noexcept;
+        constexpr PrioritizedPage(const PageMetaData& pmd, PageIndex id) noexcept;
+        constexpr PrioritizedPage(int type, int usageCount, int priority, PageIndex id) noexcept;
 
-        constexpr bool operator<(PageSortItem rhs) const noexcept;
-        constexpr bool operator==(PageSortItem rhs) const noexcept;
+        constexpr bool operator<(PrioritizedPage rhs) const noexcept;
+        constexpr bool operator==(PrioritizedPage rhs) const noexcept;
     };
 
 public:
@@ -73,14 +73,14 @@ public:
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const noexcept;
-    std::vector<PageSortItem> getUnpinnedPages() const;
+    std::vector<PrioritizedPage> getUnpinnedPages() const;
     std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages();
-    void writePhysicalLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
+    void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
 
     void trimCheck() noexcept;
-    void evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
-    void evictNewPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
-    void removeFromCache(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end);
+    void evictDirtyPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
+    void evictNewPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
+    void removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
 
 private:
     RawFileInterface* m_rawFileInterface;
@@ -88,8 +88,8 @@ private:
     std::unordered_map<PageIndex, CachedPage> m_cache;
     std::unordered_map<PageIndex, PageIndex> m_redirectedPagesMap;
     std::unordered_set<PageIndex> m_newPageSet;
-    PageAllocator m_pageAllocator;
-    uint32_t m_maxPages;
+    PageAllocator m_pageMemoryAllocator;
+    uint32_t m_maxCachedPages;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -109,24 +109,24 @@ inline CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page
 
 ///////////////////////////////////////////////////////////////////////////////
 
-inline constexpr CacheManager::PageSortItem::PageSortItem(const PageMetaData& pmd, PageIndex id) noexcept
+inline constexpr CacheManager::PrioritizedPage::PrioritizedPage(const PageMetaData& pmd, PageIndex id) noexcept
     : PageMetaData(pmd)
     , m_id(id)
 {}
 
-inline constexpr CacheManager::PageSortItem::PageSortItem(int type, int usageCount, int priority, PageIndex id) noexcept
+inline constexpr CacheManager::PrioritizedPage::PrioritizedPage(int type, int usageCount, int priority, PageIndex id) noexcept
     : PageMetaData(type, priority)
     , m_id(id)
 {
     m_usageCount = usageCount;
 }
 
-inline constexpr bool CacheManager::PageSortItem::operator<(const PageSortItem rhs) const noexcept
+inline constexpr bool CacheManager::PrioritizedPage::operator<(const PrioritizedPage rhs) const noexcept
 {
     return std::tie(m_type, m_usageCount, m_priority) > std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
 }
 
-inline constexpr bool CacheManager::PageSortItem::operator==(const PageSortItem rhs) const noexcept
+inline constexpr bool CacheManager::PrioritizedPage::operator==(const PrioritizedPage rhs) const noexcept
 {
     return std::tie(m_type, m_usageCount, m_priority) == std::tie(rhs.m_type, rhs.m_usageCount, rhs.m_priority);
 }

@@ -297,18 +297,18 @@ TEST(CacheManager, setPageIndexAllocator)
     {}
 }
 
-TEST(PageSortItem, sortOrder)
+TEST(PrioritizedPage, sortOrder)
 {
-    std::vector<CacheManager::PageSortItem> psis;
-    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 5, 0, 0);
-    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 3, 5, 1);
-    psis.emplace_back(CacheManager::PageSortItem::DirtyRead, 3, 4, 2);
-    psis.emplace_back(CacheManager::PageSortItem::New, 0, 5, 3);
-    psis.emplace_back(CacheManager::PageSortItem::New, 0, 4, 4);
-    psis.emplace_back(CacheManager::PageSortItem::New, 0, 0, 5);
-    psis.emplace_back(CacheManager::PageSortItem::Read, 3, 1, 6);
-    psis.emplace_back(CacheManager::PageSortItem::Read, 3, 0, 7);
-    psis.emplace_back(CacheManager::PageSortItem::Read, 2, 10, 8);
+    std::vector<CacheManager::PrioritizedPage> psis;
+    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 5, 0, 0);
+    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 3, 5, 1);
+    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 3, 4, 2);
+    psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 5, 3);
+    psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 4, 4);
+    psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 0, 5);
+    psis.emplace_back(CacheManager::PrioritizedPage::Read, 3, 1, 6);
+    psis.emplace_back(CacheManager::PrioritizedPage::Read, 3, 0, 7);
+    psis.emplace_back(CacheManager::PrioritizedPage::Read, 2, 10, 8);
 
     auto psis2 = psis;
     std::random_shuffle(psis2.begin(), psis2.end());

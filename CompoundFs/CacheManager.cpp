@@ -12,15 +12,15 @@ using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
     : m_rawFileInterface(rfi)
-    , m_pageAllocator(maxPages)
-    , m_maxPages(maxPages)
+    , m_pageMemoryAllocator(maxPages)
+    , m_maxCachedPages(maxPages)
 {}
 
 /// Delivers a new page. The page is either allocated form the FreeStore or it comes from extending the file. The
 /// PageDef<> is writable as it is expected that a new page was requested because you want to write to it.
 PageDef<uint8_t> CacheManager::newPage()
 {
-    auto page = m_pageAllocator.allocate();
+    auto page = m_pageMemoryAllocator.allocate();
     auto id = newPageIndex();
     m_cache.emplace(id, CachedPage(page, PageMetaData::New));
     m_newPageSet.insert(id);
@@ -37,7 +37,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
-        auto page = m_pageAllocator.allocate();
+        auto page = m_pageMemoryAllocator.allocate();
         m_rawFileInterface->readPage(id, 0, page.get(), page.get() + 4096);
         m_cache.emplace(id, CachedPage(page, PageMetaData::Read));
         trimCheck();
@@ -59,7 +59,7 @@ PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
-        auto page = m_pageAllocator.allocate();
+        auto page = m_pageMemoryAllocator.allocate();
         m_cache.emplace(id, CachedPage(page, type));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
@@ -93,27 +93,27 @@ void CacheManager::setPageDirty(PageIndex id) noexcept
 /// Finds out if a trim operation needs to be performed and does it if necessary.
 void CacheManager::trimCheck() noexcept
 {
-    if (m_cache.size() > m_maxPages)
-        trim(m_maxPages / 4 * 3);
+    if (m_cache.size() > m_maxCachedPages)
+        trim(m_maxCachedPages / 4 * 3);
 }
 
 // Trims down memory usage by maxPages. If users have a lot of pinned pages this is triggered too often. Make sure that
 // there is sufficient space to deal with real-world scenarios.
 size_t CacheManager::trim(uint32_t maxPages)
 {
-    auto pageSortItems = getUnpinnedPages();
-    maxPages = std::min(maxPages, (uint32_t) pageSortItems.size());
-    auto beginEvictSet = pageSortItems.begin() + maxPages;
+    auto prioritizedPages = getUnpinnedPages();
+    maxPages = std::min(maxPages, (uint32_t) prioritizedPages.size());
+    auto beginEvictSet = prioritizedPages.begin() + maxPages;
 
-    std::nth_element(pageSortItems.begin(), beginEvictSet, pageSortItems.end());
-    auto beginNewPageSet = std::partition(beginEvictSet, pageSortItems.end(),
-                                          [](PageSortItem psi) { return psi.m_type == PageMetaData::DirtyRead; });
-    auto endNewPageSet = std::partition(beginNewPageSet, pageSortItems.end(),
-                                        [](PageSortItem psi) { return psi.m_type == PageMetaData::New; });
+    std::nth_element(prioritizedPages.begin(), beginEvictSet, prioritizedPages.end());
+    auto beginNewPageSet = std::partition(beginEvictSet, prioritizedPages.end(),
+                                          [](PrioritizedPage psi) { return psi.m_type == PageMetaData::DirtyRead; });
+    auto endNewPageSet = std::partition(beginNewPageSet, prioritizedPages.end(),
+                                        [](PrioritizedPage psi) { return psi.m_type == PageMetaData::New; });
 
     evictDirtyPages(beginEvictSet, beginNewPageSet);
     evictNewPages(beginNewPageSet, endNewPageSet);
-    removeFromCache(beginEvictSet, pageSortItems.end());
+    removeFromCache(beginEvictSet, prioritizedPages.end());
     return m_cache.size();
 }
 
@@ -151,17 +151,17 @@ PageIndex CacheManager::redirectPage(PageIndex id) const noexcept
 }
 
 /// Find all pages that are currently not pinned.
-std::vector<CacheManager::PageSortItem> CacheManager::getUnpinnedPages() const
+std::vector<CacheManager::PrioritizedPage> CacheManager::getUnpinnedPages() const
 {
-    std::vector<PageSortItem> pageSortItems;
+    std::vector<PrioritizedPage> pageSortItems;
     pageSortItems.reserve(m_cache.size());
     for (auto& cp: m_cache)
         if (cp.second.m_page.use_count() == 1) // we don't use weak_ptr => this is save
-            pageSortItems.push_back(PageSortItem(cp.second, cp.first));
+            pageSortItems.push_back(PrioritizedPage(cp.second, cp.first));
     return pageSortItems;
 }
 
-void CacheManager::evictDirtyPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
+void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end)
 {
     for (auto it = begin; it != end; ++it)
     {
@@ -175,7 +175,7 @@ void CacheManager::evictDirtyPages(std::vector<PageSortItem>::iterator begin, st
     }
 }
 
-void CacheManager::evictNewPages(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
+void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end)
 {
     for (auto it = begin; it != end; ++it)
     {
@@ -186,7 +186,7 @@ void CacheManager::evictNewPages(std::vector<PageSortItem>::iterator begin, std:
     }
 }
 
-void CacheManager::removeFromCache(std::vector<PageSortItem>::iterator begin, std::vector<PageSortItem>::iterator end)
+void CacheManager::removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end)
 {
     for (auto it = begin; it != end; ++it)
         m_cache.erase(it->m_id);
@@ -200,12 +200,22 @@ void CacheManager::commit()
     auto origToCopyPages = copyDirtyPages();
     m_rawFileInterface->commit();
 
-    writePhysicalLogs(origToCopyPages);
+    writeLogs(origToCopyPages);
     m_rawFileInterface->commit();
+    
+    // TODO: overwrite the original dirty pages
+    // use the cache if its already there
+    // otherwise just copy pages redirectIdx to origIdx
+    // some New pages will have to be pushed to disk
+    // but not the once we just used to overwrite the dirty pages!
+    
+    // cut the file
 }
 
 std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
 {
+
+    // TODO: add the DirtyRead pages from the cache to this
     std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
     origToCopyPages.reserve(m_redirectedPagesMap.size());
 
@@ -217,19 +227,21 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
     assert(interval.length() == redirectedPagesMap.size()); // here the file is just growing
     auto nextPage = interval.begin();
 
-    for (const auto& [originalPage, redirectedPage]: redirectedPagesMap)
+    for (const auto& [originalPageIdx, redirectedPageIdx]: redirectedPagesMap)
     {
-        auto pageDef = loadPage(originalPage);
+        // TODO: don't loadPage()! avoid triggering a cache eviction. copy directly!
+        auto pageDef = loadPage(originalPageIdx);
         m_rawFileInterface->writePage(nextPage, 0, pageDef.m_page.get(), pageDef.m_page.get() + 4096);
-        origToCopyPages.push_back({ originalPage, nextPage++ });
+        origToCopyPages.emplace_back(originalPageIdx, nextPage++);
     }
+    assert(nextPage == interval.end());
 
     // restore redirecting
     redirectedPagesMap.swap(m_redirectedPagesMap);
     return origToCopyPages;
 }
 
-void CacheManager::writePhysicalLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages)
+void CacheManager::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages)
 {
     auto begin = origToCopyPages.begin();
     while (begin != origToCopyPages.end())
