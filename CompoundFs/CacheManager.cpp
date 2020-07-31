@@ -22,7 +22,7 @@ PageDef<uint8_t> CacheManager::newPage()
 {
     auto page = m_pageMemoryAllocator.allocate();
     auto id = newPageIndex();
-    m_cache.emplace(id, CachedPage(page, PageMetaData::New));
+    m_cache.emplace(id, CachedPage(page, PageClass::New));
     m_newPageSet.insert(id);
     trimCheck();
     return PageDef<uint8_t>(page, id);
@@ -39,7 +39,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     {
         auto page = m_pageMemoryAllocator.allocate();
         m_rawFileInterface->readPage(id, 0, page.get(), page.get() + 4096);
-        m_cache.emplace(id, CachedPage(page, PageMetaData::Read));
+        m_cache.emplace(id, CachedPage(page, PageClass::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
     }
@@ -49,24 +49,24 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 }
 
 /// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
-/// setPageDirty(). The page is treated as PageMetaData::New if we find the page in the m_newPageSet otherwise it will
-/// be flagged as PageMetaData::Dirty. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
+/// setPageDirty(). The page is treated as PageClass::New if we find the page in the m_newPageSet otherwise it will
+/// be flagged as PageClass::Dirty. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
 /// following the dirty-page-protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
     auto id = redirectPage(origId);
-    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::Dirty;
+    PageClass pageClass = m_newPageSet.count(id) ? PageClass::New : PageClass::Dirty;
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        m_cache.emplace(id, CachedPage(page, type));
+        m_cache.emplace(id, CachedPage(page, pageClass));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
     }
 
     it->second.m_usageCount++;
-    it->second.m_type = type;
+    it->second.m_pageClass = static_cast<unsigned> (pageClass);
     return PageDef<uint8_t>(it->second.m_page, origId);
 }
 
@@ -79,15 +79,15 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 }
 
 /// Marks that a page was changed: Pages previously read-in are marked dirty (which makes them follow the
-/// Dirty-Page-Protocoll). All other pages are treated as PageMetaData::New.
+/// Dirty-Page-Protocoll). All other pages are treated as PageClass::New.
 void CacheManager::setPageDirty(PageIndex id) noexcept
 {
     id = redirectPage(id);
-    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::Dirty;
+    PageClass pageClass = m_newPageSet.count(id) ? PageClass::New : PageClass::Dirty;
 
     auto it = m_cache.find(id);
     assert(it != m_cache.end());
-    it->second.m_type = type;
+    it->second.m_pageClass = static_cast<unsigned>(pageClass);
 }
 
 /// Finds out if a trim operation needs to be performed and does it if necessary.
@@ -107,9 +107,9 @@ size_t CacheManager::trim(uint32_t maxPages)
 
     std::nth_element(prioritizedPages.begin(), beginEvictSet, prioritizedPages.end());
     auto beginNewPageSet = std::partition(beginEvictSet, prioritizedPages.end(),
-                                          [](PrioritizedPage psi) { return psi.m_type == PageMetaData::Dirty; });
+                                          [](PrioritizedPage psi) { return psi.m_pageClass == PageClass::Dirty; });
     auto endNewPageSet = std::partition(beginNewPageSet, prioritizedPages.end(),
-                                        [](PrioritizedPage psi) { return psi.m_type == PageMetaData::New; });
+                                        [](PrioritizedPage psi) { return psi.m_pageClass == PageClass::New; });
 
     evictDirtyPages(beginEvictSet, beginNewPageSet);
     evictNewPages(beginNewPageSet, endNewPageSet);
@@ -165,7 +165,7 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
 {
     for (auto it = begin; it != end; ++it)
     {
-        assert(it->m_type == PageMetaData::Dirty);
+        assert(it->m_pageClass == PageClass::Dirty);
         auto p = m_cache.find(it->m_id);
         assert(p != m_cache.end());
         auto id = newPageIndex();
@@ -179,7 +179,7 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
 {
     for (auto it = begin; it != end; ++it)
     {
-        assert(it->m_type == PageMetaData::New);
+        assert(it->m_pageClass == PageClass::New);
         auto p = m_cache.find(it->m_id);
         assert(p != m_cache.end());
         m_rawFileInterface->writePage(p->first, 0, p->second.m_page.get(), p->second.m_page.get() + 4096);
