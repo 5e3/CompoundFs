@@ -302,9 +302,9 @@ TEST(CacheManager, setPageIndexAllocator)
 TEST(PrioritizedPage, sortOrder)
 {
     std::vector<CacheManager::PrioritizedPage> psis;
-    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 5, 0, 0);
-    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 3, 5, 1);
-    psis.emplace_back(CacheManager::PrioritizedPage::DirtyRead, 3, 4, 2);
+    psis.emplace_back(CacheManager::PrioritizedPage::Dirty, 5, 0, 0);
+    psis.emplace_back(CacheManager::PrioritizedPage::Dirty, 3, 5, 1);
+    psis.emplace_back(CacheManager::PrioritizedPage::Dirty, 3, 4, 2);
     psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 5, 3);
     psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 4, 4);
     psis.emplace_back(CacheManager::PrioritizedPage::New, 0, 0, 5);

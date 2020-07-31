@@ -50,12 +50,12 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 
 /// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
 /// setPageDirty(). The page is treated as PageMetaData::New if we find the page in the m_newPageSet otherwise it will
-/// be flagged as PageMetaData::DirtyRead. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
+/// be flagged as PageMetaData::Dirty. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
 /// following the dirty-page-protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
     auto id = redirectPage(origId);
-    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::DirtyRead;
+    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::Dirty;
     auto it = m_cache.find(id);
     if (it == m_cache.end())
     {
@@ -83,7 +83,7 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 void CacheManager::setPageDirty(PageIndex id) noexcept
 {
     id = redirectPage(id);
-    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::DirtyRead;
+    int type = m_newPageSet.count(id) ? PageMetaData::New : PageMetaData::Dirty;
 
     auto it = m_cache.find(id);
     assert(it != m_cache.end());
@@ -107,7 +107,7 @@ size_t CacheManager::trim(uint32_t maxPages)
 
     std::nth_element(prioritizedPages.begin(), beginEvictSet, prioritizedPages.end());
     auto beginNewPageSet = std::partition(beginEvictSet, prioritizedPages.end(),
-                                          [](PrioritizedPage psi) { return psi.m_type == PageMetaData::DirtyRead; });
+                                          [](PrioritizedPage psi) { return psi.m_type == PageMetaData::Dirty; });
     auto endNewPageSet = std::partition(beginNewPageSet, prioritizedPages.end(),
                                         [](PrioritizedPage psi) { return psi.m_type == PageMetaData::New; });
 
@@ -130,7 +130,7 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
     return m_rawFileInterface->newInterval(maxPages);
 }
 
-/// Get the pages used temporarily to redirect pages
+/// Get the page-indices for redirected Dirty pages
 std::vector<PageIndex> CacheManager::getRedirectedPages() const
 {
     std::vector<PageIndex> pages;
@@ -165,7 +165,7 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
 {
     for (auto it = begin; it != end; ++it)
     {
-        assert(it->m_type == PageMetaData::DirtyRead);
+        assert(it->m_type == PageMetaData::Dirty);
         auto p = m_cache.find(it->m_id);
         assert(p != m_cache.end());
         auto id = newPageIndex();
@@ -215,7 +215,7 @@ void CacheManager::commit()
 std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
 {
 
-    // TODO: add the DirtyRead pages from the cache to this
+    // TODO: add the Dirty pages from the cache to this
     std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
     origToCopyPages.reserve(m_redirectedPagesMap.size());
 

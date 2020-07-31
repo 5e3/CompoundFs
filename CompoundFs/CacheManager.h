@@ -24,7 +24,7 @@ class CacheManager
 {
     struct PageMetaData
     {
-        enum { Undefined, Read, New, DirtyRead };
+        enum { Undefined, Read, New, Dirty };
 
         unsigned int m_type : 2;
         unsigned int m_usageCount : 24;
