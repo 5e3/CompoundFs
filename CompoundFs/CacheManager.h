@@ -85,11 +85,13 @@ public:
     std::vector<PageIndex> getRedirectedPages() const;
     void commit();
 
+    std::vector<PageIndex> getAllDirtyPageIds() const;
+
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const noexcept;
     std::vector<PrioritizedPage> getUnpinnedPages() const;
-    std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages();
+    std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
 
     void trimCheck() noexcept;

@@ -197,11 +197,13 @@ void CacheManager::commit()
     // stop allocating from FreeStore
     m_pageIntervalAllocator = std::function<Interval(size_t)>();
 
-    auto origToCopyPages = copyDirtyPages();
-    m_rawFileInterface->commit();
+    auto dirtyPageIds = getAllDirtyPageIds();
+
+    auto origToCopyPages = copyDirtyPages(dirtyPageIds);
+    m_rawFileInterface->flushFile();
 
     writeLogs(origToCopyPages);
-    m_rawFileInterface->commit();
+    m_rawFileInterface->flushFile();
     
     // TODO: overwrite the original dirty pages
     // use the cache if its already there
@@ -212,32 +214,36 @@ void CacheManager::commit()
     // cut the file
 }
 
-std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages()
+std::vector<PageIndex> CacheManager::getAllDirtyPageIds() const
 {
+    std::vector<PageIndex> dirtyPageIds;
+    dirtyPageIds.reserve(m_redirectedPagesMap.size());
+    for (const auto& [originalPageIdx, redirectedPageIdx]: m_redirectedPagesMap)
+        dirtyPageIds.push_back(originalPageIdx);
 
-    // TODO: add the Dirty pages from the cache to this
+    for (auto& p: m_cache)
+        if (p.second.m_pageClass == PageClass::Dirty)
+            dirtyPageIds.push_back(p.first);
+
+    return dirtyPageIds;
+}
+
+std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
+{
     std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
-    origToCopyPages.reserve(m_redirectedPagesMap.size());
+    origToCopyPages.reserve(dirtyPageIds.size());
 
-    // stop redirecting loading
-    std::unordered_map<PageIndex, PageIndex> redirectedPagesMap;
-    redirectedPagesMap.swap(m_redirectedPagesMap);
-
-    auto interval = m_rawFileInterface->newInterval(redirectedPagesMap.size());
-    assert(interval.length() == redirectedPagesMap.size()); // here the file is just growing
+    auto interval = m_rawFileInterface->newInterval(dirtyPageIds.size());
+    assert(interval.length() == dirtyPageIds.size()); // here the file is just growing
     auto nextPage = interval.begin();
 
-    for (const auto& [originalPageIdx, redirectedPageIdx]: redirectedPagesMap)
+    for (auto originalPageIdx: dirtyPageIds)
     {
-        // TODO: don't loadPage()! avoid triggering a cache eviction. copy directly!
-        auto pageDef = loadPage(originalPageIdx);
-        m_rawFileInterface->writePage(nextPage, 0, pageDef.m_page.get(), pageDef.m_page.get() + 4096);
+        copyPage(m_rawFileInterface, originalPageIdx, nextPage);
         origToCopyPages.emplace_back(originalPageIdx, nextPage++);
     }
     assert(nextPage == interval.end());
 
-    // restore redirecting
-    redirectedPagesMap.swap(m_redirectedPagesMap);
     return origToCopyPages;
 }
 

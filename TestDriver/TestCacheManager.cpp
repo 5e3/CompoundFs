@@ -5,6 +5,7 @@
 #include "../CompoundFs/CacheManager.h"
 #include <algorithm>
 #include <random>
+#include <numeric>
 
 
 using namespace TxFs;
@@ -236,6 +237,42 @@ TEST(CacheManager, dirtyPagesGetRedirected)
     CHECK(redirectedPages.size() == 10);
     for (auto page : redirectedPages)
         CHECK(page >= 10);
+}
+
+TEST(CacheManager, getAllDirtyPageIds)
+{
+    SimpleFile sf;
+    {
+        // create new pages
+        CacheManager cm(&sf);
+        for (int i = 0; i < 40; i++)
+            cm.newPage();
+        cm.trim(0);
+    }
+
+    // 10 dirty pages
+    CacheManager cm(&sf);
+    for (int i = 10; i < 20; i++)
+        cm.makePageWritable(cm.loadPage(i));
+
+    // pin one of them so it cannot be trimmed
+    auto pinnedPage = cm.loadPage(15);
+    cm.trim(0);
+
+    // make one of the trimmed pages dirty again
+    cm.makePageWritable(cm.loadPage(16));
+
+    // make 10 more dirty pages that stay in the cache
+    for (int i = 20; i < 30; i++)
+        cm.makePageWritable(cm.loadPage(i));
+
+    auto dirtyPageIds = cm.getAllDirtyPageIds();
+    CHECK(dirtyPageIds.size() == 20);
+    std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
+
+    auto expected = dirtyPageIds;
+    std::iota(expected.begin(), expected.end(), 10);
+    CHECK(dirtyPageIds == expected);
 }
 
 TEST(CacheManager, repurposedPagesCanComeFromCache)
