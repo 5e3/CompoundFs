@@ -4,6 +4,8 @@
 #include "SimpleFile.h"
 #include "../CompoundFs/CacheManager.h"
 #include <algorithm>
+#include <random>
+
 
 using namespace TxFs;
 
@@ -311,7 +313,7 @@ TEST(PrioritizedPage, sortOrder)
     psis.emplace_back(CacheManager::PrioritizedPage::Read, 2, 10, 8);
 
     auto psis2 = psis;
-    std::random_shuffle(psis2.begin(), psis2.end());
+    std::shuffle(psis2.begin(), psis2.end(), std::mt19937(std::random_device()()));
     std::sort(psis2.begin(), psis2.end());
     CHECK(psis2 == psis);
 }

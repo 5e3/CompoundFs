@@ -4,6 +4,8 @@
 #include "Test.h"
 #include "../CompoundFs/FileTable.h"
 #include <list>
+#include <algorithm>
+#include <random>
 
 using namespace TxFs;
 
@@ -77,7 +79,7 @@ TEST(FileTable, transferNotEnoughSpace3)
     for (uint32_t i = 0; i < 2000; i++)
         ivect.push_back(Interval(i * 3, i * 3 + i % 2 + 1));
 
-    std::random_shuffle(ivect.begin(), ivect.end());
+    std::shuffle(ivect.begin(), ivect.end(), std::mt19937(std::random_device()()));
     IntervalSequence is;
     for (auto& iv: is)
         is.pushBack(iv);

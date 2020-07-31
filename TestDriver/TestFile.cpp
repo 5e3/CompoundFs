@@ -6,6 +6,8 @@
 #include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/ByteString.h"
 #include <string>
+#include <algorithm>
+#include <random>
 
 using namespace TxFs;
 
@@ -349,7 +351,7 @@ std::vector<uint8_t> makeRandomVector(size_t size)
     std::vector<uint8_t> v(size);
     for (size_t i = 0; i < size; i++)
         v[i] = uint8_t(i);
-    std::random_shuffle(v.begin(), v.end());
+    std::shuffle(v.begin(), v.end(), std::mt19937(std::random_device()()));
     return v;
 }
 
