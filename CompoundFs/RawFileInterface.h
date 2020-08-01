@@ -18,11 +18,32 @@ public:
     virtual void flushFile() = 0;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
+inline void readPage(const RawFileInterface* rfi, PageIndex idx, void* page)
+{
+    uint8_t* buffer = static_cast<uint8_t*>(page);
+    rfi->readPage(idx, 0, buffer, buffer + 4096);
+}
+inline void writePage(RawFileInterface* rfi, PageIndex idx, const void* page)
+{
+    const uint8_t* buffer = static_cast<const uint8_t*>(page);
+    rfi->writePage(idx, 0, buffer, buffer + 4096);
+}
+
 inline void copyPage(RawFileInterface* rfi, PageIndex from, PageIndex to)
 {
     uint8_t buffer[4096];
-    rfi->readPage(from, 0, buffer, buffer+sizeof(buffer));
-    rfi->writePage(to, 0, buffer, buffer + sizeof(buffer));
+    readPage(rfi, from, buffer);
+    writePage(rfi, to, buffer);
+}
+
+inline bool isEqualPage(const RawFileInterface* rfi, PageIndex p1, PageIndex p2)
+{
+    std::vector<uint8_t[4096]> buffer(2);
+    readPage(rfi, p1, buffer[0]);
+    readPage(rfi, p2, buffer[1]);
+    return memcmp(buffer[0], buffer[1], 4096) == 0;
 }
 
 }

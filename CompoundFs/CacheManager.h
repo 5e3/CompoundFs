@@ -46,6 +46,7 @@ class CacheManager
         unsigned int m_priority : 6;
 
         constexpr PageMetaData(PageClass pageClass, int priority) noexcept;
+        constexpr void setPageClass(PageClass pageClass) noexcept;
     };
 
     struct CachedPage : PageMetaData
@@ -74,25 +75,29 @@ public:
         m_pageIntervalAllocator = pageIntervalAllocator;
     }
 
+    // page management
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
     PageDef<uint8_t> repurpose(PageIndex index);
     PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage) noexcept;
     void setPageDirty(PageIndex id) noexcept;
-    size_t trim(uint32_t maxPages);
-    RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
     Interval allocatePageInterval(size_t maxPages) noexcept;
-    std::vector<PageIndex> getRedirectedPages() const;
-    void commit();
+    size_t trim(uint32_t maxPages);
 
+    // commit management
+    void commit();
+    std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
+    void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
+    void updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
+    void writeCachedPages();      
+    std::vector<PageIndex> getRedirectedPages() const;
     std::vector<PageIndex> getAllDirtyPageIds() const;
 
+    RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     PageIndex redirectPage(PageIndex id) const noexcept;
     std::vector<PrioritizedPage> getUnpinnedPages() const;
-    std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
-    void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
 
     void trimCheck() noexcept;
     void evictDirtyPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
@@ -117,6 +122,12 @@ inline constexpr CacheManager::PageMetaData::PageMetaData(PageClass pageClass, i
     , m_priority(priority)
 {}
 
+constexpr void CacheManager::PageMetaData::setPageClass(PageClass pageClass) noexcept
+{
+    m_pageClass = static_cast<unsigned>(pageClass);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
 inline CacheManager::CachedPage::CachedPage(const std::shared_ptr<uint8_t>& page, PageClass pageClass, int priority)
@@ -134,6 +145,16 @@ inline constexpr bool operator==(unsigned lhs, PageClass rhs)
 inline constexpr bool operator==(PageClass lhs, unsigned rhs)
 {
     return rhs == lhs;
+}
+
+inline constexpr bool operator!=(unsigned lhs, PageClass rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline constexpr bool operator!=(PageClass lhs, unsigned rhs)
+{
+    return !(rhs == lhs);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
