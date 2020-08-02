@@ -76,6 +76,7 @@ is then elevated to an [X] lock during the commit-phase. The [X] lock allows acc
 ## The Commit Protocol  
 
 ### The Log File  
+
 - During the commit phase log records are written to the file.
 - It consistes of `LogPage` pages which store a list of pairs `{ OriginalPageIndex, CopyPageIndex }`. 
 - `LogPage` pages are at the very end of the file.
@@ -83,7 +84,6 @@ is then elevated to an [X] lock during the commit-phase. The [X] lock allows acc
 
 
 ### The Commit Phase  
-
 
 Here is the general idea behind the commit-phase:
 - Before we change any existing meta-data we make a copy of the original information to allow rollback 
@@ -97,6 +97,8 @@ Note:
 - During the commit-phase the file grows temporarily (see below).
 - FSize is an attribute written to the file meta-data. It reflects the file size after a successful write-operation.
 
+____
+
 Here is the commit-phase in greater detail. For the baseline we consider a more complex situation: `CacheManager` 
 evicted some `DirtyRead` pages to temporary new locations. These pages are not needed anymore after commit.
 
@@ -105,20 +107,21 @@ evicted some `DirtyRead` pages to temporary new locations. These pages are not n
 free in `FreeStore`.
 3. Close the `FreeStore`. From now on new pages are allocated by growing the file.
 4. FSize = current file size.
-2. Write all `New` pages.
-5. Copy contents of original `DirtyRead` pages to new location (by growing the file).
-6. Write `LogPage` pages by growing the file.
-7. Flush all pages. 
-8. Copy new `DirtyRead` contents over original pages.
-9. Flush all pages.
-10. Cut the file size to FSize (throw away `DirtyRead` copies and `LogPage` pages).
-12. Release eXclusive File Lock.
+5. Write all `New` pages.
+6. Copy contents of original `DirtyRead` pages to new location (by growing the file).
+7. Flush all pages.
+8. Write `LogPage` pages by growing the file.
+9. Flush all pages. 
+10. Copy new `DirtyRead` contents over original pages.
+11. Flush all pages.
+12. Cut the file size to FSize (throw away `DirtyRead` copies and `LogPage` pages).
+13. Release eXclusive File Lock.
 
 ### The Rollback Procedure  
 
 If a write-operation gets interrupted before the commit-phase just cut the file to FSize and be done with it.  
-Up to point 7. in the commit-phase no meta-data page was changed. Again just cut the file.  
-After point 7. we use the `LogPage` information to restore the original `DirtyRead` pages (which might 
+Up to point 9. in the commit-phase no meta-data page was changed. Again just cut the file.  
+After point 10. we use the `LogPage` information to restore the original `DirtyRead` pages (which might 
 have been partly overwritten) and then cut the file.  
 
 ```
