@@ -11,6 +11,14 @@
 namespace TxFs
 {
 
+///////////////////////////////////////////////////////////////////////////
+/// The FreeStore manages space that got 'deleted'. It can act as a page-
+/// allocator making sure that before a file grows all free space is used.
+/// FreeStore pools pages from previous transactions and avoids
+/// recently freed-up space to keep the number of dirty pages low. However 
+/// during its commit-phase in close() it will use its own page-pool to
+/// satisfy page-allocation requests for meta-data pages.
+
 class FreeStore
 {
 public:
@@ -28,11 +36,11 @@ public:
             return Interval();
 
         // delayed loading of the first batch of Intervals
-        if (!m_pinnedPage.m_page)
+        if (!m_freeListHeadPage.m_page)
             loadInitialIntervals();
 
         // load as many PageTables necessary to potentially fulfill this request
-        auto next = m_pinnedPage.m_page->getNext();
+        auto next = m_freeListHeadPage.m_page->getNext();
         while (next != PageIdx::INVALID && m_current.totalLength() < maxPages)
         {
             m_freeMetaDataPages.insert(next);
@@ -41,10 +49,10 @@ public:
 
         // if we loaded more than one page then sort it. This potentially improves access patterns as it ensures that we
         // write low-index to high-index and it might merge the intervals.
-        if (next != m_pinnedPage.m_page->getNext())
+        if (next != m_freeListHeadPage.m_page->getNext())
         {
             // TODO: make nicer
-            m_cacheManager.makePageWritable(m_pinnedPage).m_page->setNext(next);
+            m_cacheManager.makePageWritable(m_freeListHeadPage).m_page->setNext(next);
             m_current.sort();
         }
 
@@ -72,7 +80,7 @@ public:
         // if anything was changed establish consistancy before calling finalize()
         if (m_fileDescriptor.m_fileSize != m_currentFileSize)
         {
-            auto pinnedPage = m_cacheManager.makePageWritable(m_pinnedPage).m_page;
+            auto pinnedPage = m_cacheManager.makePageWritable(m_freeListHeadPage).m_page;
             if (pinnedPage->getNext() == PageIdx::INVALID)
                 m_fileDescriptor.m_last = m_fileDescriptor.m_first;
             pinnedPage->clear();
@@ -82,7 +90,7 @@ public:
         finalize();
         FileDescriptor fd;
         std::swap(fd, m_fileDescriptor);
-        // m_pinnedPage.reset(); TODO: ?
+        // m_freeListHeadPage.reset(); TODO: ?
         m_freeMetaDataPages.clear();
         m_current.clear();
 
@@ -90,7 +98,7 @@ public:
     }
 
 private:
-    /// Loads one FileTablePage into an Intervalsequence and returns the next page's index
+    /// Loads one FileTablePage into an IntervalSequence and returns the next page's index
     PageIndex loadFileTablePage(PageIndex page, IntervalSequence& is) const
     {
         auto pageTable = m_cacheManager.loadPage<FileTable>(page).m_page;
@@ -113,15 +121,15 @@ private:
 
     void loadInitialIntervals()
     {
-        if (!m_pinnedPage.m_page)
+        if (!m_freeListHeadPage.m_page)
         {
-            m_pinnedPage = m_cacheManager.loadPage<FileTable>(m_fileDescriptor.m_first);
-            m_pinnedPage.m_page->insertInto(m_current);
+            m_freeListHeadPage = m_cacheManager.loadPage<FileTable>(m_fileDescriptor.m_first);
+            m_freeListHeadPage.m_page->insertInto(m_current);
         }
     }
 
     /// Loads and merges the Intervals of all files consisting of only one FileTable page as these pages are likely only
-    /// sparsly filled.
+    /// sparsely filled.
     IntervalSequence onePageOptimization()
     {
         // separate one-page FileTable files from the others
@@ -154,8 +162,12 @@ private:
         return is;
     }
 
-    /// Pushes the IntervalSequence back into FileTable pages. If more than one page is needed it will try reuse its own
-    /// pages to store the FileTables.
+    /// Pushes the IntervalSequence back into FileTable pages. If more than one 
+    /// page is needed it will try to reuse its own pages to store the FileTables.
+    /// Note: FreeStore::close() happens before the CacheManager commits.
+    /// Therefore some CasheManager pages need to deallocate() while
+    /// still in-use. FreeStore mustn't reuse these pages for its own meta-
+    /// data needs otherwise this could result in corrupted pages!
     FileDescriptor pushFileTables(IntervalSequence& is) const
     {
         if (is.empty())
@@ -163,11 +175,12 @@ private:
 
         FileDescriptor fd = m_fileDescriptor;
 
-        auto cur = m_cacheManager.makePageWritable(m_pinnedPage);
+        auto cur = m_cacheManager.makePageWritable(m_freeListHeadPage);
         cur.m_page->transferFrom(is);
         while (!is.empty())
         {
-            // let's try to use one of our own pages as a FileTable
+            // let's try to reuse one of our own pages as a FileTable but only if the page is not
+            // a meta-data page form m_freeMetaDataPages. Fall back: allocate from m_cacheManager. 
             auto pageId = is.front().begin();
             auto next = m_freeMetaDataPages.count(pageId) ? m_cacheManager.newPage<FileTable>()
                                                           : m_cacheManager.repurpose<FileTable>(is.popFront(1).begin());
@@ -218,11 +231,11 @@ private:
 
 private:
     mutable TypedCacheManager m_cacheManager;
-    FileDescriptor m_fileDescriptor; // the FreeStore looks like a file
-    uint64_t m_currentFileSize;      // tracks the space left before close()
+    FileDescriptor m_fileDescriptor;            // the FreeStore looks like a file
+    uint64_t m_currentFileSize;                 // tracks the space left before close()
     std::vector<FileDescriptor> m_filesToDelete;
     std::unordered_set<PageIndex> m_freeMetaDataPages;
     IntervalSequence m_current;
-    ConstPageDef<FileTable> m_pinnedPage; // TODO: rename
+    ConstPageDef<FileTable> m_freeListHeadPage; 
 };
 }

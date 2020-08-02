@@ -27,10 +27,10 @@ pack the maximum amount of data into the tree's nodes.
 
 - File meta data is organized in pages of 4096 bytes which is expected to be the atomic size for hardware write-operations 
 to external storage.
-- Pages can be in one of three states: `Read, New, DirtyRead`. 
+- Pages can be in one of three states: `Read, New, Dirty`. 
   - `Read` pages are cached to avoid reading them again.
   - `New` pages did not exist before. They are cached because they might change more than once.
-  - `DirtyRead` pages were first brought into memory as `Read` pages but subsequently changed by the 
+  - `Dirty` pages were first brought into memory as `Read` pages but subsequently changed by the 
 current write operation. They are cached for the same reason as the `New` pages.
 - The `CacheManager` manages the pages and keeps track of the memory consumption.
 - At any time at most one write-operation can be active in parallel with an arbitrary number of read-operations.
@@ -53,7 +53,7 @@ Page State | Priority | Eviction Strategy | Future Cost
 -----------| -------- |------------------ | -----------  
 `Read` | 0 | Just release the memory. | Needs to be read-in again if ever requested at a later stage.
 `New` | 1 | Write the page to disk before releasing it. | Needs to be read-in and potentially written again if it will be updated later on. 
-`DirtyRead` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures two more write-operation during the *commit-phase* when it needs to update the original page
+`Dirty` | 2 | Write to disk to a previously unused location. | Same cost as for `New` pages but incures two more write-operation during the *commit-phase* when it needs to update the original page
 
 ## The Locking Protocol 
 
@@ -93,35 +93,35 @@ if anything goes wrong.
 - To mark successful completion of the commit-phase (and to tidy up) we remove the log file.  
 
 Note:
-- A write operation always creates `DirtyRead` pages.
+- A write operation always creates `Dirty` pages.
 - During the commit-phase the file grows temporarily (see below).
 - FSize is an attribute written to the file meta-data. It reflects the file size after a successful write-operation.
 
 ____
 
 Here is the commit-phase in greater detail. For the baseline we consider a more complex situation: `CacheManager` 
-evicted some `DirtyRead` pages to temporary new locations. These pages are not needed anymore after commit.
+evicted some `Dirty` pages to temporary new locations. These pages are not needed anymore after commit.
 
 1. Aquire eXclusive File Lock.
-2. Collect all free pages including the evicted `DirtyRead` pages from `CacheManager` and mark them as 
+2. Collect all free pages including the evicted `Dirty` pages from `CacheManager` and mark them as 
 free in `FreeStore`.
 3. Close the `FreeStore`. From now on new pages are allocated by growing the file.
 4. FSize = current file size.
 5. Write all `New` pages.
-6. Copy contents of original `DirtyRead` pages to new location (by growing the file).
+6. Copy contents of original `Dirty` pages to new location (by growing the file).
 7. Flush all pages.
 8. Write `LogPage` pages by growing the file.
 9. Flush all pages. 
-10. Copy new `DirtyRead` contents over original pages.
+10. Copy new `Dirty` contents over original pages.
 11. Flush all pages.
-12. Cut the file size to FSize (throw away `DirtyRead` copies and `LogPage` pages).
+12. Cut the file size to FSize (throw away `Dirty` copies and `LogPage` pages).
 13. Release eXclusive File Lock.
 
 ### The Rollback Procedure  
 
 If a write-operation gets interrupted before the commit-phase just cut the file to FSize and be done with it.  
 Up to point 9. in the commit-phase no meta-data page was changed. Again just cut the file.  
-After point 10. we use the `LogPage` information to restore the original `DirtyRead` pages (which might 
+After point 10. we use the `LogPage` information to restore the original `Dirty` pages (which might 
 have been partly overwritten) and then cut the file.  
 
 ```

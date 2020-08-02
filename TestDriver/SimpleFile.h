@@ -59,7 +59,7 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
-    virtual void commit() override {}
+    virtual void flushFile() override {}
 
     void clearPages(const std::vector<PageIndex>& pages)
     {

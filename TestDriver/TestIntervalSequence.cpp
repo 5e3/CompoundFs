@@ -3,6 +3,8 @@
 #include "stdafx.h"
 #include "Test.h"
 #include "../CompoundFs/IntervalSequence.h"
+#include <algorithm>
+#include <random>
 
 using namespace TxFs;
 
@@ -128,7 +130,7 @@ TEST(IntervalSequence, Sort2)
     for (int i = 51; i < 100; i += 2)
         v.push_back(i);
 
-    std::random_shuffle(v.begin(), v.end());
+    std::shuffle(v.begin(), v.end(), std::mt19937(std::random_device()()));
 
     IntervalSequence is;
     for (auto& id: v)

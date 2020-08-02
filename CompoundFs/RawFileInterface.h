@@ -15,7 +15,35 @@ public:
     virtual const uint8_t* writePages(Interval iv, const uint8_t* page) = 0;
     virtual uint8_t* readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const = 0;
     virtual uint8_t* readPages(Interval iv, uint8_t* page) const = 0;
-    virtual void commit() = 0;
+    virtual void flushFile() = 0;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+inline void readPage(const RawFileInterface* rfi, PageIndex idx, void* page)
+{
+    uint8_t* buffer = static_cast<uint8_t*>(page);
+    rfi->readPage(idx, 0, buffer, buffer + 4096);
+}
+inline void writePage(RawFileInterface* rfi, PageIndex idx, const void* page)
+{
+    const uint8_t* buffer = static_cast<const uint8_t*>(page);
+    rfi->writePage(idx, 0, buffer, buffer + 4096);
+}
+
+inline void copyPage(RawFileInterface* rfi, PageIndex from, PageIndex to)
+{
+    uint8_t buffer[4096];
+    readPage(rfi, from, buffer);
+    writePage(rfi, to, buffer);
+}
+
+inline bool isEqualPage(const RawFileInterface* rfi, PageIndex p1, PageIndex p2)
+{
+    std::vector<uint8_t[4096]> buffer(2);
+    readPage(rfi, p1, buffer[0]);
+    readPage(rfi, p2, buffer[1]);
+    return memcmp(buffer[0], buffer[1], 4096) == 0;
+}
 
 }

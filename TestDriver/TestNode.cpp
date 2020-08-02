@@ -3,6 +3,8 @@
 #include "Test.h"
 #include "../CompoundFs/Leaf.h"
 #include "../CompoundFs/InnerNode.h"
+#include <algorithm>
+#include <random>
 
 using namespace TxFs;
 
@@ -80,7 +82,7 @@ TEST(Leaf, keysAreSorted)
     for (int j = 900; j < 2000; j++)
         strs.push_back(std::to_string(j));
 
-    std::random_shuffle(strs.begin(), strs.end());
+    std::shuffle(strs.begin(), strs.end(), std::mt19937(std::random_device()()));
 
     size_t i = 0;
     for (; i < strs.size(); i++)
@@ -189,7 +191,7 @@ TEST(Leaf, removeInRandomOrder)
     for (int j = 0; j < 700; j++)
         strs.push_back(std::to_string(j));
 
-    std::random_shuffle(strs.begin(), strs.end());
+    std::shuffle(strs.begin(), strs.end(), std::mt19937(std::random_device()()));
 
     size_t i = 0;
     for (; i < strs.size(); i++)
@@ -201,7 +203,7 @@ TEST(Leaf, removeInRandomOrder)
     }
 
     strs.resize(i);
-    std::random_shuffle(strs.begin(), strs.end());
+    std::shuffle(strs.begin(), strs.end(), std::mt19937(std::random_device()()));
 
     for (size_t i = 0; i < strs.size(); i++)
     {
@@ -222,7 +224,7 @@ TEST(Leaf, split)
     for (int j = 0; j < 500; j++)
         strs.push_back(std::to_string(j));
 
-    std::random_shuffle(strs.begin(), strs.end());
+    std::shuffle(strs.begin(), strs.end(), std::mt19937(std::random_device()()));
 
     size_t i = 0;
     for (; i < strs.size(); i++)
@@ -438,7 +440,7 @@ TEST(InnerNode, remove)
     CHECK(n.nofItems() == 0);
 
     n = createInnerNode(keys);
-    std::random_shuffle(keys.begin(), keys.end());
+    std::shuffle(keys.begin(), keys.end(), std::mt19937(std::random_device()()));
     removeInnerNode(n, keys);
     CHECK(n.nofItems() == 0);
 
