@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <tuple>
+#include <iterator>
 
 using namespace TxFs;
 
@@ -280,7 +281,7 @@ void CacheManager::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
 /// Pages that are still in the cache are written to the file. 
 void CacheManager::writeCachedPages()
 {
-    for (auto page: m_cache)
+    for (const auto& page: m_cache)
     {
         assert(page.second.m_pageClass != PageClass::Undefined);
         if (page.second.m_pageClass != PageClass::Read)
@@ -301,4 +302,28 @@ void CacheManager::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>&
         TxFs::writePage(m_rawFileInterface, pageIndex, &logPage);
 
     }
+}
+
+std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
+{
+    std::vector<std::pair<PageIndex, PageIndex>> res;
+    auto size = m_rawFileInterface->currentSize();
+    if (!size)
+        return res;
+
+    PageIndex idx = static_cast<PageIndex>(size);
+    LogPage logPage{};
+
+    do 
+    {
+        TxFs::readPage(m_rawFileInterface, --idx, &logPage);
+        if (!logPage.checkSignature(idx))
+            return res;
+
+        res.reserve(res.size() + logPage.size());
+        for (auto [orig, cpy]: logPage)
+            res.push_back(std::pair(orig, cpy));
+    } while (idx != 0);
+
+    return res;
 }

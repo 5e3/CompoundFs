@@ -25,6 +25,8 @@ private:
     PageCopies m_pageCopies[MAX_ENTRIES];
 
 public:
+    explicit LogPage() noexcept = default;
+
     LogPage(PageIndex pageIndex) noexcept
         : m_size(0)
     {

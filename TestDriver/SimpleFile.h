@@ -49,7 +49,7 @@ struct SimpleFile : RawFileInterface
         return std::copy(p.get() + pageOffset, p.get() + pageOffset + (end - begin), begin);
     }
 
-    virtual uint8_t* readPages(Interval iv, uint8_t* page) const
+    virtual uint8_t* readPages(Interval iv, uint8_t* page) const override
     {
         for (auto idx = iv.begin(); idx < iv.end(); idx++)
         {
@@ -65,6 +65,11 @@ struct SimpleFile : RawFileInterface
     {
         for (auto page: pages)
             memset(m_file.at(page).get(), 0, 4096);
+    }
+
+    virtual size_t currentSize() const override
+    { 
+        return m_file.size();
     }
 
     std::vector<std::shared_ptr<uint8_t>> m_file;

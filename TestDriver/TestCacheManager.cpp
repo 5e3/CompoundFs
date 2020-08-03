@@ -444,3 +444,26 @@ TEST(CacheManager, updateDirtyPagesChangesOriginalPages)
         CHECK(*buffer > 100);
     }
 }
+
+TEST(CacheManager, NoLogsReturnEmpty)
+{
+    SimpleFile sf;
+    CacheManager cm(&sf);
+    CHECK(cm.readLogs().empty());
+
+    cm.newPage();
+    CHECK(cm.readLogs().empty());
+}
+
+TEST(CacheManager, ReadLogsReturnTheLogs)
+{
+    SimpleFile sf;
+    CacheManager cm(&sf);
+    cm.newPage();
+    std::vector<std::pair<PageIndex, PageIndex>> logs(1000);
+    std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });
+    cm.writeLogs(logs);
+    auto logs2 = cm.readLogs();
+    std::sort(logs2.begin(), logs2.end());
+    CHECK(logs == logs2);
+}

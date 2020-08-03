@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <functional>
+#include <optional>
 
 namespace TxFs
 {
@@ -92,6 +93,10 @@ public:
     void writeCachedPages();      
     std::vector<PageIndex> getRedirectedPages() const;
     std::vector<PageIndex> getAllDirtyPageIds() const;
+
+    // rollback management
+    std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
+
 
     RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
 private:
