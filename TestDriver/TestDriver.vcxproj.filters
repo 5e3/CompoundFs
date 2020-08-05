@@ -25,5 +25,6 @@
     <ClCompile Include="TestLogPage.cpp" />
     <ClCompile Include="TestLock.cpp" />
     <ClCompile Include="TestLockProtocoll.cpp" />
+    <ClCompile Include="TestFileSharedMutex.cpp" />
   </ItemGroup>
 </Project>

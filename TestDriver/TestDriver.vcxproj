@@ -162,6 +162,7 @@
     <ClCompile Include="TestDirectoryStructure.cpp" />
     <ClCompile Include="TestDriver.cpp" />
     <ClCompile Include="TestFile.cpp" />
+    <ClCompile Include="TestFileSharedMutex.cpp" />
     <ClCompile Include="TestFileSystem.cpp" />
     <ClCompile Include="TestFileTable.cpp" />
     <ClCompile Include="TestFreeStore.cpp" />
