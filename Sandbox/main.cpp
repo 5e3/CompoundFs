@@ -150,158 +150,194 @@ using namespace TxFs;
 //    auto var = variantFromBlob<Version>(Blob());
 //}
 
-#include <deque>
+//#include <deque>
+//
+//struct Generic
+//{
+//    std::vector<uint8_t> m_value;
+//};
+//
+//template <typename Tuple>
+//struct ToVariant;
+//
+//template <typename... Args>
+//struct ToVariant<std::tuple<Args...>>
+//{
+//    using Variant = std::variant<Args...>;
+//};
+//
+//using Types = std::tuple<uint8_t, uint32_t, uint64_t, std::string>;
+//using Buffer = std::deque<uint8_t>;
+//using Variant = ToVariant<Types>::Variant;
+//
+//template <typename T>
+//Variant BufferToVariant(Buffer& buf)
+//{
+//    T val;
+//    std::copy(buf.begin(), buf.begin() + sizeof(T), (uint8_t*) &val);
+//    buf.erase(buf.begin(), buf.begin() + sizeof(T));
+//    return val;
+//}
+//
+//using BufferToVariantFuncType = Variant (*)(Buffer&);
+//
+//template <typename T>
+//struct BufferToVariantFuncArray;
+//
+//template <typename... Args>
+//struct BufferToVariantFuncArray<std::tuple<Args...>>
+//{
+//    inline static const BufferToVariantFuncType m_funcs[] = { BufferToVariant<Args>... };
+//};
+//
+//size_t t2iHelper(size_t in, std::true_type)
+//{
+//    return in;
+//}
+//
+//size_t t2iHelper(size_t, std::false_type)
+//{
+//    return 0;
+//}
+//
+//template <typename Tuple>
+//struct TypeToIndex;
+//
+//template <typename... Args>
+//struct TypeToIndex<std::tuple<Args...>>
+//{
+//    template <typename T>
+//    static constexpr size_t getIndex()
+//    {
+//        static_assert((std::is_same<T, Args>::value + ...) == 1, "Type has to match one of the tuple<> types!");
+//        size_t i = 0;
+//        return (t2iHelper(i++, std::is_same<T, Args>()) + ...);
+//    }
+//};
+//
+//struct Test
+//{
+//    // static const size_t s = TypeToIndex<Types>::getIndex<uint32_t>();
+//};
+//
+//using TestVariant = std::tuple<double, std::pair<double, double>, std::pair<int, int>, std::string>;
+//
+//template <class T>
+//constexpr auto supportsPushBack(T* x) -> decltype(&T::push_back, std::true_type {})
+//{
+//    return {};
+//}
+//constexpr auto supportsPushBack(...) -> std::false_type
+//{
+//    return {};
+//}
+//
+//template <typename T>
+//ByteString convertToBlob(T* value)
+//{
+//    if constexpr (supportsPushBack(value))
+//    {
+//        return ByteString();
+//    }
+//    else
+//    {
+//        return ByteString();
+//    }
+//}
+//
+//template <typename T, template <typename... Ts> class Tmpl>
+//struct IsClassTemplate : std::false_type
+//{};
+//
+//template <template <typename... Ts> class Tmpl, typename... Args>
+//struct IsClassTemplate<Tmpl<Args...>, Tmpl> : std::true_type
+//{};
+//
+//#include <array>
+//
+//template <typename T>
+//auto fromBlob(const ByteStringView& blob, const uint8_t* begin = nullptr)
+//{
+//    if (!begin)
+//        begin = blob.begin() + 1;
+//
+//    if constexpr (IsClassTemplate<T, std::vector>::value)
+//    {
+//        T vec((blob.end() - begin) / sizeof(T::value_type));
+//        std::copy(begin, blob.end(), (uint8_t*) &vec[0]);
+//        return vec;
+//    }
+//    else if constexpr (std::is_same<T, std::string>::value)
+//    {
+//        return std::string(begin, blob.end());
+//    }
+//    else
+//    {
+//        T value;
+//        std::copy(begin, blob.end(), (uint8_t*) &value);
+//        return value;
+//    }
+//}
+//
+//std::tuple<int, float, double, std::string> types;
+//using Var = std::variant<std::string, int>;
+//using Var2 = std::variant<std::string, int, double>;
+//
+//#include <random>
+//
+//int main()
+//{
+//    std::random_device rd;
+//    std::mt19937_64 mt(rd());
+//    mt.seed(1);
+//
+//    std::vector<int> vi;
+//    for (auto i: { 0, 100 })
+//        vi.push_back(i);
+//
+//    // ByteString b;
+//    // fromBlob<std::vector<float>>(b);
+//    // fromBlob<std::string>(b);
+//    // fromBlob<int>(b);
+//
+//    // func(5);
+//    // func("test");
+//    // Var v = "test";
+//    // Var2 v2 = *v;
+//}
 
-struct Generic
+class ReadLock
 {
-    std::vector<uint8_t> m_value;
+
 };
 
-template <typename Tuple>
-struct ToVariant;
+//
+//
+//class LockProtocoll
+//{
+//public:
+//    ReadLock readAccess();
+//    std::optional<ReadLock> tryReadAccess();
+//    void release(ReadLock&& readLock);
+//
+//    WriteLock writeAccess();
+//    std::optional<WriteLock> tryWriteAccess();
+//    void release(WriteLock&& writeLock);
+//
+//    CommitLock commitAccess(WriteLock&& writeLock);
+//    std::variant<WriteLock, CommitLock> tryCommitAccess(WriteLock&& writeLock);
+//    WriteLock release(CommitLock&& commitLock);
+//};
 
-template <typename... Args>
-struct ToVariant<std::tuple<Args...>>
-{
-    using Variant = std::variant<Args...>;
-};
 
-using Types = std::tuple<uint8_t, uint32_t, uint64_t, std::string>;
-using Buffer = std::deque<uint8_t>;
-using Variant = ToVariant<Types>::Variant;
-
-template <typename T>
-Variant BufferToVariant(Buffer& buf)
-{
-    T val;
-    std::copy(buf.begin(), buf.begin() + sizeof(T), (uint8_t*) &val);
-    buf.erase(buf.begin(), buf.begin() + sizeof(T));
-    return val;
-}
-
-using BufferToVariantFuncType = Variant (*)(Buffer&);
-
-template <typename T>
-struct BufferToVariantFuncArray;
-
-template <typename... Args>
-struct BufferToVariantFuncArray<std::tuple<Args...>>
-{
-    inline static const BufferToVariantFuncType m_funcs[] = { BufferToVariant<Args>... };
-};
-
-size_t t2iHelper(size_t in, std::true_type)
-{
-    return in;
-}
-
-size_t t2iHelper(size_t, std::false_type)
-{
-    return 0;
-}
-
-template <typename Tuple>
-struct TypeToIndex;
-
-template <typename... Args>
-struct TypeToIndex<std::tuple<Args...>>
-{
-    template <typename T>
-    static constexpr size_t getIndex()
-    {
-        static_assert((std::is_same<T, Args>::value + ...) == 1, "Type has to match one of the tuple<> types!");
-        size_t i = 0;
-        return (t2iHelper(i++, std::is_same<T, Args>()) + ...);
-    }
-};
-
-struct Test
-{
-    // static const size_t s = TypeToIndex<Types>::getIndex<uint32_t>();
-};
-
-using TestVariant = std::tuple<double, std::pair<double, double>, std::pair<int, int>, std::string>;
-
-template <class T>
-constexpr auto supportsPushBack(T* x) -> decltype(&T::push_back, std::true_type {})
-{
-    return {};
-}
-constexpr auto supportsPushBack(...) -> std::false_type
-{
-    return {};
-}
-
-template <typename T>
-ByteString convertToBlob(T* value)
-{
-    if constexpr (supportsPushBack(value))
-    {
-        return ByteString();
-    }
-    else
-    {
-        return ByteString();
-    }
-}
-
-template <typename T, template <typename... Ts> class Tmpl>
-struct IsClassTemplate : std::false_type
-{};
-
-template <template <typename... Ts> class Tmpl, typename... Args>
-struct IsClassTemplate<Tmpl<Args...>, Tmpl> : std::true_type
-{};
-
-#include <array>
-
-template <typename T>
-auto fromBlob(const ByteStringView& blob, const uint8_t* begin = nullptr)
-{
-    if (!begin)
-        begin = blob.begin() + 1;
-
-    if constexpr (IsClassTemplate<T, std::vector>::value)
-    {
-        T vec((blob.end() - begin) / sizeof(T::value_type));
-        std::copy(begin, blob.end(), (uint8_t*) &vec[0]);
-        return vec;
-    }
-    else if constexpr (std::is_same<T, std::string>::value)
-    {
-        return std::string(begin, blob.end());
-    }
-    else
-    {
-        T value;
-        std::copy(begin, blob.end(), (uint8_t*) &value);
-        return value;
-    }
-}
-
-std::tuple<int, float, double, std::string> types;
-using Var = std::variant<std::string, int>;
-using Var2 = std::variant<std::string, int, double>;
-
-#include <random>
+#include <memory>
 
 int main()
 {
-    std::random_device rd;
-    std::mt19937_64 mt(rd());
-    mt.seed(1);
+    std::unique_ptr<int> p;
+    std::unique_ptr<int> p2 = std::make_unique<int>(1);
 
-    std::vector<int> vi;
-    for (auto i: { 0, 100 })
-        vi.push_back(i);
+    p = std::make_unique<int>(1);
+    p = std::move(p2);
 
-    // ByteString b;
-    // fromBlob<std::vector<float>>(b);
-    // fromBlob<std::string>(b);
-    // fromBlob<int>(b);
-
-    // func(5);
-    // func("test");
-    // Var v = "test";
-    // Var2 v2 = *v;
 }

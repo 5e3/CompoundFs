@@ -23,6 +23,8 @@
     <ClInclude Include="FileSystem.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="LogPage.h" />
+    <ClInclude Include="Lock.h" />
+    <ClInclude Include="LockProtocoll.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
