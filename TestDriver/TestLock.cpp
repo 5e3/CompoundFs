@@ -1,7 +1,6 @@
 
 
 #include "Test.h"
-#include "SimpleFile.h"
 #include "../CompoundFs/Lock.h"
 
 using namespace TxFs;
