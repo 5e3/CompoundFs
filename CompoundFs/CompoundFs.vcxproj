@@ -36,7 +36,7 @@
     <ClInclude Include="IntervalSequence.h" />
     <ClInclude Include="Leaf.h" />
     <ClInclude Include="Lock.h" />
-    <ClInclude Include="LockProtocoll.h" />
+    <ClInclude Include="LockProtocol.h" />
     <ClInclude Include="LogPage.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />

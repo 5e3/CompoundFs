@@ -168,7 +168,7 @@
     <ClCompile Include="TestFreeStore.cpp" />
     <ClCompile Include="TestIntervalSequence.cpp" />
     <ClCompile Include="TestLock.cpp" />
-    <ClCompile Include="TestLockProtocoll.cpp" />
+    <ClCompile Include="TestLockProtocol.cpp" />
     <ClCompile Include="TestLogPage.cpp" />
     <ClCompile Include="TestNode.cpp" />
     <ClCompile Include="TestPath.cpp" />

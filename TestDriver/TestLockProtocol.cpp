@@ -2,16 +2,16 @@
 
 #include "Test.h"
 #include "SimpleFile.h"
-#include "../CompoundFs/LockProtocoll.h"
+#include "../CompoundFs/LockProtocol.h"
 
 #include <mutex>
 #include <shared_mutex>
 
 using namespace TxFs;
 
-using SimpleLockProtocoll = LockProtocoll<std::shared_mutex, std::mutex>;
+using SimpleLockProtocoll = LockProtocol<std::shared_mutex, std::mutex>;
 
-TEST(LockProtocoll, writeAccessIsExclusiveLock)
+TEST(LockProtocol, writeAccessIsExclusiveLock)
 {
     SimpleLockProtocoll slp;
     auto lock = slp.writeAccess();
@@ -24,7 +24,7 @@ TEST(LockProtocoll, writeAccessIsExclusiveLock)
     CHECK(!slp.tryWriteAccess());
 }
 
-TEST(LockProtocoll, readAccessIsSharedLock)
+TEST(LockProtocol, readAccessIsSharedLock)
 {
     SimpleLockProtocoll slp;
     auto lock = slp.readAccess();
@@ -32,7 +32,7 @@ TEST(LockProtocoll, readAccessIsSharedLock)
     CHECK(slp.tryReadAccess());
 }
 
-TEST(LockProtocoll, commitAccessThrowsOnWrongParam)
+TEST(LockProtocol, commitAccessThrowsOnWrongParam)
 {
     try
     {
@@ -51,7 +51,7 @@ TEST(LockProtocoll, commitAccessThrowsOnWrongParam)
     catch (std::exception&) {}
 }
 
-TEST(LockProtocoll, readAccessIsNotBlockedByWriteAccess)
+TEST(LockProtocol, readAccessIsNotBlockedByWriteAccess)
 {
     SimpleLockProtocoll slp;
     auto wlock = slp.writeAccess();
@@ -59,7 +59,7 @@ TEST(LockProtocoll, readAccessIsNotBlockedByWriteAccess)
     CHECK(slp.tryReadAccess());
 }
 
-TEST(LockProtocoll, readAccessIsBlockedByCommitAccess)
+TEST(LockProtocol, readAccessIsBlockedByCommitAccess)
 {
     SimpleLockProtocoll slp;
     auto commitLock = slp.commitAccess(slp.writeAccess());
@@ -67,7 +67,7 @@ TEST(LockProtocoll, readAccessIsBlockedByCommitAccess)
     CHECK(!slp.tryReadAccess());
 }
 
-TEST(LockProtocoll, commitAccessIsBlockedByReadAccess)
+TEST(LockProtocol, commitAccessIsBlockedByReadAccess)
 {
     SimpleLockProtocoll slp;
     auto rlock = slp.readAccess();
@@ -76,7 +76,7 @@ TEST(LockProtocoll, commitAccessIsBlockedByReadAccess)
     CHECK(std::get_if<CommitLock>(&commitLock) == nullptr);
 }
 
-TEST(LockProtocoll, readAccessCannotStarveCommitAccess)
+TEST(LockProtocol, readAccessCannotStarveCommitAccess)
 {
     SimpleLockProtocoll slp;
     auto rlock = slp.readAccess();

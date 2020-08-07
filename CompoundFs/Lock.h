@@ -80,7 +80,7 @@ constexpr Lock::Lock(Lock&& rhs) noexcept
     rhs.m_releaseFunc = nullptr;
 }
 
-inline Lock::~Lock() noexcept
+inline Lock::~Lock()
 {
     release();
 }
