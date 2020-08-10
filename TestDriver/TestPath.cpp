@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "SimpleFile.h"
+#include "../CompoundFs/SimpleFile.h"
 #include "../CompoundFs/Path.h"
 #include "../CompoundFs/DirectoryStructure.h"
 #include "../CompoundFs/FileSystem.h"

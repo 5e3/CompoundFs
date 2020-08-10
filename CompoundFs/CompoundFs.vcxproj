@@ -43,6 +43,7 @@
     <ClInclude Include="PageDef.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="RawFileInterface.h" />
+    <ClInclude Include="SimpleFile.h" />
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>

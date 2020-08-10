@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "../CompoundFs/RawFileInterface.h"
-#include "../CompoundFs/PageAllocator.h"
+#include "RawFileInterface.h"
+#include "PageAllocator.h"
 #include <memory>
 
 namespace TxFs
@@ -16,7 +16,7 @@ struct SimpleFile : RawFileInterface
         m_file.reserve(1024);
     }
 
-    virtual Interval newInterval(size_t maxPages) override
+    Interval newInterval(size_t maxPages) override
     {
         PageIndex idx = (PageIndex) m_file.size();
         for (size_t i = 0; i < maxPages; i++)
@@ -24,7 +24,7 @@ struct SimpleFile : RawFileInterface
         return Interval(idx, idx + uint32_t(maxPages));
     }
 
-    virtual const uint8_t* writePage(PageIndex idx, size_t pageOffset, const uint8_t* begin,
+    const uint8_t* writePage(PageIndex idx, size_t pageOffset, const uint8_t* begin,
                                      const uint8_t* end) override
     {
         auto p = m_file.at(idx);
@@ -32,7 +32,7 @@ struct SimpleFile : RawFileInterface
         return end;
     }
 
-    virtual const uint8_t* writePages(Interval iv, const uint8_t* page) override
+    const uint8_t* writePages(Interval iv, const uint8_t* page) override
     {
         for (auto idx = iv.begin(); idx < iv.end(); idx++)
         {
@@ -43,13 +43,13 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
-    virtual uint8_t* readPage(PageIndex idx, size_t pageOffset, uint8_t* begin, uint8_t* end) const override
+    uint8_t* readPage(PageIndex idx, size_t pageOffset, uint8_t* begin, uint8_t* end) const override
     {
         auto p = m_file.at(idx);
         return std::copy(p.get() + pageOffset, p.get() + pageOffset + (end - begin), begin);
     }
 
-    virtual uint8_t* readPages(Interval iv, uint8_t* page) const override
+    uint8_t* readPages(Interval iv, uint8_t* page) const override
     {
         for (auto idx = iv.begin(); idx < iv.end(); idx++)
         {
@@ -59,7 +59,7 @@ struct SimpleFile : RawFileInterface
         return page;
     }
 
-    virtual void flushFile() override {}
+    void flushFile() override {}
 
     void clearPages(const std::vector<PageIndex>& pages)
     {
@@ -67,7 +67,7 @@ struct SimpleFile : RawFileInterface
             memset(m_file.at(page).get(), 0, 4096);
     }
 
-    virtual size_t currentSize() const override
+    size_t currentSize() const override
     { 
         return m_file.size();
     }

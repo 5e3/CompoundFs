@@ -2,8 +2,8 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "SimpleFile.h"
 #include "MinimalTreeBuilder.h"
+#include "../CompoundFs/SimpleFile.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/BTree.h"
 #include "../CompoundFs/ByteString.h"

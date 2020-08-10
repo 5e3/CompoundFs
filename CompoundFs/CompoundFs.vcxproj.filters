@@ -26,6 +26,7 @@
     <ClInclude Include="Lock.h" />
     <ClInclude Include="FileSharedMutex.h" />
     <ClInclude Include="LockProtocol.h" />
+    <ClInclude Include="SimpleFile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />

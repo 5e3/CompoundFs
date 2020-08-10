@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "SimpleFile.h"
+#include "../CompoundFs/SimpleFile.h"
 #include "../CompoundFs/TypedCacheManager.h"
 #include "../CompoundFs/FileTable.h"
 #include "../CompoundFs/Leaf.h"
