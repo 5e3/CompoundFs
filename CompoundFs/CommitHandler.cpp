@@ -30,6 +30,7 @@ void CommitHandler::commit()
         return;
     }
 
+    auto fileSize = m_cache.m_rawFileInterface->currentSize();
     {
         // order the file writes: make sure the copies are visible before the Logs
         auto origToCopyPages = copyDirtyPages(dirtyPageIds);
@@ -42,8 +43,7 @@ void CommitHandler::commit()
 
     exclusiveLockedCommit(dirtyPageIds);
     m_cache.m_rawFileInterface->flushFile();
-
-    // cut the file
+    m_cache.m_rawFileInterface->truncate(fileSize);
 }
 
 void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds)
@@ -73,7 +73,7 @@ std::vector<PageIndex> CommitHandler::getDirtyPageIds() const
     return dirtyPageIds;
 }
 
-/// Make a copy of the unmodified dirty pages. The original state of these pages
+/// Make a copy of the unmodified dirty pages. The original contents of these pages
 /// is not in the cache so we just copy from the file to a new location in the file.
 std::vector<std::pair<PageIndex, PageIndex>> CommitHandler::copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
 {
@@ -100,12 +100,12 @@ void CommitHandler::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
 {
     for (auto origIdx: dirtyPageIds)
     {
-        auto id = divertPage(origIdx);
+        auto id = TxFs::divertPage(m_cache, origIdx);
         auto it = m_cache.m_pageCache.find(id);
         if (it == m_cache.m_pageCache.end())
         {
             // if the page is not in the cache just physically copy the page from
-            // its diverted place. (PageClass::Dirty pages are either in the cache or redirected)
+            // its diverted place. (PageClass::Dirty pages are either in the cache or diverted)
             assert(id != origIdx);
             TxFs::copyPage(m_cache.m_rawFileInterface, id, origIdx);
         }
@@ -141,15 +141,6 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
         begin = logPage.pushBack(begin, origToCopyPages.end());
         TxFs::writePage(m_cache.m_rawFileInterface, pageIndex, &logPage);
     }
-}
-
-/// Find the page we moved the original page to or return identity.
-PageIndex CommitHandler::divertPage(PageIndex id) const noexcept
-{
-    auto it = m_cache.m_divertedPageIds.find(id);
-    if (it == m_cache.m_divertedPageIds.end())
-        return id;
-    return it->second;
 }
 
 

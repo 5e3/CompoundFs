@@ -20,6 +20,7 @@ public:
     virtual uint8_t* readPages(Interval iv, uint8_t* page) const = 0;
     virtual size_t currentSize() const = 0; // file size in number of pages
     virtual void flushFile() = 0;
+    virtual void truncate(size_t numberOfPages) = 0;
 
     virtual Lock readAccess() = 0;
     virtual Lock writeAccess() = 0;

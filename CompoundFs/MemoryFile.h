@@ -25,6 +25,8 @@ public:
     uint8_t* readPages(Interval iv, uint8_t* page) const override;
     void flushFile() override;
     size_t currentSize() const override;
+    void truncate(size_t numberOfPages) override;
+
 
     Lock readAccess() override;
     Lock writeAccess() override;

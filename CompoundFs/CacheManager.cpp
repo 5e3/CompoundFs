@@ -37,7 +37,7 @@ PageDef<uint8_t> CacheManager::newPage()
 /// subject to the dirty-page protocol.
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
-    auto id = divertPage(origId);
+    auto id = TxFs::divertPage(m_cache, origId);
     auto it = m_cache.m_pageCache.find(id);
     if (it == m_cache.m_pageCache.end())
     {
@@ -58,7 +58,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 /// following the dirty-page protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
-    auto id = divertPage(origId);
+    auto id = TxFs::divertPage(m_cache, origId);
     PageClass pageClass = m_cache.m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
     auto it = m_cache.m_pageCache.find(id);
     if (it == m_cache.m_pageCache.end())
@@ -86,7 +86,7 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 /// dirty-page protocoll). All other pages are treated as PageClass::New.
 void CacheManager::setPageDirty(PageIndex id) noexcept
 {
-    id = divertPage(id);
+    id = TxFs::divertPage(m_cache, id);
     PageClass pageClass = m_cache.m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
 
     auto it = m_cache.m_pageCache.find(id);
@@ -132,15 +132,6 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
         return iv;
     }
     return m_cache.m_rawFileInterface->newInterval(maxPages);
-}
-
-/// Find the page we moved the original page to or return identity.
-PageIndex CacheManager::divertPage(PageIndex id) const noexcept
-{
-    auto it = m_cache.m_divertedPageIds.find(id);
-    if (it == m_cache.m_divertedPageIds.end())
-        return id;
-    return it->second;
 }
 
 /// Find all pages that are currently not pinned.

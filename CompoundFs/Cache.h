@@ -24,4 +24,13 @@ class RawFileInterface;
         NewPageIds m_newPageIds;
         Lock m_lock;
     };
-}
+
+    inline PageIndex divertPage(const Cache& cache, PageIndex id)
+    {
+        auto it = cache.m_divertedPageIds.find(id);
+        if (it == cache.m_divertedPageIds.end())
+            return id;
+        return it->second;
+
+    }
+    }

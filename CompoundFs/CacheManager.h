@@ -51,7 +51,6 @@ public:
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
-    PageIndex divertPage(PageIndex id) const noexcept;
     std::vector<PrioritizedPage> getUnpinnedPages() const;
 
     void trimCheck() noexcept;

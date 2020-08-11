@@ -33,9 +33,6 @@ public:
     std::vector<PageIndex> getDirtyPageIds() const;
 
 private:
-    PageIndex divertPage(PageIndex id) const noexcept;
-
-private:
     Cache m_cache;
  
 };
