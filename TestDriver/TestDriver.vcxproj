@@ -157,6 +157,7 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestBTree.cpp" />
     <ClCompile Include="TestCacheManager.cpp" />
+    <ClCompile Include="TestCommitHandler.cpp" />
     <ClCompile Include="TestDirectoryObjects.cpp" />
     <ClCompile Include="TestDirectoryStructure.cpp" />
     <ClCompile Include="TestDriver.cpp" />
@@ -170,6 +171,7 @@
     <ClCompile Include="TestLockProtocol.cpp" />
     <ClCompile Include="TestLogPage.cpp" />
     <ClCompile Include="TestNode.cpp" />
+    <ClCompile Include="TestPageMetaData.cpp" />
     <ClCompile Include="TestPath.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
   </ItemGroup>

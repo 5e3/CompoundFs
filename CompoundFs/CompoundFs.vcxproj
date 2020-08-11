@@ -22,6 +22,7 @@
     <ClInclude Include="ByteString.h" />
     <ClInclude Include="BTree.h" />
     <ClInclude Include="CacheManager.h" />
+    <ClInclude Include="CommitHandler.h" />
     <ClInclude Include="DirectoryObjects.h" />
     <ClInclude Include="DirectoryStructure.h" />
     <ClInclude Include="FileDescriptor.h" />
@@ -41,6 +42,7 @@
     <ClInclude Include="Node.h" />
     <ClInclude Include="PageAllocator.h" />
     <ClInclude Include="PageDef.h" />
+    <ClInclude Include="PageMetaData.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="MemoryFile.h" />
@@ -49,6 +51,7 @@
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
+    <ClCompile Include="CommitHandler.cpp" />
     <ClCompile Include="DirectoryObjects.cpp" />
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="FileSharedMutex.cpp" />

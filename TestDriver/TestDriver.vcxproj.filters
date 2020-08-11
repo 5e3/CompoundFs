@@ -25,5 +25,7 @@
     <ClCompile Include="TestLock.cpp" />
     <ClCompile Include="TestFileSharedMutex.cpp" />
     <ClCompile Include="TestLockProtocol.cpp" />
+    <ClCompile Include="TestCommitHandler.cpp" />
+    <ClCompile Include="TestPageMetaData.cpp" />
   </ItemGroup>
 </Project>

@@ -2,6 +2,7 @@
 
 #include "DirectoryStructure.h"
 #include "DirectoryObjects.h"
+#include "CommitHandler.h"
 
 using namespace TxFs;
 
@@ -169,12 +170,14 @@ void DirectoryStructure::commit()
     for (auto page : freePages)
         m_freeStore.deallocate(page);
 
-    auto redirectedPages = m_cacheManager->getRedirectedPages();
-    for (auto page : redirectedPages)
+    auto commitHandler = m_cacheManager->makeCommitHandler();
+
+    auto divertedPageIds = commitHandler.getDivertedPageIds();
+    for (auto page: divertedPageIds)
         m_freeStore.deallocate(page);
 
-    m_cacheManager->commit();
     auto fileDescriptor = m_freeStore.close();
+    commitHandler.commit();
 }
 
 //////////////////////////////////////////////////////////////////////////

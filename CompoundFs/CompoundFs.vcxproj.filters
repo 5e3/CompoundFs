@@ -27,6 +27,8 @@
     <ClInclude Include="FileSharedMutex.h" />
     <ClInclude Include="LockProtocol.h" />
     <ClInclude Include="MemoryFile.h" />
+    <ClInclude Include="CommitHandler.h" />
+    <ClInclude Include="PageMetaData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
@@ -38,6 +40,7 @@
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="FileSharedMutex.cpp" />
     <ClCompile Include="MemoryFile.cpp" />
+    <ClCompile Include="CommitHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

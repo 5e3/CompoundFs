@@ -3,6 +3,7 @@
 #include "RawFileInterface.h"
 #include "TypedCacheManager.h"
 #include "LogPage.h"
+#include "CommitHandler.h"
 
 #include <assert.h>
 #include <algorithm>
@@ -23,8 +24,8 @@ PageDef<uint8_t> CacheManager::newPage()
 {
     auto page = m_pageMemoryAllocator.allocate();
     auto id = newPageIndex();
-    m_cache.emplace(id, CachedPage(page, PageClass::New));
-    m_newPageSet.insert(id);
+    m_pageCache.emplace(id, CachedPage(page, PageClass::New));
+    m_newPageIds.insert(id);
     trimCheck();
     return PageDef<uint8_t>(page, id);
 }
@@ -34,13 +35,13 @@ PageDef<uint8_t> CacheManager::newPage()
 /// subject to the dirty-page protocol.
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
-    auto id = redirectPage(origId);
-    auto it = m_cache.find(id);
-    if (it == m_cache.end())
+    auto id = divertPage(origId);
+    auto it = m_pageCache.find(id);
+    if (it == m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
         TxFs::readPage(m_rawFileInterface, id, page.get());
-        m_cache.emplace(id, CachedPage(page, PageClass::Read));
+        m_pageCache.emplace(id, CachedPage(page, PageClass::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
     }
@@ -50,18 +51,18 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 }
 
 /// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
-/// setPageDirty(). The page is treated as PageClass::New if we find the page in the m_newPageSet otherwise it will
+/// setPageDirty(). The page is treated as PageClass::New if we find the page in the m_newPageIds otherwise it will
 /// be flagged as PageClass::Dirty. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
 /// following the dirty-page protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
-    auto id = redirectPage(origId);
-    PageClass pageClass = m_newPageSet.count(id) ? PageClass::New : PageClass::Dirty;
-    auto it = m_cache.find(id);
-    if (it == m_cache.end())
+    auto id = divertPage(origId);
+    PageClass pageClass = m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
+    auto it = m_pageCache.find(id);
+    if (it == m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        m_cache.emplace(id, CachedPage(page, pageClass));
+        m_pageCache.emplace(id, CachedPage(page, pageClass));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
     }
@@ -83,18 +84,18 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 /// dirty-page protocoll). All other pages are treated as PageClass::New.
 void CacheManager::setPageDirty(PageIndex id) noexcept
 {
-    id = redirectPage(id);
-    PageClass pageClass = m_newPageSet.count(id) ? PageClass::New : PageClass::Dirty;
+    id = divertPage(id);
+    PageClass pageClass = m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
 
-    auto it = m_cache.find(id);
-    assert(it != m_cache.end());
+    auto it = m_pageCache.find(id);
+    assert(it != m_pageCache.end());
     it->second.setPageClass(pageClass);
 }
 
 /// Finds out if a trim operation needs to be performed and does it if necessary.
 void CacheManager::trimCheck() noexcept
 {
-    if (m_cache.size() > m_maxCachedPages)
+    if (m_pageCache.size() > m_maxCachedPages)
         trim(m_maxCachedPages / 4 * 3);
 }
 
@@ -115,7 +116,7 @@ size_t CacheManager::trim(uint32_t maxPages)
     evictDirtyPages(beginEvictSet, beginNewPageSet);
     evictNewPages(beginNewPageSet, endNewPageSet);
     removeFromCache(beginEvictSet, prioritizedPages.end());
-    return m_cache.size();
+    return m_pageCache.size();
 }
 
 /// Use installed allocation function or the rawFileInterface.
@@ -131,32 +132,21 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
     return m_rawFileInterface->newInterval(maxPages);
 }
 
-/// Get the page-indices for redirected Dirty pages
-std::vector<PageIndex> CacheManager::getRedirectedPages() const
-{
-    std::vector<PageIndex> pages;
-    pages.reserve(m_redirectedPagesMap.size());
-    for (const auto& [originalPage, redirectedPage]: m_redirectedPagesMap)
-        pages.push_back(redirectedPage);
-
-    return pages;
-}
-
 /// Find the page we moved the original page to or return identity.
-PageIndex CacheManager::redirectPage(PageIndex id) const noexcept
+PageIndex CacheManager::divertPage(PageIndex id) const noexcept
 {
-    auto it = m_redirectedPagesMap.find(id);
-    if (it == m_redirectedPagesMap.end())
+    auto it = m_divertedPageIds.find(id);
+    if (it == m_divertedPageIds.end())
         return id;
     return it->second;
 }
 
 /// Find all pages that are currently not pinned.
-std::vector<CacheManager::PrioritizedPage> CacheManager::getUnpinnedPages() const
+std::vector<PrioritizedPage> CacheManager::getUnpinnedPages() const
 {
     std::vector<PrioritizedPage> pageSortItems;
-    pageSortItems.reserve(m_cache.size());
-    for (auto& cp: m_cache)
+    pageSortItems.reserve(m_pageCache.size());
+    for (auto& cp: m_pageCache)
         if (cp.second.m_page.use_count() == 1) // we don't use weak_ptr => this is save
             pageSortItems.emplace_back(cp.second, cp.first);
     return pageSortItems;
@@ -167,12 +157,12 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
     for (auto it = begin; it != end; ++it)
     {
         assert(it->m_pageClass == PageClass::Dirty);
-        auto p = m_cache.find(it->m_id);
-        assert(p != m_cache.end());
+        auto p = m_pageCache.find(it->m_id);
+        assert(p != m_pageCache.end());
         auto id = newPageIndex();
         TxFs::writePage(m_rawFileInterface, id, p->second.m_page.get());
-        m_redirectedPagesMap[it->m_id] = id;
-        m_newPageSet.insert(id);
+        m_divertedPageIds[it->m_id] = id;
+        m_newPageIds.insert(id);
     }
 }
 
@@ -181,8 +171,8 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
     for (auto it = begin; it != end; ++it)
     {
         assert(it->m_pageClass == PageClass::New);
-        auto p = m_cache.find(it->m_id);
-        assert(p != m_cache.end());
+        auto p = m_pageCache.find(it->m_id);
+        assert(p != m_pageCache.end());
         TxFs::writePage(m_rawFileInterface, p->first, p->second.m_page.get());
     }
 }
@@ -190,118 +180,7 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
 void CacheManager::removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end)
 {
     for (auto it = begin; it != end; ++it)
-        m_cache.erase(it->m_id);
-}
-
-void CacheManager::commit()
-{
-    // stop allocating from FreeStore
-    m_pageIntervalAllocator = std::function<Interval(size_t)>();
-
-    auto dirtyPageIds = getAllDirtyPageIds();
-    {
-        // make sure the copies are visible before the Logs
-        auto origToCopyPages = copyDirtyPages(dirtyPageIds);
-        m_rawFileInterface->flushFile();
-
-        // make sure the Logs are visible before we overwrite original contents
-        writeLogs(origToCopyPages);
-        m_rawFileInterface->flushFile();
-    }
-
-    updateDirtyPages(dirtyPageIds);
-    writeCachedPages();
-    m_rawFileInterface->flushFile();
-
-    // cut the file
-}
-
-/// Get the original ids of the PageClass::Dirty pages. Some of them may
-/// still live in m_cache the others were probably pushed out by the
-/// dirty-page eviction protocol.
-std::vector<PageIndex> CacheManager::getAllDirtyPageIds() const
-{
-    std::vector<PageIndex> dirtyPageIds;
-    dirtyPageIds.reserve(m_redirectedPagesMap.size());
-    for (const auto& [originalPageIdx, redirectedPageIdx]: m_redirectedPagesMap)
-        dirtyPageIds.push_back(originalPageIdx);
-
-    for (auto& p: m_cache)
-        if (p.second.m_pageClass == PageClass::Dirty)
-            dirtyPageIds.push_back(p.first);
-
-    return dirtyPageIds;
-}
-
-/// Make a copy of the unmodified dirty pages. The original state of these pages
-/// is not in the cache so we just copy from the file to a new location in the file.
-std::vector<std::pair<PageIndex, PageIndex>> CacheManager::copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
-{
-    std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
-    origToCopyPages.reserve(dirtyPageIds.size());
-
-    auto interval = m_rawFileInterface->newInterval(dirtyPageIds.size());
-    assert(interval.length() == dirtyPageIds.size()); // here the file is just growing
-    auto nextPage = interval.begin();
-
-    for (auto originalPageIdx: dirtyPageIds)
-    {
-        TxFs::copyPage(m_rawFileInterface, originalPageIdx, nextPage);
-        origToCopyPages.emplace_back(originalPageIdx, nextPage++);
-    }
-    assert(nextPage == interval.end());
-
-    return origToCopyPages;
-}
-
-/// Update the original PageClass::DirtyPage pages either from the cache or from the redirected
-/// pages and erase them from the cache.
-void CacheManager::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
-{
-    for (auto origIdx : dirtyPageIds)
-    {
-        auto id = redirectPage(origIdx);
-        auto it = m_cache.find(id);
-        if (it == m_cache.end()) 
-        {
-            // if the page is not in the cache just physically copy the page from
-            // its redirected place. (PageClass::Dirty pages are either in the cache or redirected)
-            assert(id != origIdx); 
-            TxFs::copyPage(m_rawFileInterface, id, origIdx);
-        }
-        else
-        {
-            // we have to use the cached page or else we lose updates (if the page is not PageClass::Read)!
-            TxFs::writePage(m_rawFileInterface, origIdx, it->second.m_page.get());
-            m_cache.erase(it);
-        }
-    }
-}
-
-/// Pages that are still in the cache are written to the file. 
-void CacheManager::writeCachedPages()
-{
-    for (const auto& page: m_cache)
-    {
-        assert(page.second.m_pageClass != PageClass::Undefined);
-        if (page.second.m_pageClass != PageClass::Read)
-            TxFs::writePage(m_rawFileInterface, page.first, page.second.m_page.get());
-    }
-    m_cache.clear();
-}
-
-/// Fill the log pages with data and write them to the file. 
-void CacheManager::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages)
-{
-    auto begin = origToCopyPages.begin();
-    while (begin != origToCopyPages.end())
-    {
-        auto pageIndex = m_rawFileInterface->newInterval(1).begin();
-        LogPage logPage(pageIndex);
-        begin = logPage.pushBack(begin, origToCopyPages.end());
-        TxFs::writePage(m_rawFileInterface, pageIndex, &logPage);
-
-    }
+        m_pageCache.erase(it->m_id);
 }
 
 std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
@@ -326,4 +205,12 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
     } while (idx != 0);
 
     return res;
+}
+
+CommitHandler CacheManager::makeCommitHandler()
+{
+    CommitHandler ch(m_rawFileInterface, m_pageCache, std::move(m_divertedPageIds), std::move(m_newPageIds));
+    m_divertedPageIds.clear();
+    m_newPageIds.clear();
+    return ch;
 }

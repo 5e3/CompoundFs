@@ -331,13 +331,19 @@ class ReadLock
 
 
 #include <memory>
+class Test
+{
+private:
+    std::vector<int> m_ints;
+};
+
+std::unique_ptr<int> make()
+{
+    std::unique_ptr<int> p = std::make_unique<int>(5);
+    return p;
+}
 
 int main()
 {
-    std::unique_ptr<int> p;
-    std::unique_ptr<int> p2 = std::make_unique<int>(1);
-
-    p = std::make_unique<int>(1);
-    p = std::move(p2);
-
+    Test t { std::vector<int>() };
 }

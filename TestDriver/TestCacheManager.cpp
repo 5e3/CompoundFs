@@ -3,10 +3,8 @@
 #include "Test.h"
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/CacheManager.h"
+#include "../CompoundFs/CommitHandler.h"
 #include <algorithm>
-#include <random>
-#include <numeric>
-
 
 using namespace TxFs;
 
@@ -24,27 +22,6 @@ namespace
         mf.writePage(idx, 0, &val, &val + 1);
     }
     }
-
-///////////////////////////////////////////////////////////////////////////////
-
-TEST(PrioritizedPage, sortOrder)
-{
-    std::vector<CacheManager::PrioritizedPage> psis;
-    psis.emplace_back(PageClass::Dirty, 5, 0, 0);
-    psis.emplace_back(PageClass::Dirty, 3, 5, 1);
-    psis.emplace_back(PageClass::Dirty, 3, 4, 2);
-    psis.emplace_back(PageClass::New, 0, 5, 3);
-    psis.emplace_back(PageClass::New, 0, 4, 4);
-    psis.emplace_back(PageClass::New, 0, 0, 5);
-    psis.emplace_back(PageClass::Read, 3, 1, 6);
-    psis.emplace_back(PageClass::Read, 3, 0, 7);
-    psis.emplace_back(PageClass::Read, 2, 10, 8);
-
-    auto psis2 = psis;
-    std::shuffle(psis2.begin(), psis2.end(), std::mt19937(std::random_device()()));
-    std::sort(psis2.begin(), psis2.end());
-    CHECK(psis2 == psis);
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -250,7 +227,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
     }
 }
 
-TEST(CacheManager, dirtyPagesGetRedirected)
+TEST(CacheManager, dirtyPagesGetDiverted)
 {
     MemoryFile memFile;
     {
@@ -270,9 +247,9 @@ TEST(CacheManager, dirtyPagesGetRedirected)
         *p = i + 10;
     }
     cm.trim(0);
-    auto redirectedPages = cm.getRedirectedPages();
-    CHECK(redirectedPages.size() == 10);
-    for (auto page : redirectedPages)
+    auto divertedPageIds = cm.makeCommitHandler().getDivertedPageIds();
+    CHECK(divertedPageIds.size() == 10);
+    for (auto page : divertedPageIds)
         CHECK(page >= 10);
 }
 
@@ -320,7 +297,7 @@ TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
     }
 }
 
-TEST(CacheManager, setPageIndexAllocator)
+TEST(CacheManager, setPageIntervalAllocator)
 {
     MemoryFile memFile;
     CacheManager cm(&memFile);
@@ -335,129 +312,6 @@ TEST(CacheManager, setPageIndexAllocator)
     }
     catch (std::exception&)
     {}
-}
-
-TEST(CacheManager, getAllDirtyPageIds)
-{
-    MemoryFile memFile;
-    {
-        // create new pages
-        CacheManager cm(&memFile);
-        for (int i = 0; i < 40; i++)
-            cm.newPage();
-        cm.trim(0);
-    }
-
-    // 10 dirty pages
-    CacheManager cm(&memFile);
-    for (int i = 10; i < 20; i++)
-        cm.makePageWritable(cm.loadPage(i));
-
-    // pin one of them so it cannot be trimmed
-    auto pinnedPage = cm.loadPage(15);
-    cm.trim(0);
-
-    // make one of the trimmed pages dirty again
-    cm.makePageWritable(cm.loadPage(16));
-
-    // make 10 more dirty pages that stay in the cache
-    for (int i = 20; i < 30; i++)
-        cm.makePageWritable(cm.loadPage(i));
-
-    auto dirtyPageIds = cm.getAllDirtyPageIds();
-    CHECK(dirtyPageIds.size() == 20);
-    std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
-
-    auto expected = dirtyPageIds;
-    std::iota(expected.begin(), expected.end(), 10);
-    CHECK(dirtyPageIds == expected);
-}
-
-TEST(CacheManager, copyDirtyPagesMakesACopyOfTheOriginalPage)
-{
-    MemoryFile memFile;
-    {
-        // perpare some pages with contents
-        CacheManager cm(&memFile);
-        for (int i = 0; i < 50; i++)
-        {
-            auto p = cm.newPage().m_page;
-            *p = i;
-        }
-        cm.trim(0);
-    }
-
-    // make some dirty pages and trim them
-    CacheManager cm(&memFile);
-    for (int i = 10; i < 20; i++)
-    {
-        auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
-        *p += 100;
-    }
-    cm.trim(0);
-
-    // make some more dirty and keep them in cache
-    for (int i = 20; i < 30; i++)
-    {
-        auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
-        *p += 100;
-    }
-
-    auto dirtyPageIds = cm.getAllDirtyPageIds();
-    auto origToCopyPages = cm.copyDirtyPages(dirtyPageIds);
-
-    // do the test...
-    CHECK(dirtyPageIds.size() == origToCopyPages.size());
-    for (auto [orig, cpy]: origToCopyPages)
-    {
-        CHECK(orig != cpy);
-        CHECK(TxFs::isEqualPage(cm.getRawFileInterface(), orig, cpy));
-        uint8_t buffer[4096];
-        TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
-        CHECK(*buffer < 100);
-    }
-}
-
-TEST(CacheManager, updateDirtyPagesChangesOriginalPages)
-{
-    MemoryFile memFile;
-    {
-        // perpare some pages with contents
-        CacheManager cm(&memFile);
-        for (int i = 0; i < 50; i++)
-        {
-            auto p = cm.newPage().m_page;
-            *p = i;
-        }
-        cm.trim(0);
-    }
-
-    // make some dirty pages and trim them
-    CacheManager cm(&memFile);
-    for (int i = 10; i < 20; i++)
-    {
-        auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
-        *p += 100;
-    }
-    cm.trim(0);
-
-    // make some more dirty and keep them in cache
-    for (int i = 20; i < 30; i++)
-    {
-        auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
-        *p += 100;
-    }
-
-    auto dirtyPageIds = cm.getAllDirtyPageIds();
-    cm.updateDirtyPages(dirtyPageIds);
-
-    // do the test...
-    for (auto orig: dirtyPageIds)
-    {
-        uint8_t buffer[4096];
-        TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
-        CHECK(*buffer > 100);
-    }
 }
 
 TEST(CacheManager, NoLogsReturnEmpty)
@@ -477,7 +331,8 @@ TEST(CacheManager, ReadLogsReturnTheLogs)
     cm.newPage();
     std::vector<std::pair<PageIndex, PageIndex>> logs(1000);
     std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });
-    cm.writeLogs(logs);
+    auto ch = cm.makeCommitHandler();
+    ch.writeLogs(logs);
     auto logs2 = cm.readLogs();
     std::sort(logs2.begin(), logs2.end());
     CHECK(logs == logs2);
