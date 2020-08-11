@@ -5,7 +5,7 @@
 using namespace TxFs;
 
 CommitHandler::CommitHandler(RawFileInterface* rfi, PageCache& pageCache, DivertedPageIds&& divertedPageIds,
-    NewPageIds&& newPages)
+    NewPageIds&& newPages) noexcept
     : m_rawFileInterface(rfi)
     , m_pageCache(pageCache)
     , m_divertedPageIds(std::move(divertedPageIds))

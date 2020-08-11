@@ -36,6 +36,8 @@ public:
 
 public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256) noexcept;
+    CacheManager(CacheManager&&) = default;
+
     void setPageIntervalAllocator(const std::function<Interval(size_t)>& pageIntervalAllocator)
     {
         m_pageIntervalAllocator = pageIntervalAllocator;
@@ -49,7 +51,7 @@ public:
     Interval allocatePageInterval(size_t maxPages) noexcept;
     size_t trim(uint32_t maxPages);
 
-    CommitHandler makeCommitHandler();
+    CommitHandler buildCommitHandler();
     std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
     RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
 

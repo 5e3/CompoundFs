@@ -20,19 +20,24 @@ public:
     using NewPageIds = std::unordered_set<PageIndex>;
 
 public:
-    CommitHandler(RawFileInterface* rfi, PageCache& pageCache, DivertedPageIds&& divertedPageIds, NewPageIds&& newPages);
+    CommitHandler(RawFileInterface* rfi, PageCache& pageCache, DivertedPageIds&& divertedPageIds, NewPageIds&& newPages) noexcept;
+    CommitHandler(CommitHandler&&) = default;
+    CommitHandler& operator=(CommitHandler&&) = default;
+    
+    CommitHandler(const CommitHandler&) = delete;
+    CommitHandler& operator=(const CommitHandler&) = delete;
 
     void commit();
     std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
     void updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeCachedPages();
+
     std::vector<PageIndex> getDivertedPageIds() const;
     std::vector<PageIndex> getAllDirtyPageIds() const;
 
 private:
     PageIndex divertPage(PageIndex id) const noexcept;
-
 
 private:
     RawFileInterface* m_rawFileInterface;
@@ -40,4 +45,5 @@ private:
     DivertedPageIds m_divertedPageIds;
     NewPageIds m_newPageIds;
 };
+
 }

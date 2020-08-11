@@ -37,7 +37,7 @@ TEST(CommitHandler, getAllDirtyPageIds)
     for (int i = 20; i < 30; i++)
         cm.makePageWritable(cm.loadPage(i));
 
-    auto dirtyPageIds = cm.makeCommitHandler().getAllDirtyPageIds();
+    auto dirtyPageIds = cm.buildCommitHandler().getAllDirtyPageIds();
     CHECK(dirtyPageIds.size() == 20);
     std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
 
@@ -76,7 +76,7 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
         *p += 100;
     }
 
-    auto commitHandler = cm.makeCommitHandler();
+    auto commitHandler = cm.buildCommitHandler();
     auto dirtyPageIds = commitHandler.getAllDirtyPageIds();
     auto origToCopyPages = commitHandler.copyDirtyPages(dirtyPageIds);
 
@@ -122,7 +122,7 @@ TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
         *p += 100;
     }
 
-    auto commitHandler = cm.makeCommitHandler();
+    auto commitHandler = cm.buildCommitHandler();
     auto dirtyPageIds = commitHandler.getAllDirtyPageIds();
     commitHandler.updateDirtyPages(dirtyPageIds);
 

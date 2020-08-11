@@ -207,7 +207,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
     return res;
 }
 
-CommitHandler CacheManager::makeCommitHandler()
+CommitHandler CacheManager::buildCommitHandler()
 {
     CommitHandler ch(m_rawFileInterface, m_pageCache, std::move(m_divertedPageIds), std::move(m_newPageIds));
     m_divertedPageIds.clear();

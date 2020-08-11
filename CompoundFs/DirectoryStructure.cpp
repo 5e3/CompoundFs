@@ -170,7 +170,7 @@ void DirectoryStructure::commit()
     for (auto page : freePages)
         m_freeStore.deallocate(page);
 
-    auto commitHandler = m_cacheManager->makeCommitHandler();
+    auto commitHandler = m_cacheManager->buildCommitHandler();
 
     auto divertedPageIds = commitHandler.getDivertedPageIds();
     for (auto page: divertedPageIds)

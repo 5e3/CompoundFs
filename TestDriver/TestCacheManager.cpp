@@ -247,7 +247,7 @@ TEST(CacheManager, dirtyPagesGetDiverted)
         *p = i + 10;
     }
     cm.trim(0);
-    auto divertedPageIds = cm.makeCommitHandler().getDivertedPageIds();
+    auto divertedPageIds = cm.buildCommitHandler().getDivertedPageIds();
     CHECK(divertedPageIds.size() == 10);
     for (auto page : divertedPageIds)
         CHECK(page >= 10);
@@ -331,7 +331,7 @@ TEST(CacheManager, ReadLogsReturnTheLogs)
     cm.newPage();
     std::vector<std::pair<PageIndex, PageIndex>> logs(1000);
     std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });
-    auto ch = cm.makeCommitHandler();
+    auto ch = cm.buildCommitHandler();
     ch.writeLogs(logs);
     auto logs2 = cm.readLogs();
     std::sort(logs2.begin(), logs2.end());
