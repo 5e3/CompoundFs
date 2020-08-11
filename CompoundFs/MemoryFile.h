@@ -3,8 +3,12 @@
 
 #include "RawFileInterface.h"
 #include "PageAllocator.h"
+#include "LockProtocol.h"
+
 #include <vector>
 #include <stdint.h>
+#include <mutex>
+#include <shared_mutex>
 
 namespace TxFs
 {
@@ -22,9 +26,15 @@ public:
     void flushFile() override;
     size_t currentSize() const override;
 
+    Lock readAccess() override;
+    Lock writeAccess() override;
+    CommitLock commitAccess(Lock&& writeLock) override;
+
 private:
     std::vector<std::shared_ptr<uint8_t>> m_file;
     PageAllocator m_allocator;
+    LockProtocol<std::shared_mutex, std::mutex> m_lockProtocol;
+
 };
 
 }

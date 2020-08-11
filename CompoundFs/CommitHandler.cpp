@@ -40,12 +40,21 @@ void CommitHandler::commit()
         m_cache.m_rawFileInterface->flushFile();
     }
 
-    updateDirtyPages(dirtyPageIds);
-    writeCachedPages();
+    exclusiveLockedCommit(dirtyPageIds);
     m_cache.m_rawFileInterface->flushFile();
 
     // cut the file
 }
+
+void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds)
+{
+    auto commitLock = m_cache.m_rawFileInterface->commitAccess(std::move(m_cache.m_lock));
+    updateDirtyPages(dirtyPageIds);
+    writeCachedPages();
+
+    m_cache.m_lock = commitLock.release();
+}
+
 
 /// Get the original ids of the PageClass::Dirty pages. Some of them may
 /// still live in m_pageCache the others were probably pushed out by the

@@ -63,3 +63,18 @@ size_t MemoryFile::currentSize() const
 {
     return m_file.size();
 }
+
+Lock MemoryFile::readAccess()
+{
+    return m_lockProtocol.readAccess();
+}
+
+Lock MemoryFile::writeAccess()
+{
+    return m_lockProtocol.writeAccess();
+}
+
+CommitLock MemoryFile::commitAccess(Lock&& writeLock)
+{
+    return m_lockProtocol.commitAccess(std::move(writeLock));
+}

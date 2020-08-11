@@ -16,7 +16,9 @@ CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
     : m_cache{rfi}
     , m_pageMemoryAllocator(maxPages)
     , m_maxCachedPages(maxPages)
-{}
+{
+    m_cache.m_lock = rfi->writeAccess();
+}
 
 /// Delivers a new page. The page is either allocated form the FreeStore or it comes from extending the file. The
 /// PageDef<> is writable as it is expected that a new page was requested because you want to write to it.

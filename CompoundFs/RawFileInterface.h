@@ -5,6 +5,8 @@
 
 namespace TxFs
 {
+class Lock;
+class CommitLock;
 
 class RawFileInterface
 {
@@ -18,6 +20,10 @@ public:
     virtual uint8_t* readPages(Interval iv, uint8_t* page) const = 0;
     virtual size_t currentSize() const = 0; // file size in number of pages
     virtual void flushFile() = 0;
+
+    virtual Lock readAccess() = 0;
+    virtual Lock writeAccess() = 0;
+    virtual CommitLock commitAccess(Lock&& writeLock) = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

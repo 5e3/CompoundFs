@@ -27,6 +27,7 @@ public:
     void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
     void updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeCachedPages();
+    void exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds);
 
     std::vector<PageIndex> getDivertedPageIds() const;
     std::vector<PageIndex> getDirtyPageIds() const;

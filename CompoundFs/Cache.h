@@ -4,6 +4,7 @@
 
 #include "Node.h"
 #include "PageMetaData.h"
+#include "Lock.h"
 #include <unordered_map>
 #include <unordered_set>
 
@@ -21,5 +22,6 @@ class RawFileInterface;
         PageCache m_pageCache;
         DivertedPageIds m_divertedPageIds;
         NewPageIds m_newPageIds;
+        Lock m_lock;
     };
 }
