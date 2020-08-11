@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClInclude Include="ByteString.h" />
     <ClInclude Include="BTree.h" />
+    <ClInclude Include="Cache.h" />
     <ClInclude Include="CacheManager.h" />
     <ClInclude Include="CommitHandler.h" />
     <ClInclude Include="DirectoryObjects.h" />

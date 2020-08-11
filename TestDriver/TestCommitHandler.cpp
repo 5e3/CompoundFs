@@ -10,7 +10,7 @@
 using namespace TxFs;
 
 
-TEST(CommitHandler, getAllDirtyPageIds)
+TEST(CommitHandler, getDirtyPageIds)
 {
     MemoryFile memFile;
     {
@@ -37,7 +37,7 @@ TEST(CommitHandler, getAllDirtyPageIds)
     for (int i = 20; i < 30; i++)
         cm.makePageWritable(cm.loadPage(i));
 
-    auto dirtyPageIds = cm.buildCommitHandler().getAllDirtyPageIds();
+    auto dirtyPageIds = cm.buildCommitHandler().getDirtyPageIds();
     CHECK(dirtyPageIds.size() == 20);
     std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
 
@@ -77,7 +77,7 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
     }
 
     auto commitHandler = cm.buildCommitHandler();
-    auto dirtyPageIds = commitHandler.getAllDirtyPageIds();
+    auto dirtyPageIds = commitHandler.getDirtyPageIds();
     auto origToCopyPages = commitHandler.copyDirtyPages(dirtyPageIds);
 
     // do the test...
@@ -123,7 +123,7 @@ TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
     }
 
     auto commitHandler = cm.buildCommitHandler();
-    auto dirtyPageIds = commitHandler.getAllDirtyPageIds();
+    auto dirtyPageIds = commitHandler.getDirtyPageIds();
     commitHandler.updateDirtyPages(dirtyPageIds);
 
     // do the test...

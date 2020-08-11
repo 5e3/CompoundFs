@@ -29,6 +29,7 @@
     <ClInclude Include="MemoryFile.h" />
     <ClInclude Include="CommitHandler.h" />
     <ClInclude Include="PageMetaData.h" />
+    <ClInclude Include="Cache.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />

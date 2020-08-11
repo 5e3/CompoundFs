@@ -13,7 +13,7 @@
 using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
-    : m_rawFileInterface(rfi)
+    : m_cache{rfi}
     , m_pageMemoryAllocator(maxPages)
     , m_maxCachedPages(maxPages)
 {}
@@ -24,8 +24,8 @@ PageDef<uint8_t> CacheManager::newPage()
 {
     auto page = m_pageMemoryAllocator.allocate();
     auto id = newPageIndex();
-    m_pageCache.emplace(id, CachedPage(page, PageClass::New));
-    m_newPageIds.insert(id);
+    m_cache.m_pageCache.emplace(id, CachedPage(page, PageClass::New));
+    m_cache.m_newPageIds.insert(id);
     trimCheck();
     return PageDef<uint8_t>(page, id);
 }
@@ -36,12 +36,12 @@ PageDef<uint8_t> CacheManager::newPage()
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
     auto id = divertPage(origId);
-    auto it = m_pageCache.find(id);
-    if (it == m_pageCache.end())
+    auto it = m_cache.m_pageCache.find(id);
+    if (it == m_cache.m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        TxFs::readPage(m_rawFileInterface, id, page.get());
-        m_pageCache.emplace(id, CachedPage(page, PageClass::Read));
+        TxFs::readPage(m_cache.m_rawFileInterface, id, page.get());
+        m_cache.m_pageCache.emplace(id, CachedPage(page, PageClass::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
     }
@@ -57,12 +57,12 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
     auto id = divertPage(origId);
-    PageClass pageClass = m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
-    auto it = m_pageCache.find(id);
-    if (it == m_pageCache.end())
+    PageClass pageClass = m_cache.m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
+    auto it = m_cache.m_pageCache.find(id);
+    if (it == m_cache.m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        m_pageCache.emplace(id, CachedPage(page, pageClass));
+        m_cache.m_pageCache.emplace(id, CachedPage(page, pageClass));
         trimCheck();
         return PageDef<uint8_t>(page, origId);
     }
@@ -85,17 +85,17 @@ PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loa
 void CacheManager::setPageDirty(PageIndex id) noexcept
 {
     id = divertPage(id);
-    PageClass pageClass = m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
+    PageClass pageClass = m_cache.m_newPageIds.count(id) ? PageClass::New : PageClass::Dirty;
 
-    auto it = m_pageCache.find(id);
-    assert(it != m_pageCache.end());
+    auto it = m_cache.m_pageCache.find(id);
+    assert(it != m_cache.m_pageCache.end());
     it->second.setPageClass(pageClass);
 }
 
 /// Finds out if a trim operation needs to be performed and does it if necessary.
 void CacheManager::trimCheck() noexcept
 {
-    if (m_pageCache.size() > m_maxCachedPages)
+    if (m_cache.m_pageCache.size() > m_maxCachedPages)
         trim(m_maxCachedPages / 4 * 3);
 }
 
@@ -116,7 +116,7 @@ size_t CacheManager::trim(uint32_t maxPages)
     evictDirtyPages(beginEvictSet, beginNewPageSet);
     evictNewPages(beginNewPageSet, endNewPageSet);
     removeFromCache(beginEvictSet, prioritizedPages.end());
-    return m_pageCache.size();
+    return m_cache.m_pageCache.size();
 }
 
 /// Use installed allocation function or the rawFileInterface.
@@ -129,14 +129,14 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
             m_pageIntervalAllocator = std::function<Interval(size_t)>();
         return iv;
     }
-    return m_rawFileInterface->newInterval(maxPages);
+    return m_cache.m_rawFileInterface->newInterval(maxPages);
 }
 
 /// Find the page we moved the original page to or return identity.
 PageIndex CacheManager::divertPage(PageIndex id) const noexcept
 {
-    auto it = m_divertedPageIds.find(id);
-    if (it == m_divertedPageIds.end())
+    auto it = m_cache.m_divertedPageIds.find(id);
+    if (it == m_cache.m_divertedPageIds.end())
         return id;
     return it->second;
 }
@@ -145,8 +145,8 @@ PageIndex CacheManager::divertPage(PageIndex id) const noexcept
 std::vector<PrioritizedPage> CacheManager::getUnpinnedPages() const
 {
     std::vector<PrioritizedPage> pageSortItems;
-    pageSortItems.reserve(m_pageCache.size());
-    for (auto& cp: m_pageCache)
+    pageSortItems.reserve(m_cache.m_pageCache.size());
+    for (auto& cp: m_cache.m_pageCache)
         if (cp.second.m_page.use_count() == 1) // we don't use weak_ptr => this is save
             pageSortItems.emplace_back(cp.second, cp.first);
     return pageSortItems;
@@ -157,12 +157,12 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
     for (auto it = begin; it != end; ++it)
     {
         assert(it->m_pageClass == PageClass::Dirty);
-        auto p = m_pageCache.find(it->m_id);
-        assert(p != m_pageCache.end());
+        auto p = m_cache.m_pageCache.find(it->m_id);
+        assert(p != m_cache.m_pageCache.end());
         auto id = newPageIndex();
-        TxFs::writePage(m_rawFileInterface, id, p->second.m_page.get());
-        m_divertedPageIds[it->m_id] = id;
-        m_newPageIds.insert(id);
+        TxFs::writePage(m_cache.m_rawFileInterface, id, p->second.m_page.get());
+        m_cache.m_divertedPageIds[it->m_id] = id;
+        m_cache.m_newPageIds.insert(id);
     }
 }
 
@@ -171,22 +171,22 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
     for (auto it = begin; it != end; ++it)
     {
         assert(it->m_pageClass == PageClass::New);
-        auto p = m_pageCache.find(it->m_id);
-        assert(p != m_pageCache.end());
-        TxFs::writePage(m_rawFileInterface, p->first, p->second.m_page.get());
+        auto p = m_cache.m_pageCache.find(it->m_id);
+        assert(p != m_cache.m_pageCache.end());
+        TxFs::writePage(m_cache.m_rawFileInterface, p->first, p->second.m_page.get());
     }
 }
 
 void CacheManager::removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end)
 {
     for (auto it = begin; it != end; ++it)
-        m_pageCache.erase(it->m_id);
+        m_cache.m_pageCache.erase(it->m_id);
 }
 
 std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 {
     std::vector<std::pair<PageIndex, PageIndex>> res;
-    auto size = m_rawFileInterface->currentSize();
+    auto size = m_cache.m_rawFileInterface->currentSize();
     if (!size)
         return res;
 
@@ -195,7 +195,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 
     do 
     {
-        TxFs::readPage(m_rawFileInterface, --idx, &logPage);
+        TxFs::readPage(m_cache.m_rawFileInterface, --idx, &logPage);
         if (!logPage.checkSignature(idx))
             return res;
 
@@ -209,8 +209,8 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 
 CommitHandler CacheManager::buildCommitHandler()
 {
-    CommitHandler ch(m_rawFileInterface, m_pageCache, std::move(m_divertedPageIds), std::move(m_newPageIds));
-    m_divertedPageIds.clear();
-    m_newPageIds.clear();
+    CommitHandler ch(std::move(m_cache));
+    m_cache.m_divertedPageIds.clear();
+    m_cache.m_newPageIds.clear();
     return ch;
 }

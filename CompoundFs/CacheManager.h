@@ -7,6 +7,7 @@
 #include "PageDef.h"
 #include "Interval.h"
 #include "PageMetaData.h"
+#include "Cache.h"
 
 #include <utility>
 #include <memory>
@@ -30,18 +31,11 @@ class CommitHandler;
 class CacheManager
 {
 public:
-    using PageCache = std::unordered_map<PageIndex, CachedPage>;
-    using DivertedPageIds = std::unordered_map<PageIndex, PageIndex>;
-    using NewPageIds = std::unordered_set<PageIndex>;
-
-public:
     CacheManager(RawFileInterface* rfi, uint32_t maxPages = 256) noexcept;
     CacheManager(CacheManager&&) = default;
 
-    void setPageIntervalAllocator(const std::function<Interval(size_t)>& pageIntervalAllocator)
-    {
-        m_pageIntervalAllocator = pageIntervalAllocator;
-    }
+    template <typename TCallable>
+    void setPageIntervalAllocator(TCallable&&);
 
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
@@ -53,7 +47,7 @@ public:
 
     CommitHandler buildCommitHandler();
     std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
-    RawFileInterface* getRawFileInterface() const { return m_rawFileInterface; }
+    RawFileInterface* getRawFileInterface() const { return m_cache.m_rawFileInterface; }
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
@@ -66,14 +60,19 @@ private:
     void removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
 
 private:
-    RawFileInterface* m_rawFileInterface;
+    Cache m_cache;
     std::function<Interval(size_t)> m_pageIntervalAllocator;
-    PageCache m_pageCache;
-    DivertedPageIds m_divertedPageIds;
-    NewPageIds m_newPageIds;
     PageAllocator m_pageMemoryAllocator;
     uint32_t m_maxCachedPages;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename TCallable>
+inline void CacheManager::setPageIntervalAllocator(TCallable&& pageIntervalAllocator)
+{
+    m_pageIntervalAllocator = pageIntervalAllocator;
+}
 
 
 }
