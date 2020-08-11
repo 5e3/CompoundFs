@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/FreeStore.h"
 #include "../CompoundFs/FileWriter.h"
 #include "../CompoundFs/ByteString.h"
@@ -10,6 +10,9 @@
 #include <random>
 
 using namespace TxFs;
+
+namespace 
+{
 
 FileDescriptor createFile(std::shared_ptr<CacheManager> cm)
 {
@@ -48,13 +51,13 @@ IntervalSequence readAllFreeStorePages(std::shared_ptr<CacheManager> cm, PageInd
     }
     return is;
 }
-
+}
 /////////////////////////////////////////////////////////////////////////////////
 
 TEST(FreeStore, closeReturnsCorrectFileDescriptor)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
 
     FileDescriptor fsfd(1000); // not supposed to access it => crash
     FreeStore fs(cm, fsfd);
@@ -64,8 +67,8 @@ TEST(FreeStore, closeReturnsCorrectFileDescriptor)
 
 TEST(FreeStore, deleteOneFileIsIncludedInFileDescriptor)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -81,8 +84,8 @@ TEST(FreeStore, deleteOneFileIsIncludedInFileDescriptor)
 
 TEST(FreeStore, forEveryDeletedFileThereIsAtLeastAFreePage)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -105,8 +108,8 @@ TEST(FreeStore, forEveryDeletedFileThereIsAtLeastAFreePage)
 
 TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf, 1600);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile, 1600);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -131,8 +134,8 @@ TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
 
 TEST(FreeStore, deleteBigAndSmallFiles)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf, 1600);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile, 1600);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -155,8 +158,8 @@ TEST(FreeStore, deleteBigAndSmallFiles)
 
 TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
 
     FileDescriptor fsfd(1000); // crashes if accessed
     FreeStore fs(cm, fsfd);
@@ -169,8 +172,8 @@ TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
 
 TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -199,8 +202,8 @@ TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
 
 TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -233,8 +236,8 @@ TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
 
 TEST(FreeStore, singlePageConsumed)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
 
@@ -260,8 +263,8 @@ TEST(FreeStore, singlePageConsumed)
 
 TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf, 1600);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile, 1600);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);

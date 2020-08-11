@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/CacheManager.h"
 #include <algorithm>
 #include <random>
@@ -9,6 +9,21 @@
 
 
 using namespace TxFs;
+
+namespace
+{
+    uint8_t readByte(const MemoryFile& mf, PageIndex idx)
+    {
+        uint8_t res;
+        mf.readPage(idx, 0, &res, &res + 1);
+        return res;
+    }
+
+    void writeByte(MemoryFile& mf, PageIndex idx, uint8_t val)
+    {
+        mf.writePage(idx, 0, &val, &val + 1);
+    }
+    }
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -36,8 +51,8 @@ TEST(PrioritizedPage, sortOrder)
 
 TEST(CacheManager, newPageIsCachedButNotWritten)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     PageIndex idx;
     {
@@ -51,28 +66,28 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     }
     auto p2 = cm.loadPage(idx);
     CHECK(*p2.m_page == 0xaa);
-    CHECK(*sf.m_file.at(idx) != *p2.m_page);
+    CHECK(readByte(memFile, idx) != *p2.m_page);
 }
 
 TEST(CacheManager, loadPageIsCachedButNotWritten)
 {
-    SimpleFile sf;
-    auto id = sf.newInterval(1).begin();
-    *sf.m_file.at(id) = 42;
+    MemoryFile memFile;
+    auto id = memFile.newInterval(1).begin();
+    writeByte(memFile, id, 42);
 
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     auto p = cm.loadPage(id);
     auto p2 = cm.loadPage(id);
     CHECK(p == p2);
 
     *std::const_pointer_cast<uint8_t>(p.m_page) = 99;
-    CHECK(*sf.m_file.at(id) == 42);
+    CHECK(readByte(memFile, id) == 42);
 }
 
 TEST(CacheManager, trimReducesSizeOfCache)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
         auto page = cm.newPage();
@@ -85,8 +100,8 @@ TEST(CacheManager, trimReducesSizeOfCache)
 
 TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -96,13 +111,13 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     cm.trim(0);
     for (int i = 0; i < 10; i++)
-        CHECK(*sf.m_file.at(i) == i + 1);
+        CHECK(readByte(memFile, i) == i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -115,16 +130,16 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     CHECK(cm.trim(0) == 2);
 
     for (int i = 1; i < 9; i++)
-        CHECK(*sf.m_file.at(i) == i + 1);
+        CHECK(readByte(memFile, i) == i + 1);
 
-    CHECK(*sf.m_file.at(0) != *p1.m_page);
-    CHECK(*sf.m_file.at(9) != *p2.m_page);
+    CHECK(readByte(memFile, 0) != *p1.m_page);
+    CHECK(readByte(memFile, 9) != *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -143,13 +158,13 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(*sf.m_file.at(i) == i + 10);
+        CHECK(readByte(memFile, i) == i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -168,14 +183,14 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(*sf.m_file.at(i) == i + 1);
+        CHECK(readByte(memFile, i) == i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
@@ -184,7 +199,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
         cm.trim(0);
     }
 
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -201,9 +216,9 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
@@ -212,7 +227,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         cm.trim(0);
     }
 
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -226,7 +241,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         *p = i + 20;
     }
     cm.trim(0);
-    CHECK(sf.m_file.size() == 20);
+    CHECK(memFile.currentSize() == 20);
 
     for (int i = 0; i < 10; i++)
     {
@@ -237,9 +252,9 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesGetRedirected)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
@@ -248,7 +263,7 @@ TEST(CacheManager, dirtyPagesGetRedirected)
         cm.trim(0);
     }
 
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -263,8 +278,8 @@ TEST(CacheManager, dirtyPagesGetRedirected)
 
 TEST(CacheManager, repurposedPagesCanComeFromCache)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -281,8 +296,8 @@ TEST(CacheManager, repurposedPagesCanComeFromCache)
 
 TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
 
     for (int i = 0; i < 10; i++)
     {
@@ -307,8 +322,8 @@ TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
 
 TEST(CacheManager, setPageIndexAllocator)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
     cm.setPageIntervalAllocator([](size_t) { return Interval(5); });
     auto pdef = cm.newPage();
     pdef.m_page.reset();
@@ -324,17 +339,17 @@ TEST(CacheManager, setPageIndexAllocator)
 
 TEST(CacheManager, getAllDirtyPageIds)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
         // create new pages
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 40; i++)
             cm.newPage();
         cm.trim(0);
     }
 
     // 10 dirty pages
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 10; i < 20; i++)
         cm.makePageWritable(cm.loadPage(i));
 
@@ -360,10 +375,10 @@ TEST(CacheManager, getAllDirtyPageIds)
 
 TEST(CacheManager, copyDirtyPagesMakesACopyOfTheOriginalPage)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
         // perpare some pages with contents
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 50; i++)
         {
             auto p = cm.newPage().m_page;
@@ -373,7 +388,7 @@ TEST(CacheManager, copyDirtyPagesMakesACopyOfTheOriginalPage)
     }
 
     // make some dirty pages and trim them
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 10; i < 20; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -405,10 +420,10 @@ TEST(CacheManager, copyDirtyPagesMakesACopyOfTheOriginalPage)
 
 TEST(CacheManager, updateDirtyPagesChangesOriginalPages)
 {
-    SimpleFile sf;
+    MemoryFile memFile;
     {
         // perpare some pages with contents
-        CacheManager cm(&sf);
+        CacheManager cm(&memFile);
         for (int i = 0; i < 50; i++)
         {
             auto p = cm.newPage().m_page;
@@ -418,7 +433,7 @@ TEST(CacheManager, updateDirtyPagesChangesOriginalPages)
     }
 
     // make some dirty pages and trim them
-    CacheManager cm(&sf);
+    CacheManager cm(&memFile);
     for (int i = 10; i < 20; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -447,8 +462,8 @@ TEST(CacheManager, updateDirtyPagesChangesOriginalPages)
 
 TEST(CacheManager, NoLogsReturnEmpty)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
     CHECK(cm.readLogs().empty());
 
     cm.newPage();
@@ -457,8 +472,8 @@ TEST(CacheManager, NoLogsReturnEmpty)
 
 TEST(CacheManager, ReadLogsReturnTheLogs)
 {
-    SimpleFile sf;
-    CacheManager cm(&sf);
+    MemoryFile memFile;
+    CacheManager cm(&memFile);
     cm.newPage();
     std::vector<std::pair<PageIndex, PageIndex>> logs(1000);
     std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });

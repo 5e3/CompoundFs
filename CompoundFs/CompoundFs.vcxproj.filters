@@ -26,7 +26,7 @@
     <ClInclude Include="Lock.h" />
     <ClInclude Include="FileSharedMutex.h" />
     <ClInclude Include="LockProtocol.h" />
-    <ClInclude Include="SimpleFile.h" />
+    <ClInclude Include="MemoryFile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
@@ -37,6 +37,7 @@
     <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="Path.cpp" />
     <ClCompile Include="FileSharedMutex.cpp" />
+    <ClCompile Include="MemoryFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

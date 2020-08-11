@@ -43,7 +43,7 @@
     <ClInclude Include="PageDef.h" />
     <ClInclude Include="Path.h" />
     <ClInclude Include="RawFileInterface.h" />
-    <ClInclude Include="SimpleFile.h" />
+    <ClInclude Include="MemoryFile.h" />
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>
@@ -53,6 +53,7 @@
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="FileSharedMutex.cpp" />
     <ClCompile Include="FileSystem.cpp" />
+    <ClCompile Include="MemoryFile.cpp" />
     <ClCompile Include="PageAllocator.cpp" />
     <ClCompile Include="Path.cpp" />
   </ItemGroup>

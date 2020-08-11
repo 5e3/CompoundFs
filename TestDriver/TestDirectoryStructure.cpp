@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"
 
 using namespace TxFs;
@@ -12,8 +12,8 @@ namespace
 
 DirectoryStructure makeDirectoryStructure()
 {
-    auto sf = new SimpleFile;
-    auto cm = std::make_shared<CacheManager>(sf);
+    auto memFile = new MemoryFile;
+    auto cm = std::make_shared<CacheManager>(memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);

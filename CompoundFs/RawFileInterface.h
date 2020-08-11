@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interval.h"
+#include <vector>
 
 namespace TxFs
 {
@@ -45,6 +46,15 @@ inline bool isEqualPage(const RawFileInterface* rfi, PageIndex p1, PageIndex p2)
     readPage(rfi, p1, buffer[0]);
     readPage(rfi, p2, buffer[1]);
     return memcmp(buffer[0], buffer[1], 4096) == 0;
+}
+
+template<typename TCont>
+inline void clearPages(RawFileInterface* rfi, const TCont& cont)
+{
+    uint8_t buf[4096];
+    memset(buf, 0, sizeof(buf));
+    for (auto idx: cont)
+        writePage(rfi, idx, buf);
 }
 
 }

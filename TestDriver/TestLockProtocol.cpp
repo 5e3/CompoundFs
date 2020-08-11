@@ -1,7 +1,7 @@
 
 
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/LockProtocol.h"
 
 #include <mutex>

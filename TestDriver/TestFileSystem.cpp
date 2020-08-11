@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"
 #include "../CompoundFs/Path.h"
 #include "../CompoundFs/FileSystem.h"
@@ -13,8 +13,8 @@ namespace
 
 FileSystem makeFileSystem()
 {
-    auto sf = new SimpleFile;
-    auto cm = std::make_shared<CacheManager>(sf);
+    auto memFile = new MemoryFile;
+    auto cm = std::make_shared<CacheManager>(memFile);
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);

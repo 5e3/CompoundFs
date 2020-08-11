@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include "Test.h"
-#include "../CompoundFs/SimpleFile.h"
+#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/TypedCacheManager.h"
 #include "../CompoundFs/FileTable.h"
 #include "../CompoundFs/Leaf.h"
@@ -11,8 +11,8 @@ using namespace TxFs;
 
 TEST(TypedCacheManager, newPageCallsCtor)
 {
-    SimpleFile sf;
-    TypedCacheManager tcm(std::make_shared<CacheManager>(&sf));
+    MemoryFile memFile;
+    TypedCacheManager tcm(std::make_shared<CacheManager>(&memFile));
 
     auto pdef = tcm.newPage<FileTable>();
     CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
@@ -21,8 +21,8 @@ TEST(TypedCacheManager, newPageCallsCtor)
 
 TEST(TypedCacheManager, makePageWritable)
 {
-    SimpleFile sf;
-    auto cm = std::make_shared<CacheManager>(&sf);
+    MemoryFile memFile;
+    auto cm = std::make_shared<CacheManager>(&memFile);
     TypedCacheManager tcm(cm);
 
     {
@@ -45,8 +45,8 @@ TEST(TypedCacheManager, makePageWritable)
 
 TEST(TypedCacheManager, repurposeCallsCtor)
 {
-    SimpleFile sf;
-    TypedCacheManager tcm(std::make_shared<CacheManager>(&sf));
+    MemoryFile memFile;
+    TypedCacheManager tcm(std::make_shared<CacheManager>(&memFile));
 
     {
         auto pdef = tcm.newPage<FileTable>();

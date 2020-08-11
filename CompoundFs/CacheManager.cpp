@@ -322,7 +322,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 
         res.reserve(res.size() + logPage.size());
         for (auto [orig, cpy]: logPage)
-            res.push_back(std::pair(orig, cpy));
+            res.emplace_back(orig, cpy);
     } while (idx != 0);
 
     return res;
