@@ -329,21 +329,22 @@ class ReadLock
 //    WriteLock release(CommitLock&& commitLock);
 //};
 
-
 #include <memory>
-class Test
+
+struct Test
 {
-private:
-    std::vector<int> m_ints;
+    Test() = default;
+    Test(int i) : m_i(i) {};
+    int m_i;
 };
 
-std::unique_ptr<int> make()
+Test f()
 {
-    std::unique_ptr<int> p = std::make_unique<int>(5);
-    return p;
+    int i = 6;
+    return Test(i);
 }
 
 int main()
 {
-    Test t { std::vector<int>() };
+    Test t = {};
 }

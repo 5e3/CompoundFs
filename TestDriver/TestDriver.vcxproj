@@ -170,9 +170,12 @@
     <ClCompile Include="TestLock.cpp" />
     <ClCompile Include="TestLockProtocol.cpp" />
     <ClCompile Include="TestLogPage.cpp" />
+    <ClCompile Include="TestMemoryFile.cpp" />
     <ClCompile Include="TestNode.cpp" />
+    <ClCompile Include="TestPageAllocator.cpp" />
     <ClCompile Include="TestPageMetaData.cpp" />
     <ClCompile Include="TestPath.cpp" />
+    <ClCompile Include="TestReadOnlyFile.cpp" />
     <ClCompile Include="TestTypedCacheManager.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -13,11 +13,11 @@
 using namespace TxFs;
 
 CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
-    : m_cache{rfi}
-    , m_pageMemoryAllocator(maxPages)
+    : m_pageMemoryAllocator(maxPages) 
+    , m_cache { rfi }
     , m_maxCachedPages(maxPages)
 {
-    m_cache.m_lock = rfi->writeAccess();
+    m_cache.m_lock = rfi->defaultAccess();
 }
 
 /// Delivers a new page. The page is either allocated form the FreeStore or it comes from extending the file. The
@@ -202,8 +202,5 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 
 CommitHandler CacheManager::buildCommitHandler()
 {
-    CommitHandler ch(std::move(m_cache));
-    m_cache.m_divertedPageIds.clear();
-    m_cache.m_newPageIds.clear();
-    return ch;
+    return CommitHandler(m_cache);
 }

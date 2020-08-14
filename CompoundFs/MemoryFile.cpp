@@ -8,6 +8,7 @@ using namespace TxFs;
 
 MemoryFile::MemoryFile()
     : m_allocator(1024)
+    , m_lockProtocol(std::make_unique<LockProtocol>())
 {
     m_file.reserve(1024);
 }
@@ -70,17 +71,22 @@ size_t MemoryFile::currentSize() const
     return m_file.size();
 }
 
+Lock MemoryFile::defaultAccess()
+{
+    return writeAccess();
+}
+
 Lock MemoryFile::readAccess()
 {
-    return m_lockProtocol.readAccess();
+    return m_lockProtocol->readAccess();
 }
 
 Lock MemoryFile::writeAccess()
 {
-    return m_lockProtocol.writeAccess();
+    return m_lockProtocol->writeAccess();
 }
 
 CommitLock MemoryFile::commitAccess(Lock&& writeLock)
 {
-    return m_lockProtocol.commitAccess(std::move(writeLock));
+    return m_lockProtocol->commitAccess(std::move(writeLock));
 }

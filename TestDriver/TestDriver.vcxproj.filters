@@ -27,5 +27,8 @@
     <ClCompile Include="TestLockProtocol.cpp" />
     <ClCompile Include="TestCommitHandler.cpp" />
     <ClCompile Include="TestPageMetaData.cpp" />
+    <ClCompile Include="TestReadOnlyFile.cpp" />
+    <ClCompile Include="TestMemoryFile.cpp" />
+    <ClCompile Include="TestPageAllocator.cpp" />
   </ItemGroup>
 </Project>

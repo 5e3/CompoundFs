@@ -4,11 +4,9 @@
 
 using namespace TxFs;
 
-CommitHandler::CommitHandler(Cache&& cache) noexcept
-    : m_cache(std::move(cache))
-{
-}
-
+CommitHandler::CommitHandler(Cache& cache) noexcept
+    : m_cache(cache)
+{}
 
 /// Get the page-indices for diverted Dirty pages
 std::vector<PageIndex> CommitHandler::getDivertedPageIds() const
@@ -24,9 +22,9 @@ std::vector<PageIndex> CommitHandler::getDivertedPageIds() const
 void CommitHandler::commit()
 {
     auto dirtyPageIds = getDirtyPageIds();
-    if (dirtyPageIds.empty())
+    if (dirtyPageIds.empty()) 
     {
-        writeCachedPages();  // really? we should probably do nothing?
+        lockedWriteCachedPages();
         return;
     }
 
@@ -55,6 +53,15 @@ void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPag
     m_cache.m_lock = commitLock.release();
 }
 
+void CommitHandler::lockedWriteCachedPages()
+{
+    if (m_cache.m_newPageIds.empty())
+        return;
+
+    auto commitLock = m_cache.m_rawFileInterface->commitAccess(std::move(m_cache.m_lock));
+    writeCachedPages();
+    m_cache.m_lock = commitLock.release();
+}
 
 /// Get the original ids of the PageClass::Dirty pages. Some of them may
 /// still live in m_pageCache the others were probably pushed out by the
@@ -142,10 +149,3 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
         TxFs::writePage(m_cache.m_rawFileInterface, pageIndex, &logPage);
     }
 }
-
-
-
-
-
-
-

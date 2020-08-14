@@ -15,12 +15,7 @@ namespace TxFs
 class CommitHandler
 {
 public:
-    CommitHandler(Cache&& cache) noexcept;
-    CommitHandler(CommitHandler&&) = default;
-    CommitHandler& operator=(CommitHandler&&) = default;
-    
-    CommitHandler(const CommitHandler&) = delete;
-    CommitHandler& operator=(const CommitHandler&) = delete;
+    CommitHandler(Cache& cache) noexcept;
 
     void commit();
     std::vector<std::pair<PageIndex, PageIndex>> copyDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
@@ -28,12 +23,13 @@ public:
     void updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeCachedPages();
     void exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds);
+    void lockedWriteCachedPages();
 
     std::vector<PageIndex> getDivertedPageIds() const;
     std::vector<PageIndex> getDirtyPageIds() const;
 
 private:
-    Cache m_cache;
+    Cache& m_cache;
  
 };
 

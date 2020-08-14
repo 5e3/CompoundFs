@@ -59,9 +59,9 @@ private:
     void removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
 
 private:
+    PageAllocator m_pageMemoryAllocator;
     Cache m_cache;
     std::function<Interval(size_t)> m_pageIntervalAllocator;
-    PageAllocator m_pageMemoryAllocator;
     uint32_t m_maxCachedPages;
 };
 

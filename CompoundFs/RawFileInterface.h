@@ -22,6 +22,7 @@ public:
     virtual void flushFile() = 0;
     virtual void truncate(size_t numberOfPages) = 0;
 
+    virtual Lock defaultAccess() = 0;
     virtual Lock readAccess() = 0;
     virtual Lock writeAccess() = 0;
     virtual CommitLock commitAccess(Lock&& writeLock) = 0;

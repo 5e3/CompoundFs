@@ -27,16 +27,16 @@ public:
     size_t currentSize() const override;
     void truncate(size_t numberOfPages) override;
 
-
+    Lock defaultAccess() override;
     Lock readAccess() override;
     Lock writeAccess() override;
     CommitLock commitAccess(Lock&& writeLock) override;
 
 private:
-    std::vector<std::shared_ptr<uint8_t>> m_file;
+    using LockProtocol = LockProtocol<std::shared_mutex, std::mutex>;
     PageAllocator m_allocator;
-    LockProtocol<std::shared_mutex, std::mutex> m_lockProtocol;
-
+    std::vector<std::shared_ptr<uint8_t>> m_file;
+    std::unique_ptr<LockProtocol> m_lockProtocol;
 };
 
 }

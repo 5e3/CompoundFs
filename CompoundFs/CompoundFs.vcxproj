@@ -47,6 +47,7 @@
     <ClInclude Include="Path.h" />
     <ClInclude Include="RawFileInterface.h" />
     <ClInclude Include="MemoryFile.h" />
+    <ClInclude Include="ReadOnlyFile.h" />
     <ClInclude Include="TypedCacheManager.h" />
   </ItemGroup>
   <ItemGroup>

@@ -30,6 +30,7 @@
     <ClInclude Include="CommitHandler.h" />
     <ClInclude Include="PageMetaData.h" />
     <ClInclude Include="Cache.h" />
+    <ClInclude Include="ReadOnlyFile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
