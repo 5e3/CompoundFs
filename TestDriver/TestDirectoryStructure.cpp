@@ -12,8 +12,7 @@ namespace
 
 DirectoryStructure makeDirectoryStructure()
 {
-    auto memFile = new MemoryFile;
-    auto cm = std::make_shared<CacheManager>(memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);

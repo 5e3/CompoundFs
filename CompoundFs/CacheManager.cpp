@@ -12,13 +12,14 @@
 
 using namespace TxFs;
 
-CacheManager::CacheManager(RawFileInterface* rfi, uint32_t maxPages) noexcept
+CacheManager::CacheManager(std::unique_ptr<RawFileInterface> rfi, uint32_t maxPages) noexcept
     : m_pageMemoryAllocator(maxPages) 
-    , m_cache { rfi }
+    , m_cache { std::move(rfi) }
     , m_maxCachedPages(maxPages)
 {
-    m_cache.m_lock = rfi->defaultAccess();
+    m_cache.m_lock = m_cache.file()->defaultAccess();
 }
+
 
 /// Delivers a new page. The page is either allocated form the FreeStore or it comes from extending the file. The
 /// PageDef<> is writable as it is expected that a new page was requested because you want to write to it.
@@ -42,7 +43,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     if (it == m_cache.m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        TxFs::readPage(m_cache.m_rawFileInterface, id, page.get());
+        TxFs::readPage(m_cache.file(), id, page.get());
         m_cache.m_pageCache.emplace(id, CachedPage(page, PageClass::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
@@ -153,7 +154,7 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
         auto p = m_cache.m_pageCache.find(it->m_id);
         assert(p != m_cache.m_pageCache.end());
         auto id = newPageIndex();
-        TxFs::writePage(m_cache.m_rawFileInterface, id, p->second.m_page.get());
+        TxFs::writePage(m_cache.file(), id, p->second.m_page.get());
         m_cache.m_divertedPageIds[it->m_id] = id;
         m_cache.m_newPageIds.insert(id);
     }
@@ -166,7 +167,7 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
         assert(it->m_pageClass == PageClass::New);
         auto p = m_cache.m_pageCache.find(it->m_id);
         assert(p != m_cache.m_pageCache.end());
-        TxFs::writePage(m_cache.m_rawFileInterface, p->first, p->second.m_page.get());
+        TxFs::writePage(m_cache.file(), p->first, p->second.m_page.get());
     }
 }
 
@@ -188,7 +189,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 
     do 
     {
-        TxFs::readPage(m_cache.m_rawFileInterface, --idx, &logPage);
+        TxFs::readPage(m_cache.file(), --idx, &logPage);
         if (!logPage.checkSignature(idx))
             return res;
 
@@ -203,4 +204,11 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 CommitHandler CacheManager::buildCommitHandler()
 {
     return CommitHandler(m_cache);
+}
+
+// TODO: Needed for testing. Unclear what we do with this?
+std::unique_ptr<RawFileInterface> CacheManager::handOverFile()
+{
+    m_cache.m_lock.release(); // we have to release that lock
+    return std::move(m_cache.m_rawFileInterface);
 }

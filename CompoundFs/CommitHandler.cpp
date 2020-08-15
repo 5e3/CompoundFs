@@ -93,7 +93,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CommitHandler::copyDirtyPages(const
 
     for (auto originalPageIdx: dirtyPageIds)
     {
-        TxFs::copyPage(m_cache.m_rawFileInterface, originalPageIdx, nextPage);
+        TxFs::copyPage(m_cache.file(), originalPageIdx, nextPage);
         origToCopyPages.emplace_back(originalPageIdx, nextPage++);
     }
     assert(nextPage == interval.end());
@@ -114,12 +114,12 @@ void CommitHandler::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
             // if the page is not in the cache just physically copy the page from
             // its diverted place. (PageClass::Dirty pages are either in the cache or diverted)
             assert(id != origIdx);
-            TxFs::copyPage(m_cache.m_rawFileInterface, id, origIdx);
+            TxFs::copyPage(m_cache.file(), id, origIdx);
         }
         else
         {
             // we have to use the cached page or else we lose updates (if the page is not PageClass::Read)!
-            TxFs::writePage(m_cache.m_rawFileInterface, origIdx, it->second.m_page.get());
+            TxFs::writePage(m_cache.file(), origIdx, it->second.m_page.get());
             m_cache.m_pageCache.erase(it);
         }
     }
@@ -132,7 +132,7 @@ void CommitHandler::writeCachedPages()
     {
         assert(page.second.m_pageClass != PageClass::Undefined);
         if (page.second.m_pageClass != PageClass::Read)
-            TxFs::writePage(m_cache.m_rawFileInterface, page.first, page.second.m_page.get());
+            TxFs::writePage(m_cache.file(), page.first, page.second.m_page.get());
     }
     m_cache.m_pageCache.clear();
 }
@@ -143,9 +143,9 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
     auto begin = origToCopyPages.begin();
     while (begin != origToCopyPages.end())
     {
-        auto pageIndex = m_cache.m_rawFileInterface->newInterval(1).begin();
+        auto pageIndex = m_cache.file()->newInterval(1).begin();
         LogPage logPage(pageIndex);
         begin = logPage.pushBack(begin, origToCopyPages.end());
-        TxFs::writePage(m_cache.m_rawFileInterface, pageIndex, &logPage);
+        TxFs::writePage(m_cache.file(), pageIndex, &logPage);
     }
 }

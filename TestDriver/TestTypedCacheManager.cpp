@@ -11,8 +11,8 @@ using namespace TxFs;
 
 TEST(TypedCacheManager, newPageCallsCtor)
 {
-    MemoryFile memFile;
-    TypedCacheManager tcm(std::make_shared<CacheManager>(&memFile));
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    TypedCacheManager tcm(cm);
 
     auto pdef = tcm.newPage<FileTable>();
     CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
@@ -21,8 +21,7 @@ TEST(TypedCacheManager, newPageCallsCtor)
 
 TEST(TypedCacheManager, makePageWritable)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     {
@@ -45,9 +44,8 @@ TEST(TypedCacheManager, makePageWritable)
 
 TEST(TypedCacheManager, repurposeCallsCtor)
 {
-    MemoryFile memFile;
-    TypedCacheManager tcm(std::make_shared<CacheManager>(&memFile));
-
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    TypedCacheManager tcm(cm);
     {
         auto pdef = tcm.newPage<FileTable>();
         pdef.m_page->setNext(42);

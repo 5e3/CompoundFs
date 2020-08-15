@@ -20,8 +20,7 @@ using namespace TxFs;
 
 TEST(BTree, trivialFind)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
     CHECK(!bt.find("test"));
 }
@@ -35,8 +34,7 @@ TEST(BTree, insert)
     auto rng = std::mt19937(std::random_device()());
     std::shuffle(keys.begin(), keys.end(), rng);
 
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
     for (const auto& key: keys)
         bt.insert(key.c_str(), "");
@@ -50,8 +48,7 @@ TEST(BTree, insert)
 
 TEST(BTree, insertReplacesOriginal)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 3000; i++)
@@ -75,8 +72,7 @@ TEST(BTree, insertReplacesOriginal)
 
 TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 3000; i++)
@@ -95,8 +91,7 @@ TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
 
 TEST(BTree, canControlReplacementWithStrategy)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 1000; i++)
@@ -122,8 +117,7 @@ TEST(BTree, canControlReplacementWithStrategy)
 
 TEST(BTree, emptyTreeReturnsFalseCursor)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     auto cur = bt.begin("");
@@ -133,8 +127,7 @@ TEST(BTree, emptyTreeReturnsFalseCursor)
 
 TEST(BTree, cursorPointsToCurrentItem)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 500; i++)
@@ -150,8 +143,7 @@ TEST(BTree, cursorPointsToCurrentItem)
 
 TEST(BTree, cursorIterates)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 500; i++)
@@ -172,8 +164,7 @@ TEST(BTree, cursorIterates)
 
 TEST(BTree, cursorNextPointsToNext)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 500; i++)
@@ -189,8 +180,7 @@ TEST(BTree, cursorNextPointsToNext)
 
 TEST(BTree, cursorKeepsPageInMemory)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     for (size_t i = 0; i < 500; i++)
@@ -213,8 +203,7 @@ TEST(BTree, cursorKeepsPageInMemory)
 
 TEST(BTree, removeAllKeysLeavesTreeEmpty)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     std::vector<uint32_t> keys;
@@ -228,7 +217,7 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
         bt.insert(s.c_str(), s.c_str());
     }
 
-    auto size = memFile.currentSize();
+    auto size = cm->getRawFileInterface()->currentSize();
 
     for (auto key: keys)
     {
@@ -244,8 +233,7 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
 
 TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     std::vector<uint32_t> keys;
@@ -265,8 +253,7 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
 
 TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     std::vector<std::string> keys;
@@ -284,7 +271,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
         auto res = bt.remove(keys[i].c_str());
         CHECK(res);
     }
-    clearPages(&memFile, bt.getFreePages());
+    clearPages(cm->getRawFileInterface(), bt.getFreePages());
 
     for (size_t i = 0; i < 1000; i++)
     {
@@ -308,7 +295,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
         CHECK(res);
     }
     CHECK(bt.getFreePages().size() > size);
-    clearPages(&memFile, bt.getFreePages());
+    clearPages(cm->getRawFileInterface(), bt.getFreePages());
 
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 800; i++)
@@ -321,8 +308,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
 
 TEST(BTree, insertAfterRemoveWorks)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     std::vector<std::string> keys;
@@ -366,8 +352,7 @@ TEST(BTree, insertAfterRemoveWorks)
 
 TEST(BTree, removeInReverseOrder)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
 
     std::vector<std::string> keys;
@@ -385,7 +370,7 @@ TEST(BTree, removeInReverseOrder)
         auto res = bt.remove(keys[i].c_str());
         CHECK(res);
     }
-    CHECK(bt.getFreePages().size() > 0);
+    CHECK(!bt.getFreePages().empty());
 
     std::reverse(keys.begin(), keys.end());
     auto cursor = bt.begin("");
@@ -400,9 +385,9 @@ TEST(BTree, removeInReverseOrder)
 
 TEST(BTree, leftMergeWithDeletionOnTheLeft)
 {
-    MemoryFile memFile;
-    auto root = MinimalTreeBuilder(&memFile).buildTree(4);
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    MinimalTreeBuilder mtb( std::make_unique<MemoryFile>() );
+    auto root = mtb.buildTree(4);
+    auto cm = std::make_shared<CacheManager>(mtb.m_cacheManager->handOverFile());
     BTree bt(cm, root);
 
     bt.remove("0001");
@@ -411,11 +396,11 @@ TEST(BTree, leftMergeWithDeletionOnTheLeft)
 
 TEST(BTree, leftMergeWithDeletionOnTheRight)
 {
-    MemoryFile memFile;
-    auto root = MinimalTreeBuilder(&memFile).buildTree(4);
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    MinimalTreeBuilder mtb(std::make_unique<MemoryFile>());
+    auto root = mtb.buildTree(4);
+    auto cm = std::make_shared<CacheManager>(mtb.m_cacheManager->handOverFile());
     BTree bt(cm, root);
 
-    bt.remove("0035");
+     bt.remove("0035");
     CHECK(bt.find("0033"));
 }

@@ -6,12 +6,13 @@
 #include "../CompoundFs/TypedCacheManager.h"
 #include "../CompoundFs/InnerNode.h"
 #include "../CompoundFs/Leaf.h"
+#include <memory>
 
 namespace TxFs
 {
+
 struct MinimalTreeBuilder
 {
-    RawFileInterface* m_file;
     std::shared_ptr<CacheManager> m_cacheManager;
     TypedCacheManager m_typedCacheManager;
     int m_leafKey;
@@ -22,9 +23,8 @@ struct MinimalTreeBuilder
         PageIndex m_index;
     };
 
-    MinimalTreeBuilder(RawFileInterface* rfi)
-        : m_file(rfi)
-        , m_cacheManager(std::make_shared<CacheManager>(rfi))
+    MinimalTreeBuilder(std::unique_ptr<RawFileInterface> rfi)
+        : m_cacheManager(std::make_shared<CacheManager>(std::move(rfi)))
         , m_typedCacheManager(m_cacheManager)
         , m_leafKey(1)
     {}

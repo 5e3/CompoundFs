@@ -12,17 +12,18 @@ using namespace TxFs;
 
 TEST(CommitHandler, getDirtyPageIds)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
         // create new pages
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 40; i++)
             cm.newPage();
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
     // 10 dirty pages
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 10; i < 20; i++)
         cm.makePageWritable(cm.loadPage(i));
 
@@ -48,20 +49,21 @@ TEST(CommitHandler, getDirtyPageIds)
 
 TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
         // prepare some pages with contents
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 50; i++)
         {
             auto p = cm.newPage().m_page;
             *p = i;
         }
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
     // make some dirty pages and trim them
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 10; i < 20; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -94,20 +96,21 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
 
 TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
         // prepare some pages with contents
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 50; i++)
         {
             auto p = cm.newPage().m_page;
             *p = i;
         }
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
     // make some dirty pages and trim them
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 10; i < 20; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;

@@ -10,16 +10,16 @@ using namespace TxFs;
 
 namespace
 {
-    uint8_t readByte(const MemoryFile& mf, PageIndex idx)
+    uint8_t readByte(const RawFileInterface* rfi, PageIndex idx)
     {
         uint8_t res;
-        mf.readPage(idx, 0, &res, &res + 1);
+        rfi->readPage(idx, 0, &res, &res + 1);
         return res;
     }
 
-    void writeByte(MemoryFile& mf, PageIndex idx, uint8_t val)
+    void writeByte(RawFileInterface* rfi, PageIndex idx, uint8_t val)
     {
-        mf.writePage(idx, 0, &val, &val + 1);
+        rfi->writePage(idx, 0, &val, &val + 1);
     }
     }
 
@@ -28,8 +28,7 @@ namespace
 
 TEST(CacheManager, newPageIsCachedButNotWritten)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     PageIndex idx;
     {
@@ -43,28 +42,27 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     }
     auto p2 = cm.loadPage(idx);
     CHECK(*p2.m_page == 0xaa);
-    CHECK(readByte(memFile, idx) != *p2.m_page);
+    CHECK(readByte(cm.getRawFileInterface(), idx) != *p2.m_page);
 }
 
 TEST(CacheManager, loadPageIsCachedButNotWritten)
 {
-    MemoryFile memFile;
-    auto id = memFile.newInterval(1).begin();
-    writeByte(memFile, id, 42);
+    auto memFile = std::make_unique<MemoryFile>();
+    auto id = memFile->newInterval(1).begin();
+    writeByte(memFile.get(), id, 42);
 
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(memFile));
     auto p = cm.loadPage(id);
     auto p2 = cm.loadPage(id);
     CHECK(p == p2);
 
     *std::const_pointer_cast<uint8_t>(p.m_page) = 99;
-    CHECK(readByte(memFile, id) == 42);
+    CHECK(readByte(cm.getRawFileInterface(), id) == 42);
 }
 
 TEST(CacheManager, trimReducesSizeOfCache)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
         auto page = cm.newPage();
@@ -77,8 +75,7 @@ TEST(CacheManager, trimReducesSizeOfCache)
 
 TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -88,13 +85,12 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     cm.trim(0);
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(memFile, i) == i + 1);
+        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -107,16 +103,15 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     CHECK(cm.trim(0) == 2);
 
     for (int i = 1; i < 9; i++)
-        CHECK(readByte(memFile, i) == i + 1);
+        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
 
-    CHECK(readByte(memFile, 0) != *p1.m_page);
-    CHECK(readByte(memFile, 9) != *p2.m_page);
+    CHECK(readByte(cm.getRawFileInterface(), 0) != *p1.m_page);
+    CHECK(readByte(cm.getRawFileInterface(), 9) != *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -135,13 +130,12 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(memFile, i) == i + 10);
+        CHECK(readByte(cm.getRawFileInterface(), i) == i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -160,23 +154,24 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(memFile, i) == i + 1);
+        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
             *p = i + 1;
         }
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -193,18 +188,19 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
             *p = i + 1;
         }
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -218,7 +214,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         *p = i + 20;
     }
     cm.trim(0);
-    CHECK(memFile.currentSize() == 20);
+    CHECK(cm.getRawFileInterface()->currentSize() == 20);
 
     for (int i = 0; i < 10; i++)
     {
@@ -229,18 +225,19 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesGetDiverted)
 {
-    MemoryFile memFile;
+    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
     {
-        CacheManager cm(&memFile);
+        CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)
         {
             auto p = cm.newPage().m_page;
             *p = i + 1;
         }
         cm.trim(0);
+        file = cm.handOverFile();
     }
 
-    CacheManager cm(&memFile);
+    CacheManager cm(std::move(file));
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.makePageWritable(cm.loadPage(i)).m_page;
@@ -255,8 +252,7 @@ TEST(CacheManager, dirtyPagesGetDiverted)
 
 TEST(CacheManager, repurposedPagesCanComeFromCache)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -273,8 +269,7 @@ TEST(CacheManager, repurposedPagesCanComeFromCache)
 
 TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
 
     for (int i = 0; i < 10; i++)
     {
@@ -299,8 +294,7 @@ TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
 
 TEST(CacheManager, setPageIntervalAllocator)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
     cm.setPageIntervalAllocator([](size_t) { return Interval(5); });
     auto pdef = cm.newPage();
     pdef.m_page.reset();
@@ -316,8 +310,7 @@ TEST(CacheManager, setPageIntervalAllocator)
 
 TEST(CacheManager, NoLogsReturnEmpty)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
     CHECK(cm.readLogs().empty());
 
     cm.newPage();
@@ -326,8 +319,7 @@ TEST(CacheManager, NoLogsReturnEmpty)
 
 TEST(CacheManager, ReadLogsReturnTheLogs)
 {
-    MemoryFile memFile;
-    CacheManager cm(&memFile);
+    CacheManager cm(std::make_unique<MemoryFile>());
     cm.newPage();
     std::vector<std::pair<PageIndex, PageIndex>> logs(1000);
     std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });

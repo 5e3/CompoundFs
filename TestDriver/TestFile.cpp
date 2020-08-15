@@ -13,8 +13,7 @@ using namespace TxFs;
 
 TEST(FileWriter, CtorCreatesEmptyFileDesc)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
     FileDescriptor fd = f.close();
@@ -27,8 +26,7 @@ TEST(FileWriter, CtorCreatesEmptyFileDesc)
 
 TEST(FileWriter, WriteCloseCreatesFileDescriptor)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
     ByteString data("Test");
@@ -42,8 +40,7 @@ TEST(FileWriter, WriteCloseCreatesFileDescriptor)
 
 TEST(FileWriter, WriteCloseCreatesFileTablePage)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -63,8 +60,7 @@ TEST(FileWriter, WriteCloseCreatesFileTablePage)
 
 TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
     ByteString data("Test");
@@ -81,8 +77,7 @@ TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
 
 TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
     ByteString data("Test");
@@ -105,8 +100,7 @@ TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
 
 TEST(FileWriter, SmallWritesOverPageBoundery)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -129,8 +123,7 @@ TEST(FileWriter, SmallWritesOverPageBoundery)
 
 TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -163,8 +156,7 @@ TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
 TEST(FileWriter, PageSizeWrites)
 {
     std::string str(4096, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -184,8 +176,7 @@ TEST(FileWriter, PageSizeWrites)
 TEST(FileWriter, OverPageSizeWrites)
 {
     std::string str(4097, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -205,8 +196,7 @@ TEST(FileWriter, OverPageSizeWrites)
 TEST(FileWriter, UnderPageSizeWrites)
 {
     std::string str(4095, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -226,8 +216,7 @@ TEST(FileWriter, UnderPageSizeWrites)
 TEST(FileWriter, LargePageSizeWrites)
 {
     std::string str(8192, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -247,8 +236,7 @@ TEST(FileWriter, LargePageSizeWrites)
 TEST(FileWriter, LargeSizeWrites)
 {
     std::string str(20000, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -268,8 +256,7 @@ TEST(FileWriter, LargeSizeWrites)
 TEST(FileWriter, LargeSizeWritesMultiFiles)
 {
     std::string str(20000, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -299,8 +286,7 @@ TEST(FileWriter, LargeSizeWritesMultiFiles)
 TEST(FileWriter, FillPageTable)
 {
     std::string str(4096, 'X');
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
@@ -335,8 +321,7 @@ TEST(FileWriter, FillPageTable)
 
 TEST(FileReader, ReadNullFile)
 {
-    MemoryFile memFile;
-    auto cm = std::make_shared<CacheManager>(&memFile);
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileReader f(cm);
 
     CHECK(f.read(0, 0) == 0);
@@ -408,8 +393,7 @@ uint8_t* readFile(FileDescriptor fd, std::vector<uint8_t>& v, std::shared_ptr<Ca
 TEST(FileReader, ReadSmallFile)
 {
     std::vector<uint8_t> v = makeRandomVector(1000);
-    MemoryFile memFile;
-    auto cacheManager = std::make_shared<CacheManager>(&memFile);
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileDescriptor fd = writeFile(v, cacheManager);
     {
         std::vector<uint8_t> res(v.size());
@@ -440,8 +424,7 @@ TEST(FileReader, ReadSmallFile)
 TEST(FileReader, ReadPageSizedFile)
 {
     std::vector<uint8_t> v = makeRandomVector(5 * 4096);
-    MemoryFile memFile;
-    auto cacheManager = std::make_shared<CacheManager>(&memFile);
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileDescriptor fd = writeFile(v, cacheManager);
     {
         std::vector<uint8_t> res(v.size());
@@ -484,8 +467,7 @@ TEST(FileReader, ReadPageSizedFile)
 TEST(FileReader, ReadBigFile)
 {
     std::vector<uint8_t> v = makeRandomVector(17 * 4097);
-    MemoryFile memFile;
-    auto cacheManager = std::make_shared<CacheManager>(&memFile);
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileDescriptor fd = writeFile(v, cacheManager);
     {
         std::vector<uint8_t> res(v.size());
@@ -528,8 +510,7 @@ TEST(FileReader, ReadBigFile)
 TEST(FileReader, ReadFragmentedFile)
 {
     std::vector<uint8_t> v = makeVector(2200 * 4097); // => 3 filetable pages
-    MemoryFile memFile;
-    auto cacheManager = std::make_shared<CacheManager>(&memFile);
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileDescriptor fd = writeFragmentedFile(v, cacheManager);
     {
         std::vector<uint8_t> res(v.size());
