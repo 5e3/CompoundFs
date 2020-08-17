@@ -24,6 +24,7 @@
     <ClInclude Include="Cache.h" />
     <ClInclude Include="CacheManager.h" />
     <ClInclude Include="CommitHandler.h" />
+    <ClInclude Include="Composit.h" />
     <ClInclude Include="DirectoryObjects.h" />
     <ClInclude Include="DirectoryStructure.h" />
     <ClInclude Include="FileDescriptor.h" />
@@ -54,6 +55,7 @@
     <ClCompile Include="BTree.cpp" />
     <ClCompile Include="CacheManager.cpp" />
     <ClCompile Include="CommitHandler.cpp" />
+    <ClCompile Include="Composit.cpp" />
     <ClCompile Include="DirectoryObjects.cpp" />
     <ClCompile Include="DirectoryStructure.cpp" />
     <ClCompile Include="FileSharedMutex.cpp" />

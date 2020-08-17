@@ -58,8 +58,10 @@ TEST(FileSharedMutex, throwOnInvalidHandle)
         bool succ = fsm.try_lock();
         CHECK(false);
     }
-    catch (const std::exception&)
-    {}
+    catch (const std::exception& e)
+    {
+        std::string msg = e.what();
+    }
 }
 
 TEST(FileSharedMutex, throwOnEmptyRange)

@@ -4,6 +4,7 @@
 #include "PageAllocator.h"
 #include <algorithm>
 #include <unordered_map>
+#include <system_error>
 #include <windows.h>
 
 using namespace TxFs;
@@ -78,7 +79,7 @@ std::shared_ptr<uint8_t> PageAllocator::allocBlock()
 {
     uint8_t* block = (uint8_t*) ::VirtualAlloc(nullptr, m_pagesPerBlock * 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (block == nullptr)
-        throw std::bad_alloc();
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "PageAllocator");
 
     m_blocksAllocated++;
     return std::shared_ptr<uint8_t>(block, [](uint8_t* b) { ::VirtualFree(b, 0, MEM_RELEASE); });

@@ -2,7 +2,7 @@
 
 #include "FileSharedMutex.h"
 #include <string>
-#include <stdexcept>
+#include <system_error>
 #include <windows.h>
 
 using namespace TxFs;
@@ -93,7 +93,5 @@ void FileSharedMutex::unlockFile()
 
 void FileSharedMutex::handleError()
 {
-    using namespace std::string_literals;
-    auto error = ::GetLastError();
-    throw std::runtime_error("FileSharedMutex Win32 API error: "s + std::to_string(error));
+    throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileSharedMutex");
 }

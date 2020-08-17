@@ -31,6 +31,7 @@
     <ClInclude Include="PageMetaData.h" />
     <ClInclude Include="Cache.h" />
     <ClInclude Include="ReadOnlyFile.h" />
+    <ClInclude Include="Composit.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BTree.cpp" />
@@ -43,6 +44,7 @@
     <ClCompile Include="FileSharedMutex.cpp" />
     <ClCompile Include="MemoryFile.cpp" />
     <ClCompile Include="CommitHandler.cpp" />
+    <ClCompile Include="Composit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="TxFs.natvis" />

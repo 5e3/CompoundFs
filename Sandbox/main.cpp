@@ -330,6 +330,8 @@ class ReadLock
 //};
 
 #include <memory>
+#include <filesystem>
+#include <system_error>
 
 struct Test
 {
@@ -346,5 +348,12 @@ Test f()
 
 int main()
 {
+    std::error_code ec;
+    //std::filesystem::remove("/&%:/myEmptyDirectoryOrFile", ec);  
+    ec = { 39, std::system_category() };
+    auto msg = ec.message();
+    std::system_error se(39, std::system_category(), "Konnte nicht tun");
+    msg = se.what();
+
     Test t = {};
 }
