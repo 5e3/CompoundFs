@@ -1,6 +1,6 @@
 
 
-#include "stdafx.h"
+
 #include <set>
 #include <memory>
 #include <algorithm>

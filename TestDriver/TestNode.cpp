@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+
 #include "Test.h"
 #include "../CompoundFs/Leaf.h"
 #include "../CompoundFs/InnerNode.h"

@@ -1,6 +1,5 @@
 
 
-#include "stdafx.h"
 #include "Test.h"
 #include "MinimalTreeBuilder.h"
 #include "../CompoundFs/MemoryFile.h"

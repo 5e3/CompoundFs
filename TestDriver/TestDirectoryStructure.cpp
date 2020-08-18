@@ -1,6 +1,6 @@
 
 
-#include "stdafx.h"
+
 #include "Test.h"
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"

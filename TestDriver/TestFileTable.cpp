@@ -1,6 +1,6 @@
 
 
-#include "stdafx.h"
+
 #include "Test.h"
 #include "../CompoundFs/FileTable.h"
 #include <list>

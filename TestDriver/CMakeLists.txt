@@ -3,7 +3,6 @@
 project(TestDriver)
 
 set (Sources 
-		stdafx.cpp
 		TestBTree.cpp
 		TestCacheManager.cpp
 		TestCommitHandler.cpp
@@ -30,8 +29,6 @@ set (Sources
 	
 set (Headers
 		MinimalTreeBuilder.h
-		stdafx.h
-		targetver.h
 		Test.h
 	)
 	
