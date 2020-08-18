@@ -1,5 +1,5 @@
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/FileSharedMutex.h"
 
 #include <filesystem>
@@ -56,7 +56,7 @@ TEST(FileSharedMutex, throwOnInvalidHandle)
     try
     {
         bool succ = fsm.try_lock();
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (const std::exception& e)
     {
@@ -72,7 +72,7 @@ TEST(FileSharedMutex, throwOnEmptyRange)
     try
     {
         bool succ = fsm.try_lock();
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (const std::exception&)
     {}
@@ -86,7 +86,7 @@ TEST(FileSharedMutex, canWriteOnXLockedRange)
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
     auto res = _write(handle, "test", 5);
-    CHECK(res == 5);
+    ASSERT_TRUE(res == 5);
 }
 
 TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
@@ -97,7 +97,7 @@ TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
     auto res = _write(handle, "test", 5);
-    CHECK(res == -1);
+    ASSERT_TRUE(res == -1);
 }
 
 TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
@@ -116,7 +116,7 @@ TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
         File f2 = f;
         int handle = _open_osfhandle((intptr_t) f2.m_handle, 0);
         auto res = _write(handle, "test", 5);
-        CHECK(res == -1);
+        ASSERT_TRUE(res == -1);
         exclusive = !exclusive;
     } while (exclusive == false);
 }
@@ -129,8 +129,8 @@ TEST(FileSharedMutex, XLockPreventsOtherLocks)
 
     File f2 = f;
     FileSharedMutex fsm2 { f2.m_handle, (uint64_t) -2, (uint64_t) -1 };
-    CHECK(!fsm2.try_lock_shared());
-    CHECK(!fsm2.try_lock());
+    ASSERT_TRUE(!fsm2.try_lock_shared());
+    ASSERT_TRUE(!fsm2.try_lock());
 }
 
 TEST(FileSharedMutex, SLockPreventsXLock)
@@ -141,6 +141,6 @@ TEST(FileSharedMutex, SLockPreventsXLock)
 
     File f2 = f;
     FileSharedMutex fsm2 { f2.m_handle, (uint64_t) -2, (uint64_t) -1 };
-    CHECK(!fsm2.try_lock());
-    CHECK(fsm2.try_lock_shared());
+    ASSERT_TRUE(!fsm2.try_lock());
+    ASSERT_TRUE(fsm2.try_lock_shared());
 }

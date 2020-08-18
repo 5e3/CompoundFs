@@ -1,7 +1,7 @@
 
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/IntervalSequence.h"
 #include <algorithm>
 #include <random>
@@ -11,9 +11,9 @@ using namespace TxFs;
 TEST(IntervalSequence, PushBackIsNotEmpty)
 {
     IntervalSequence is;
-    CHECK(is.empty());
+    ASSERT_TRUE(is.empty());
     is.pushBack(Interval(0, 10));
-    CHECK(!is.empty());
+    ASSERT_TRUE(!is.empty());
 }
 
 TEST(IntervalSequence, FillIntervals)
@@ -23,11 +23,11 @@ TEST(IntervalSequence, FillIntervals)
     is.pushBack(Interval(11, 20));
 
     Interval iv = is.popFront();
-    CHECK(iv == Interval(0, 10));
+    ASSERT_TRUE(iv == Interval(0, 10));
 
     iv = is.popFront();
-    CHECK(iv == Interval(11, 20));
-    CHECK(is.empty());
+    ASSERT_TRUE(iv == Interval(11, 20));
+    ASSERT_TRUE(is.empty());
 }
 
 TEST(IntervalSequence, FrontDoesntRemove)
@@ -37,14 +37,14 @@ TEST(IntervalSequence, FrontDoesntRemove)
     is.pushBack(Interval(11, 20));
 
     Interval iv = is.front();
-    CHECK(iv == Interval(0, 10));
+    ASSERT_TRUE(iv == Interval(0, 10));
 
     iv = is.front();
-    CHECK(iv == Interval(0, 10));
+    ASSERT_TRUE(iv == Interval(0, 10));
 
     is.popFront();
     iv = is.front();
-    CHECK(iv == Interval(11, 20));
+    ASSERT_TRUE(iv == Interval(11, 20));
 }
 
 TEST(IntervalSequence, MergeIntervals)
@@ -54,7 +54,7 @@ TEST(IntervalSequence, MergeIntervals)
     is.pushBack(Interval(10, 20));
 
     Interval iv = is.front();
-    CHECK(iv == Interval(0, 20));
+    ASSERT_TRUE(iv == Interval(0, 20));
 }
 
 TEST(IntervalSequence, SplitIntervals)
@@ -64,14 +64,14 @@ TEST(IntervalSequence, SplitIntervals)
     is.pushBack(Interval(10, 20));
 
     Interval iv = is.popFront(5);
-    CHECK(iv == Interval(0, 5));
+    ASSERT_TRUE(iv == Interval(0, 5));
 
     iv = is.popFront(5);
-    CHECK(iv == Interval(5, 10));
+    ASSERT_TRUE(iv == Interval(5, 10));
 
     iv = is.popFront(20);
-    CHECK(iv == Interval(10, 20));
-    CHECK(is.empty());
+    ASSERT_TRUE(iv == Interval(10, 20));
+    ASSERT_TRUE(is.empty());
 }
 
 TEST(IntervalSequence, IterateOneByOne)
@@ -84,7 +84,7 @@ TEST(IntervalSequence, IterateOneByOne)
     while (!is.empty())
     {
         Interval iv = is.popFront(1);
-        CHECK(iv == Interval(j, j + 1));
+        ASSERT_TRUE(iv == Interval(j, j + 1));
         j++;
         if (((j + 1) % 3) == 0)
             j++;
@@ -97,7 +97,7 @@ TEST(IntervalSequence, TotalLength)
     for (int i = 0; i < 100; i += 10)
         is.pushBack(Interval(i, i + 5));
 
-    CHECK(is.totalLength() == 50);
+    ASSERT_TRUE(is.totalLength() == 50);
 }
 
 TEST(IntervalSequence, Sort)
@@ -109,16 +109,16 @@ TEST(IntervalSequence, Sort)
 
     is.sort();
     Interval iv = is.front();
-    CHECK(iv == Interval(0, 30));
+    ASSERT_TRUE(iv == Interval(0, 30));
 
     iv = is.popFront(10);
-    CHECK(iv == Interval(0, 10));
+    ASSERT_TRUE(iv == Interval(0, 10));
 
     iv = is.popFront(10);
-    CHECK(iv == Interval(10, 20));
+    ASSERT_TRUE(iv == Interval(10, 20));
 
     iv = is.popFront(10);
-    CHECK(iv == Interval(20, 30));
+    ASSERT_TRUE(iv == Interval(20, 30));
 }
 
 TEST(IntervalSequence, Sort2)
@@ -138,8 +138,8 @@ TEST(IntervalSequence, Sort2)
 
     size_t totalLen = is.totalLength();
     is.sort();
-    CHECK(totalLen == is.totalLength());
+    ASSERT_TRUE(totalLen == is.totalLength());
 
     Interval iv = is.popFront();
-    CHECK(iv == Interval(0, 50));
+    ASSERT_TRUE(iv == Interval(0, 50));
 }

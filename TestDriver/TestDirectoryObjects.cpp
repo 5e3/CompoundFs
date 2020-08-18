@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/DirectoryObjects.h"
 
 using namespace TxFs;
@@ -43,70 +43,70 @@ TEST(ByteStringOps, TransformFile)
 {
     TransformationTester<DirectoryObjType::File> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "File");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "File");
 }
 
 TEST(ByteStringOps, TransformFolder)
 {
     TransformationTester<DirectoryObjType::Folder> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "Folder");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "Folder");
 }
 
 TEST(ByteStringOps, TransformVersion)
 {
     TransformationTester<DirectoryObjType::Version> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "Version");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "Version");
 }
 
 TEST(ByteStringOps, TransformDouble)
 {
     TransformationTester<DirectoryObjType::Double> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "Double");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "Double");
 }
 
 TEST(ByteStringOps, TransformFileDoublePair)
 {
     TransformationTester<DirectoryObjType::DoublePair> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "DoublePair");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "DoublePair");
 }
 
 TEST(ByteStringOps, TransformInt)
 {
     TransformationTester<DirectoryObjType::Int> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "Int");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "Int");
 }
 
 TEST(ByteStringOps, TransformString)
 {
     TransformationTester<DirectoryObjType::String> tt;
     ByteString b = ByteStringOps::toByteString(tt.m_value);
-    CHECK(b.size() == getTypeSize(tt.m_value) + 2);
-    CHECK(ByteStringOps::getType(b) == tt.m_enum);
-    CHECK(tt.get(b) == tt.m_value);
-    CHECK(tt.getTypeName(b) == "String");
+    ASSERT_TRUE(b.size() == getTypeSize(tt.m_value) + 2);
+    ASSERT_TRUE(ByteStringOps::getType(b) == tt.m_enum);
+    ASSERT_TRUE(tt.get(b) == tt.m_value);
+    ASSERT_TRUE(tt.getTypeName(b) == "String");
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -115,11 +115,11 @@ TEST(ByteStringOps, WrongTypeThrows)
 {
     ByteString b = ByteStringOps::toByteString("test");
     std::string s = ByteStringOps::toValue<std::string>(b);
-    CHECK(s == "test");
+    ASSERT_TRUE(s == "test");
     try
     {
         double d = ByteStringOps::toValue<double>(b);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {}
@@ -128,15 +128,15 @@ TEST(ByteStringOps, WrongTypeThrows)
 TEST(ByteStringOps, EmptyBlobIsUndefined)
 {
     ByteString b;
-    CHECK(ByteStringOps::getType(b) == DirectoryObjType::Undefined);
+    ASSERT_TRUE(ByteStringOps::getType(b) == DirectoryObjType::Undefined);
 }
 
 TEST(ByteStringOps, EmptyStringIsLegal)
 {
     ByteString b = ByteStringOps::toByteString("");
-    CHECK(ByteStringOps::getType(b) == DirectoryObjType::String);
+    ASSERT_TRUE(ByteStringOps::getType(b) == DirectoryObjType::String);
     std::string s = ByteStringOps::toValue<std::string>(b);
-    CHECK(s.empty());
+    ASSERT_TRUE(s.empty());
 }
 
 TEST(ByteStringOps, TooLongStringThrows)
@@ -144,7 +144,7 @@ TEST(ByteStringOps, TooLongStringThrows)
     try
     {
         ByteString b = ByteStringOps::toByteString(std::string(300, 'X'));
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch(std::exception&)
     { }

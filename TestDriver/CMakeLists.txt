@@ -2,13 +2,13 @@
 
 project(TestDriver)
 
-set (Sources 
+set (Sources
+		main.cpp
 		TestBTree.cpp
 		TestCacheManager.cpp
 		TestCommitHandler.cpp
 		TestDirectoryObjects.cpp
 		TestDirectoryStructure.cpp
-		TestDriver.cpp
 		TestFile.cpp
 		TestFileSharedMutex.cpp
 		TestFileSystem.cpp
@@ -29,11 +29,10 @@ set (Sources
 	
 set (Headers
 		MinimalTreeBuilder.h
-		Test.h
 	)
 	
 
 source_group("" FILES ${Sources} ${Headers})
 
 add_executable(${PROJECT_NAME} ${Sources} ${Headers})
-target_link_libraries(${PROJECT_NAME} PUBLIC CompoundFs)
+target_link_libraries(${PROJECT_NAME} PUBLIC CompoundFs gtest)

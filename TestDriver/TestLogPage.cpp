@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/LogPage.h"
 
 using namespace TxFs;
@@ -8,14 +8,14 @@ using namespace TxFs;
 TEST(LogPage, size)
 {
     LogPage log(0);
-    CHECK(sizeof(log) == 4096);
+    ASSERT_TRUE(sizeof(log) == 4096);
 }
 
 TEST(LogPage, checkSignature)
 {
     LogPage log(100);
-    CHECK(log.checkSignature(100));
-    CHECK(!log.checkSignature(1));
+    ASSERT_TRUE(log.checkSignature(100));
+    ASSERT_TRUE(!log.checkSignature(1));
 }
 
 TEST(LogPage, storingRetrieving)
@@ -27,9 +27,9 @@ TEST(LogPage, storingRetrieving)
         pageCopies.push_back({ i, i });
 
     for (auto pc: pageCopies)
-        CHECK(lp.pushBack(pc));
+        ASSERT_TRUE(lp.pushBack(pc));
 
-    CHECK(lp.getPageCopies() == pageCopies);
+    ASSERT_TRUE(lp.getPageCopies() == pageCopies);
 }
 
 TEST(LogPage, sizeTests)
@@ -37,10 +37,10 @@ TEST(LogPage, sizeTests)
     LogPage lp(100);
 
     for (uint32_t i = 0; i < LogPage::MAX_ENTRIES; i++)
-        CHECK(lp.pushBack({ i, i }));
+        ASSERT_TRUE(lp.pushBack({ i, i }));
 
-    CHECK(lp.size() == LogPage::MAX_ENTRIES);
-    CHECK(!lp.pushBack({ 1, 1 }));
+    ASSERT_TRUE(lp.size() == LogPage::MAX_ENTRIES);
+    ASSERT_TRUE(!lp.pushBack({ 1, 1 }));
 }
 
 TEST(LogPage, pushBackIterator)
@@ -48,12 +48,12 @@ TEST(LogPage, pushBackIterator)
     LogPage lp(100);
 
     for (uint32_t i = 0; i < LogPage::MAX_ENTRIES / 2; i++)
-        CHECK(lp.pushBack({ i, i }));
+        ASSERT_TRUE(lp.pushBack({ i, i }));
 
     auto pageCopies = lp.getPageCopies();
-    CHECK(lp.pushBack(pageCopies.begin(), pageCopies.end()) == pageCopies.end());
-    CHECK(lp.size() == LogPage::MAX_ENTRIES);
-    CHECK(!lp.pushBack({ 1, 1 }));
+    ASSERT_TRUE(lp.pushBack(pageCopies.begin(), pageCopies.end()) == pageCopies.end());
+    ASSERT_TRUE(lp.size() == LogPage::MAX_ENTRIES);
+    ASSERT_TRUE(!lp.pushBack({ 1, 1 }));
 }
 
 TEST(LogPage, beginEndCanBeUsedToAppend)
@@ -61,10 +61,10 @@ TEST(LogPage, beginEndCanBeUsedToAppend)
     LogPage lp(100);
 
     for (uint32_t i = 0; i < LogPage::MAX_ENTRIES; i++)
-        CHECK(lp.pushBack({ i, i }));
+        ASSERT_TRUE(lp.pushBack({ i, i }));
 
     auto pageCopies = lp.getPageCopies();
     pageCopies.insert(pageCopies.end(), lp.begin(), lp.end());
 
-    CHECK(pageCopies.size() == 2 * LogPage::MAX_ENTRIES);
+    ASSERT_TRUE(pageCopies.size() == 2 * LogPage::MAX_ENTRIES);
 }

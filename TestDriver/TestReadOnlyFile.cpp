@@ -2,7 +2,7 @@
 
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/ReadOnlyFile.h"
 #include "../CompoundFs/CacheManager.h"

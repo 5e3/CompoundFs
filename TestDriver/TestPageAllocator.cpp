@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <random>
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/PageAllocator.h"
 
 using namespace TxFs;
@@ -27,7 +27,7 @@ TEST(PageAllocator, CanAllocateManyPages)
 
     std::unordered_set<std::shared_ptr<uint8_t>> pset;
     for (auto p: pages)
-        CHECK(pset.insert(p).second); // check if unique
+        ASSERT_TRUE(pset.insert(p).second); // check if unique
 }
 
 TEST(PageAllocator, allocReusesMemory)
@@ -48,7 +48,7 @@ TEST(PageAllocator, allocReusesMemory)
     for (int i = 0; i < 70; i++)
     {
         pages.push_back(alloc.allocate());
-        CHECK(pset.count(pages.back().get()) != 0);
+        ASSERT_TRUE(pset.count(pages.back().get()) != 0);
     }
 }
 
@@ -64,8 +64,8 @@ TEST(PageAllocator, trimFreesAllButOnePageWithoutOutstandingReferences)
     }
 
     auto statistic = alloc.trim();
-    CHECK(statistic.first == 1);
-    CHECK(statistic.second < 16);
+    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_TRUE(statistic.second < 16);
 }
 
 TEST(PageAllocator, trimFreesWhatIsUsefull)
@@ -81,14 +81,14 @@ TEST(PageAllocator, trimFreesWhatIsUsefull)
     }
 
     auto statistic = alloc.trim();
-    CHECK(statistic.first == 2);
-    CHECK(statistic.second > 16);
-    CHECK(statistic.second < 32);
+    ASSERT_TRUE(statistic.first == 2);
+    ASSERT_TRUE(statistic.second > 16);
+    ASSERT_TRUE(statistic.second < 32);
 
     p.reset();
     statistic = alloc.trim();
-    CHECK(statistic.first == 1);
-    CHECK(statistic.second < 16);
+    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_TRUE(statistic.second < 16);
 }
 
 TEST(PageAllocator, allocAfterTrim)
@@ -102,14 +102,14 @@ TEST(PageAllocator, allocAfterTrim)
 
     auto stat = alloc.trim();
     auto page = alloc.allocate();
-    CHECK(stat.first == 1 && stat.second == 0);
+    ASSERT_TRUE(stat.first == 1 && stat.second == 0);
 }
 
 TEST(PageAllocator, defaultCtorTrimIsNoOp)
 {
     PageAllocator alloc;
     auto stat = alloc.trim();
-    CHECK(stat.first == 0 && stat.second == 0);
+    ASSERT_TRUE(stat.first == 0 && stat.second == 0);
 }
 
 TEST(PageAllocator, MovedAllocatorTrimIsNoOp)
@@ -121,11 +121,11 @@ TEST(PageAllocator, MovedAllocatorTrimIsNoOp)
         p = alloc2.allocate();
         p = alloc.allocate();
         auto stat = alloc2.trim();
-        CHECK(stat.first = 1 && stat.second == 2);
+        ASSERT_TRUE(stat.first = 1 && stat.second == 2);
     }
 
     auto stat = alloc.trim();
-    CHECK(stat.first == 1 && stat.second == 1);
+    ASSERT_TRUE(stat.first == 1 && stat.second == 1);
 }
 
 TEST(PageAllocator, stressTest)
@@ -140,8 +140,8 @@ TEST(PageAllocator, stressTest)
     }
 
     auto statistic = alloc.trim();
-    CHECK(statistic.first == 1);
-    CHECK(statistic.second < 16);
+    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_TRUE(statistic.second < 16);
 }
 
 TEST(PageAllocator, moveTransfersAllInternalsToNewObject)
@@ -154,5 +154,5 @@ TEST(PageAllocator, moveTransfersAllInternalsToNewObject)
     pages.clear();
 
     auto statistic = alloc2.trim();
-    CHECK(statistic.first == 1 && statistic.second == 4);
+    ASSERT_TRUE(statistic.first == 1 && statistic.second == 4);
 }

@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/LockProtocol.h"
 
@@ -16,12 +16,12 @@ TEST(LockProtocol, writeAccessIsExclusiveLock)
     SimpleLockProtocoll slp;
     auto lock = slp.writeAccess();
 
-    CHECK(!slp.tryWriteAccess());
+    ASSERT_TRUE(!slp.tryWriteAccess());
 
     lock.release();
     auto l2 = slp.tryWriteAccess();
-    CHECK(l2);
-    CHECK(!slp.tryWriteAccess());
+    ASSERT_TRUE(l2);
+    ASSERT_TRUE(!slp.tryWriteAccess());
 }
 
 TEST(LockProtocol, readAccessIsSharedLock)
@@ -29,7 +29,7 @@ TEST(LockProtocol, readAccessIsSharedLock)
     SimpleLockProtocoll slp;
     auto lock = slp.readAccess();
 
-    CHECK(slp.tryReadAccess());
+    ASSERT_TRUE(slp.tryReadAccess());
 }
 
 TEST(LockProtocol, commitAccessThrowsOnWrongParam)
@@ -38,7 +38,7 @@ TEST(LockProtocol, commitAccessThrowsOnWrongParam)
     {
         SimpleLockProtocoll slp;
         auto clock = slp.commitAccess(slp.readAccess());
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&) {}
     try
@@ -46,7 +46,7 @@ TEST(LockProtocol, commitAccessThrowsOnWrongParam)
         SimpleLockProtocoll slp;
         SimpleLockProtocoll slp2;
         auto clock = slp.commitAccess(slp2.writeAccess());
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&) {}
 }
@@ -56,7 +56,7 @@ TEST(LockProtocol, readAccessIsNotBlockedByWriteAccess)
     SimpleLockProtocoll slp;
     auto wlock = slp.writeAccess();
 
-    CHECK(slp.tryReadAccess());
+    ASSERT_TRUE(slp.tryReadAccess());
 }
 
 TEST(LockProtocol, readAccessIsBlockedByCommitAccess)
@@ -64,7 +64,7 @@ TEST(LockProtocol, readAccessIsBlockedByCommitAccess)
     SimpleLockProtocoll slp;
     auto commitLock = slp.commitAccess(slp.writeAccess());
 
-    CHECK(!slp.tryReadAccess());
+    ASSERT_TRUE(!slp.tryReadAccess());
 }
 
 TEST(LockProtocol, commitAccessIsBlockedByReadAccess)
@@ -73,7 +73,7 @@ TEST(LockProtocol, commitAccessIsBlockedByReadAccess)
     auto rlock = slp.readAccess();
     auto commitLock = slp.tryCommitAccess(slp.writeAccess());
 
-    CHECK(std::get_if<CommitLock>(&commitLock) == nullptr);
+    ASSERT_TRUE(std::get_if<CommitLock>(&commitLock) == nullptr);
 }
 
 TEST(LockProtocol, readAccessCannotStarveCommitAccess)
@@ -91,7 +91,7 @@ TEST(LockProtocol, readAccessCannotStarveCommitAccess)
         if (!wlock)
             break;
     }
-    CHECK(!slp.tryReadAccess());
+    ASSERT_TRUE(!slp.tryReadAccess());
     rlock.release();
     //rlock = slp.readAccess();
     t.join();

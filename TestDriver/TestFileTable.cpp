@@ -1,7 +1,7 @@
 
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/FileTable.h"
 #include <list>
 #include <algorithm>
@@ -12,11 +12,11 @@ using namespace TxFs;
 TEST(FileTable, Empty)
 {
     FileTable ft;
-    CHECK(sizeof(ft) == 4096);
+    ASSERT_TRUE(sizeof(ft) == 4096);
 
     IntervalSequence is;
     ft.insertInto(is);
-    CHECK(is.empty());
+    ASSERT_TRUE(is.empty());
 }
 
 TEST(FileTable, transferBackAndForth)
@@ -29,10 +29,10 @@ TEST(FileTable, transferBackAndForth)
     IntervalSequence is2 = is;
     FileTable ft;
     ft.transferFrom(is);
-    CHECK(is.empty());
+    ASSERT_TRUE(is.empty());
 
     ft.insertInto(is);
-    CHECK(is == is2);
+    ASSERT_TRUE(is == is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace)
@@ -44,14 +44,14 @@ TEST(FileTable, transferNotEnoughSpace)
     IntervalSequence is2 = is;
     FileTable ft;
     ft.transferFrom(is);
-    CHECK(!is.empty());
+    ASSERT_TRUE(!is.empty());
 
     IntervalSequence is3;
     ft.insertInto(is3);
     while (!is.empty())
         is3.pushBack(is.popFront());
 
-    CHECK(is3 == is2);
+    ASSERT_TRUE(is3 == is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace2)
@@ -63,14 +63,14 @@ TEST(FileTable, transferNotEnoughSpace2)
     IntervalSequence is2 = is;
     FileTable ft;
     ft.transferFrom(is);
-    CHECK(!is.empty());
+    ASSERT_TRUE(!is.empty());
 
     IntervalSequence is3;
     ft.insertInto(is3);
     while (!is.empty())
         is3.pushBack(is.popFront());
 
-    CHECK(is3 == is2);
+    ASSERT_TRUE(is3 == is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace3)
@@ -97,5 +97,5 @@ TEST(FileTable, transferNotEnoughSpace3)
     for (auto& ft: fts)
         ft.insertInto(is3);
 
-    CHECK(is3 == is2);
+    ASSERT_TRUE(is3 == is2);
 }

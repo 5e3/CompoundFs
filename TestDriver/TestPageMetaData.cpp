@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/PageMetaData.h"
 
 #include <algorithm>
@@ -25,5 +25,5 @@ TEST(PrioritizedPage, sortOrder)
     auto psis2 = psis;
     std::shuffle(psis2.begin(), psis2.end(), std::mt19937(std::random_device()()));
     std::sort(psis2.begin(), psis2.end());
-    CHECK(psis2 == psis);
+    ASSERT_TRUE(psis2 == psis);
 }

@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "MinimalTreeBuilder.h"
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/CacheManager.h"
@@ -21,7 +21,7 @@ TEST(BTree, trivialFind)
 {
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     BTree bt(cm);
-    CHECK(!bt.find("test"));
+    ASSERT_TRUE(!bt.find("test"));
 }
 
 TEST(BTree, insert)
@@ -40,9 +40,9 @@ TEST(BTree, insert)
 
     std::shuffle(keys.begin(), keys.end(), rng);
     for (const auto& key: keys)
-        CHECK(bt.find(key.c_str()));
+        ASSERT_TRUE(bt.find(key.c_str()));
 
-    CHECK(!bt.find("gaga"));
+    ASSERT_TRUE(!bt.find("gaga"));
 }
 
 TEST(BTree, insertReplacesOriginal)
@@ -60,13 +60,13 @@ TEST(BTree, insertReplacesOriginal)
     ByteString value("Te$tData");
     bt.insert("2233", value);
     auto res = bt.find("2233");
-    CHECK(value == res.value());
+    ASSERT_TRUE(value == res.value());
 
     // value has different size => remove, add
     value = ByteString("Data");
     bt.insert("1122", value);
     res = bt.find("1122");
-    CHECK(value == res.value());
+    ASSERT_TRUE(value == res.value());
 }
 
 TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
@@ -85,7 +85,7 @@ TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
         return true;
     });
 
-    CHECK(std::holds_alternative<BTree::Inserted>(res));
+    ASSERT_TRUE(std::holds_alternative<BTree::Inserted>(res));
 }
 
 TEST(BTree, canControlReplacementWithStrategy)
@@ -106,12 +106,12 @@ TEST(BTree, canControlReplacementWithStrategy)
 
     auto res = bt.insert("TestKey", "TestValue1", [](const ByteStringView&) { return false; });
 
-    CHECK(std::get<BTree::Unchanged>(res).m_currentValue.current().second == ByteString("TestValue"));
+    ASSERT_TRUE(std::get<BTree::Unchanged>(res).m_currentValue.current().second == ByteString("TestValue"));
 
     res = bt.insert("TestKey", "TestValue2", [](const ByteStringView&) { return true; });
 
-    CHECK(std::get<BTree::Replaced>(res).m_beforeValue == ByteString("TestValue"));
-    CHECK(bt.find("TestKey").value() == ByteString("TestValue2"));
+    ASSERT_TRUE(std::get<BTree::Replaced>(res).m_beforeValue == ByteString("TestValue"));
+    ASSERT_TRUE(bt.find("TestKey").value() == ByteString("TestValue2"));
 }
 
 TEST(BTree, emptyTreeReturnsFalseCursor)
@@ -120,8 +120,8 @@ TEST(BTree, emptyTreeReturnsFalseCursor)
     BTree bt(cm);
 
     auto cur = bt.begin("");
-    CHECK(!cur);
-    CHECK(!bt.next(cur));
+    ASSERT_TRUE(!cur);
+    ASSERT_TRUE(!bt.next(cur));
 }
 
 TEST(BTree, cursorPointsToCurrentItem)
@@ -136,8 +136,8 @@ TEST(BTree, cursorPointsToCurrentItem)
     }
 
     auto cur = bt.begin("100");
-    CHECK(cur.current().first == ByteString("100"));
-    CHECK(cur.current().second == ByteString("100 Test"));
+    ASSERT_TRUE(cur.current().first == ByteString("100"));
+    ASSERT_TRUE(cur.current().second == ByteString("100 Test"));
 }
 
 TEST(BTree, cursorIterates)
@@ -154,11 +154,11 @@ TEST(BTree, cursorIterates)
     auto cur = bt.begin("");
     for (size_t i = 0; i < 500; i++)
     {
-        CHECK(cur);
+        ASSERT_TRUE(cur);
         cur = bt.next(cur);
     }
 
-    CHECK(!cur);
+    ASSERT_TRUE(!cur);
 }
 
 TEST(BTree, cursorNextPointsToNext)
@@ -174,7 +174,7 @@ TEST(BTree, cursorNextPointsToNext)
 
     auto cur = bt.begin("100");
     cur = bt.next(cur);
-    CHECK(cur.current().first == ByteString("101"));
+    ASSERT_TRUE(cur.current().first == ByteString("101"));
 }
 
 TEST(BTree, cursorKeepsPageInMemory)
@@ -191,13 +191,13 @@ TEST(BTree, cursorKeepsPageInMemory)
     auto cur = bt.begin("250");
     auto pagesStillInMem = cm->trim(0);
 
-    CHECK(pagesStillInMem == 1);
-    CHECK(cur.current().first == ByteString("250"));
-    CHECK(cur.current().second == ByteString("250 Test"));
+    ASSERT_TRUE(pagesStillInMem == 1);
+    ASSERT_TRUE(cur.current().first == ByteString("250"));
+    ASSERT_TRUE(cur.current().second == ByteString("250 Test"));
 
     cur = BTree::Cursor();
     pagesStillInMem = cm->trim(0);
-    CHECK(pagesStillInMem == 0);
+    ASSERT_TRUE(pagesStillInMem == 0);
 }
 
 TEST(BTree, removeAllKeysLeavesTreeEmpty)
@@ -222,12 +222,12 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
     {
         std::string s = std::to_string(key);
         auto res = bt.remove(s.c_str());
-        CHECK(res);
-        CHECK(res == ByteString(s.c_str()));
+        ASSERT_TRUE(res);
+        ASSERT_TRUE(res == ByteString(s.c_str()));
     }
 
-    CHECK(!bt.begin(""));
-    CHECK(bt.getFreePages().size() == size);
+    ASSERT_TRUE(!bt.begin(""));
+    ASSERT_TRUE(bt.getFreePages().size() == size);
 }
 
 TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
@@ -246,8 +246,8 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
         bt.insert(s.c_str(), (s + " Test").c_str());
     }
 
-    CHECK(!bt.remove("Test"));
-    CHECK(bt.remove("399").value() == ByteString("399 Test"));
+    ASSERT_TRUE(!bt.remove("Test"));
+    ASSERT_TRUE(bt.remove("399").value() == ByteString("399 Test"));
 }
 
 TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
@@ -268,20 +268,20 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
     for (size_t i = 1000; i < 3000; i++)
     {
         auto res = bt.remove(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
     clearPages(cm->getRawFileInterface(), bt.getFreePages());
 
     for (size_t i = 0; i < 1000; i++)
     {
         auto res = bt.find(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
 
     for (size_t i = 1000; i < 3000; i++)
     {
         auto res = bt.find(keys[i].c_str());
-        CHECK(!res);
+        ASSERT_TRUE(!res);
     }
 
     std::sort(keys.begin(), keys.begin() + 1000);
@@ -291,18 +291,18 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
     for (size_t i = 800; i < 1000; i++)
     {
         auto res = bt.remove(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
-    CHECK(bt.getFreePages().size() > size);
+    ASSERT_TRUE(bt.getFreePages().size() > size);
     clearPages(cm->getRawFileInterface(), bt.getFreePages());
 
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 800; i++)
     {
-        CHECK(cursor.key() == ByteString(keys[i].c_str()));
+        ASSERT_TRUE(cursor.key() == ByteString(keys[i].c_str()));
         cursor = bt.next(cursor);
     }
-    CHECK(!cursor);
+    ASSERT_TRUE(!cursor);
 }
 
 TEST(BTree, insertAfterRemoveWorks)
@@ -323,19 +323,19 @@ TEST(BTree, insertAfterRemoveWorks)
     for (size_t i = 500; i < 3000; i++)
     {
         auto res = bt.remove(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
 
     for (size_t i = 500; i < 3000; i++)
     {
         auto res = bt.insert(keys[i].c_str(), keys[i].c_str());
-        CHECK(!res);
+        ASSERT_TRUE(!res);
     }
 
     for (size_t i = 0; i < 3000; i++)
     {
         auto res = bt.find(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
 
     std::sort(keys.begin(), keys.end());
@@ -343,10 +343,10 @@ TEST(BTree, insertAfterRemoveWorks)
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 3000; i++)
     {
-        CHECK(cursor.key() == ByteString(keys[i].c_str()));
+        ASSERT_TRUE(cursor.key() == ByteString(keys[i].c_str()));
         cursor = bt.next(cursor);
     }
-    CHECK(!cursor);
+    ASSERT_TRUE(!cursor);
 }
 
 TEST(BTree, removeInReverseOrder)
@@ -367,19 +367,19 @@ TEST(BTree, removeInReverseOrder)
     for (size_t i = 1000; i < 3000; i++)
     {
         auto res = bt.remove(keys[i].c_str());
-        CHECK(res);
+        ASSERT_TRUE(res);
     }
-    CHECK(!bt.getFreePages().empty());
+    ASSERT_TRUE(!bt.getFreePages().empty());
 
     std::reverse(keys.begin(), keys.end());
     auto cursor = bt.begin("");
     for (size_t i = 2000; i < 3000; i++)
     {
-        CHECK(cursor.key() == ByteString(keys[i].c_str()));
-        CHECK(bt.find(ByteString(keys[i].c_str())) == cursor);
+        ASSERT_TRUE(cursor.key() == ByteString(keys[i].c_str()));
+        ASSERT_TRUE(bt.find(ByteString(keys[i].c_str())) == cursor);
         cursor = bt.next(cursor);
     }
-    CHECK(!cursor);
+    ASSERT_TRUE(!cursor);
 }
 
 TEST(BTree, leftMergeWithDeletionOnTheLeft)
@@ -390,7 +390,7 @@ TEST(BTree, leftMergeWithDeletionOnTheLeft)
     BTree bt(cm, root);
 
     bt.remove("0001");
-    CHECK(bt.find("0003"));
+    ASSERT_TRUE(bt.find("0003"));
 }
 
 TEST(BTree, leftMergeWithDeletionOnTheRight)
@@ -401,5 +401,5 @@ TEST(BTree, leftMergeWithDeletionOnTheRight)
     BTree bt(cm, root);
 
      bt.remove("0035");
-    CHECK(bt.find("0033"));
+    ASSERT_TRUE(bt.find("0033"));
 }

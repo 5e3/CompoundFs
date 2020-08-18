@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/Path.h"
 #include "../CompoundFs/DirectoryStructure.h"
@@ -28,10 +28,10 @@ TEST(Path, noSubFolderDoesNotChangePath)
     Path p("test");
     Path p2 = p;
 
-    CHECK(p.create(&ds));
-    CHECK(p.m_root == Path::AbsoluteRoot);
-    CHECK(p.m_relativePath == "test");
-    CHECK(p == p2);
+    ASSERT_TRUE(p.create(&ds));
+    ASSERT_TRUE(p.m_root == Path::AbsoluteRoot);
+    ASSERT_TRUE(p.m_relativePath == "test");
+    ASSERT_TRUE(p == p2);
 }
 
 TEST(Path, createCreatesSubFolders)
@@ -40,11 +40,11 @@ TEST(Path, createCreatesSubFolders)
     Path p("folder/folder2");
     Path p2 = p;
 
-    CHECK(p.create(&ds));
-    CHECK(p.m_root != Path::AbsoluteRoot);
-    CHECK(p.m_relativePath == "folder2");
-    CHECK(ds.subFolder(DirectoryKey("folder")));
-    CHECK(p != p2);
+    ASSERT_TRUE(p.create(&ds));
+    ASSERT_TRUE(p.m_root != Path::AbsoluteRoot);
+    ASSERT_TRUE(p.m_relativePath == "folder2");
+    ASSERT_TRUE(ds.subFolder(DirectoryKey("folder")));
+    ASSERT_TRUE(p != p2);
 }
 
 TEST(Path, creationOfFolderFailsWhenTheNameIsUsedForAnAttribute)
@@ -52,16 +52,16 @@ TEST(Path, creationOfFolderFailsWhenTheNameIsUsedForAnAttribute)
     auto ds = makeDirectoryStructure();
     Path p("folder/folder/attribute");
 
-    CHECK(p.create(&ds));
+    ASSERT_TRUE(p.create(&ds));
     ds.addAttribute(DirectoryKey(p.m_root, p.m_relativePath), 1);
     Path p2("folder/folder/attribute/test");
     Path p3 = p2;
-    CHECK(!p2.create(&ds));
-    CHECK(p2 == p3);
+    ASSERT_TRUE(!p2.create(&ds));
+    ASSERT_TRUE(p2 == p3);
 
     ds.remove(DirectoryKey(p.m_root, p.m_relativePath));
-    CHECK(p2.create(&ds));
-    CHECK(p2 != p3);
+    ASSERT_TRUE(p2.create(&ds));
+    ASSERT_TRUE(p2 != p3);
 }
 
 TEST(Path, reduceFindsSubFolders)
@@ -71,13 +71,13 @@ TEST(Path, reduceFindsSubFolders)
     Path p2 = p;
     Path p3 = p;
 
-    CHECK(p.create(&ds));
-    CHECK(p2.create(&ds));
-    CHECK(p3.reduce(&ds));
+    ASSERT_TRUE(p.create(&ds));
+    ASSERT_TRUE(p2.create(&ds));
+    ASSERT_TRUE(p3.reduce(&ds));
 
-    CHECK(p == p2);
-    CHECK(p == p3);
-    CHECK(p.m_root != Path::AbsoluteRoot);
-    CHECK(p.m_relativePath == "file.file");
+    ASSERT_TRUE(p == p2);
+    ASSERT_TRUE(p == p3);
+    ASSERT_TRUE(p.m_root != Path::AbsoluteRoot);
+    ASSERT_TRUE(p.m_relativePath == "file.file");
 }
 

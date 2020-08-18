@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"
 #include "../CompoundFs/Path.h"
@@ -25,14 +25,14 @@ FileSystem makeFileSystem()
 TEST(FileSystem, createFile)
 {
     auto fs = makeFileSystem();
-    CHECK(fs.createFile("folder/file.file"));
+    ASSERT_TRUE(fs.createFile("folder/file.file"));
 }
 
 TEST(FileSystem, appendFile)
 {
     auto fs = makeFileSystem();
     auto handle = fs.appendFile("folder/file.file");
-    CHECK(handle);
+    ASSERT_TRUE(handle);
 }
 
 TEST(FileSystem, appendFileWithClose)
@@ -42,7 +42,7 @@ TEST(FileSystem, appendFileWithClose)
 
     fs.close(*handle);
     handle = fs.appendFile("folder/file.file");
-    CHECK(handle);
+    ASSERT_TRUE(handle);
 }
 
 TEST(FileSystem, readAfterWrite)
@@ -51,14 +51,14 @@ TEST(FileSystem, readAfterWrite)
     auto handle = fs.appendFile("folder/file.file").value();
     ByteString data("test");
     auto size = data.size();
-    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    ASSERT_TRUE(size == fs.write(handle, data.begin(), data.size()));
     fs.close(handle);
 
     uint8_t buf[10];
     auto readHandle = fs.readFile("folder/file.file");
-    CHECK(readHandle);
-    CHECK(size == fs.read(*readHandle, buf, sizeof(buf)));
-    CHECK(data == ByteString(buf));
+    ASSERT_TRUE(readHandle);
+    ASSERT_TRUE(size == fs.read(*readHandle, buf, sizeof(buf)));
+    ASSERT_TRUE(data == ByteString(buf));
 }
 
 TEST(FileSystem, readAfterAppendAfterWrite)
@@ -67,16 +67,16 @@ TEST(FileSystem, readAfterAppendAfterWrite)
     auto handle = fs.createFile("folder/file.file").value();
     ByteString data("test");
     auto size = data.size();
-    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    ASSERT_TRUE(size == fs.write(handle, data.begin(), data.size()));
     fs.close(handle);
     handle = fs.appendFile("folder/file.file").value();
-    CHECK(size == fs.write(handle, data.begin(), data.size()));
+    ASSERT_TRUE(size == fs.write(handle, data.begin(), data.size()));
     fs.close(handle);
 
     uint8_t buf[20];
     auto readHandle = fs.readFile("folder/file.file");
-    CHECK(readHandle);
-    CHECK(2 * size == fs.read(*readHandle, buf, sizeof(buf)));
+    ASSERT_TRUE(readHandle);
+    ASSERT_TRUE(2 * size == fs.read(*readHandle, buf, sizeof(buf)));
 }
 
 TEST(FileSystem, doubleCloseWriteHandleThrows)
@@ -87,7 +87,7 @@ TEST(FileSystem, doubleCloseWriteHandleThrows)
     try
     {
         fs.close(handle);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {}
@@ -104,7 +104,7 @@ TEST(FileSystem, doubleCloseReadHandleThrows)
     try
     {
         fs.close(readHandle);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {}
@@ -114,44 +114,44 @@ TEST(FileSystem, subFolder)
 {
     auto fs = makeFileSystem();
     auto folder = fs.makeSubFolder("test/folder");
-    CHECK(folder);
+    ASSERT_TRUE(folder);
 
     auto folder2 = fs.subFolder("test/folder");
-    CHECK(folder2);
-    CHECK(folder == folder2);
+    ASSERT_TRUE(folder2);
+    ASSERT_TRUE(folder == folder2);
 }
 
 TEST(FileSystem, attribute)
 {
     auto fs = makeFileSystem();
     auto success = fs.addAttribute("folder/attribute", 42);
-    CHECK(success);
+    ASSERT_TRUE(success);
     success = fs.addAttribute("folder/attribute", 42.42);
-    CHECK(success);
+    ASSERT_TRUE(success);
 
     auto attribute = fs.getAttribute("folder/attribute");
-    CHECK(attribute);
-    CHECK(*attribute == ByteStringOps::Variant(42.42));
+    ASSERT_TRUE(attribute);
+    ASSERT_TRUE(*attribute == ByteStringOps::Variant(42.42));
 }
 
 TEST(FileSystem, remove)
 {
     auto fs = makeFileSystem();
     auto success = fs.addAttribute("folder/attribute", 42);
-    CHECK(success);
+    ASSERT_TRUE(success);
 
-    CHECK(fs.remove("folder/attribute") == 1);
+    ASSERT_TRUE(fs.remove("folder/attribute") == 1);
     auto attribute = fs.getAttribute("folder/attribute");
-    CHECK(!attribute);
+    ASSERT_TRUE(!attribute);
 }
 
 TEST(FileSystem, Cursor)
 {
     auto fs = makeFileSystem();
-    CHECK(fs.addAttribute("folder/folder/attrib", 5));
+    ASSERT_TRUE(fs.addAttribute("folder/folder/attrib", 5));
     auto cur = fs.find("folder/folder/attrib");
-    CHECK(cur);
-    CHECK(std::get<int>(cur.value()) == 5);
+    ASSERT_TRUE(cur);
+    ASSERT_TRUE(std::get<int>(cur.value()) == 5);
 }
 
 TEST(FileSystem, commitClosesAllFileHandles)
@@ -166,7 +166,7 @@ TEST(FileSystem, commitClosesAllFileHandles)
     try
     {
         fs.close(readHandle);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {
@@ -175,7 +175,7 @@ TEST(FileSystem, commitClosesAllFileHandles)
     try
     {
         fs.close(writeHandle);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {

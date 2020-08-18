@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/CommitHandler.h"
@@ -36,13 +36,13 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
         idx = p.m_index;
         {
             auto p2 = cm.loadPage(p.m_index);
-            CHECK(p2 == p);
+            ASSERT_TRUE(p2 == p);
             *p.m_page = 0xaa;
         }
     }
     auto p2 = cm.loadPage(idx);
-    CHECK(*p2.m_page == 0xaa);
-    CHECK(readByte(cm.getRawFileInterface(), idx) != *p2.m_page);
+    ASSERT_TRUE(*p2.m_page == 0xaa);
+    ASSERT_TRUE(readByte(cm.getRawFileInterface(), idx) != *p2.m_page);
 }
 
 TEST(CacheManager, loadPageIsCachedButNotWritten)
@@ -54,10 +54,10 @@ TEST(CacheManager, loadPageIsCachedButNotWritten)
     CacheManager cm(std::move(memFile));
     auto p = cm.loadPage(id);
     auto p2 = cm.loadPage(id);
-    CHECK(p == p2);
+    ASSERT_TRUE(p == p2);
 
     *std::const_pointer_cast<uint8_t>(p.m_page) = 99;
-    CHECK(readByte(cm.getRawFileInterface(), id) == 42);
+    ASSERT_TRUE(readByte(cm.getRawFileInterface(), id) == 42);
 }
 
 TEST(CacheManager, trimReducesSizeOfCache)
@@ -67,10 +67,10 @@ TEST(CacheManager, trimReducesSizeOfCache)
     for (int i = 0; i < 10; i++)
         auto page = cm.newPage();
 
-    CHECK(cm.trim(20) == 10);
-    CHECK(cm.trim(9) == 9);
-    CHECK(cm.trim(5) == 5);
-    CHECK(cm.trim(0) == 0);
+    ASSERT_TRUE(cm.trim(20) == 10);
+    ASSERT_TRUE(cm.trim(9) == 9);
+    ASSERT_TRUE(cm.trim(5) == 5);
+    ASSERT_TRUE(cm.trim(0) == 0);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
@@ -85,7 +85,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     cm.trim(0);
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
+        ASSERT_TRUE(readByte(cm.getRawFileInterface(), i) == i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
@@ -100,13 +100,13 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     auto p1 = cm.loadPage(0);
     auto p2 = cm.loadPage(9);
 
-    CHECK(cm.trim(0) == 2);
+    ASSERT_TRUE(cm.trim(0) == 2);
 
     for (int i = 1; i < 9; i++)
-        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
+        ASSERT_TRUE(readByte(cm.getRawFileInterface(), i) == i + 1);
 
-    CHECK(readByte(cm.getRawFileInterface(), 0) != *p1.m_page);
-    CHECK(readByte(cm.getRawFileInterface(), 9) != *p2.m_page);
+    ASSERT_TRUE(readByte(cm.getRawFileInterface(), 0) != *p1.m_page);
+    ASSERT_TRUE(readByte(cm.getRawFileInterface(), 9) != *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
@@ -130,7 +130,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(cm.getRawFileInterface(), i) == i + 10);
+        ASSERT_TRUE(readByte(cm.getRawFileInterface(), i) == i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
@@ -154,7 +154,7 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        CHECK(readByte(cm.getRawFileInterface(), i) == i + 1);
+        ASSERT_TRUE(readByte(cm.getRawFileInterface(), i) == i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
@@ -182,7 +182,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.loadPage(i).m_page;
-        CHECK(*p == i + 10);
+        ASSERT_TRUE(*p == i + 10);
     }
 }
 
@@ -214,12 +214,12 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         *p = i + 20;
     }
     cm.trim(0);
-    CHECK(cm.getRawFileInterface()->currentSize() == 20);
+    ASSERT_TRUE(cm.getRawFileInterface()->currentSize() == 20);
 
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.loadPage(i).m_page;
-        CHECK(*p == i + 20);
+        ASSERT_TRUE(*p == i + 20);
     }
 }
 
@@ -245,9 +245,9 @@ TEST(CacheManager, dirtyPagesGetDiverted)
     }
     cm.trim(0);
     auto divertedPageIds = cm.buildCommitHandler().getDivertedPageIds();
-    CHECK(divertedPageIds.size() == 10);
+    ASSERT_TRUE(divertedPageIds.size() == 10);
     for (auto page : divertedPageIds)
-        CHECK(page >= 10);
+        ASSERT_TRUE(page >= 10);
 }
 
 TEST(CacheManager, repurposedPagesCanComeFromCache)
@@ -263,7 +263,7 @@ TEST(CacheManager, repurposedPagesCanComeFromCache)
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.repurpose(i).m_page;
-        CHECK(*p == i + 1);
+        ASSERT_TRUE(*p == i + 1);
     }
 }
 
@@ -288,7 +288,7 @@ TEST(CacheManager, repurposedPagesAreNotLoadedIfNotInCache)
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.repurpose(i).m_page;
-        CHECK(*p != i + 1);
+        ASSERT_TRUE(*p != i + 1);
     }
 }
 
@@ -302,7 +302,7 @@ TEST(CacheManager, setPageIntervalAllocator)
     try
     {
         cm.trim(0);
-        CHECK(false);
+        ASSERT_TRUE(false);
     }
     catch (std::exception&)
     {}
@@ -311,10 +311,10 @@ TEST(CacheManager, setPageIntervalAllocator)
 TEST(CacheManager, NoLogsReturnEmpty)
 {
     CacheManager cm(std::make_unique<MemoryFile>());
-    CHECK(cm.readLogs().empty());
+    ASSERT_TRUE(cm.readLogs().empty());
 
     cm.newPage();
-    CHECK(cm.readLogs().empty());
+    ASSERT_TRUE(cm.readLogs().empty());
 }
 
 TEST(CacheManager, ReadLogsReturnTheLogs)
@@ -327,5 +327,5 @@ TEST(CacheManager, ReadLogsReturnTheLogs)
     ch.writeLogs(logs);
     auto logs2 = cm.readLogs();
     std::sort(logs2.begin(), logs2.end());
-    CHECK(logs == logs2);
+    ASSERT_TRUE(logs == logs2);
 }

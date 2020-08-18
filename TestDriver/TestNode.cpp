@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/Leaf.h"
 #include "../CompoundFs/InnerNode.h"
 #include <algorithm>
@@ -11,44 +11,44 @@ using namespace TxFs;
 TEST(ByteString, Ctor)
 {
     ByteString a;
-    CHECK(a.size() == 1);
+    ASSERT_TRUE(a.size() == 1);
 
     ByteString b("Nils");
-    CHECK(b.size() == 5);
+    ASSERT_TRUE(b.size() == 5);
 
     ByteString c("Senta");
-    CHECK(!(b == c));
-    CHECK(b == b);
+    ASSERT_TRUE(!(b == c));
+    ASSERT_TRUE(b == b);
 
     ByteString d = c;
-    CHECK(d == c);
-    CHECK(d.begin() != c.begin());
+    ASSERT_TRUE(d == c);
+    ASSERT_TRUE(d.begin() != c.begin());
 
     b = d;
-    CHECK(b == c);
-    CHECK(b.begin() != c.begin());
+    ASSERT_TRUE(b == c);
+    ASSERT_TRUE(b.begin() != c.begin());
 
     ByteString e(b.begin());
-    CHECK(e == b);
-    CHECK(e.begin() != b.begin());
+    ASSERT_TRUE(e == b);
+    ASSERT_TRUE(e.begin() != b.begin());
 }
 
 TEST(ByteStringView, Transformations)
 {
     ByteString b("Senta");
     ByteStringView br = b;
-    CHECK(br.begin() == b.begin());
+    ASSERT_TRUE(br.begin() == b.begin());
 
     ByteString c(std::move(b));
-    CHECK(br.begin() == c.begin());
+    ASSERT_TRUE(br.begin() == c.begin());
 
     b = br; // reassignment after move is legal
-    CHECK(br.begin() != b.begin());
-    CHECK(br == b);
+    ASSERT_TRUE(br.begin() != b.begin());
+    ASSERT_TRUE(br == b);
 
     br = b;
     c = std::move(b);
-    CHECK(br.begin() == c.begin());
+    ASSERT_TRUE(br.begin() == c.begin());
 }
 
 TEST(Node, hasPageSize)
@@ -56,23 +56,23 @@ TEST(Node, hasPageSize)
     Leaf l;
     InnerNode n;
 
-    CHECK(sizeof(l) == 4096);
-    CHECK(sizeof(n) == 4096);
+    ASSERT_TRUE(sizeof(l) == 4096);
+    ASSERT_TRUE(sizeof(n) == 4096);
 }
 
 TEST(Leaf, insert)
 {
     Leaf l;
-    CHECK(l.nofItems() == 0);
+    ASSERT_TRUE(l.nofItems() == 0);
     size_t s = l.bytesLeft();
 
     l.insert("Test", "");
-    CHECK(l.nofItems() == 1);
-    CHECK(l.bytesLeft() == s - 8);
+    ASSERT_TRUE(l.nofItems() == 1);
+    ASSERT_TRUE(l.bytesLeft() == s - 8);
 
     l.insert("Anfang", "");
-    CHECK(l.nofItems() == 2);
-    CHECK(l.bytesLeft() == s - 18);
+    ASSERT_TRUE(l.nofItems() == 2);
+    ASSERT_TRUE(l.bytesLeft() == s - 18);
 }
 
 TEST(Leaf, keysAreSorted)
@@ -91,17 +91,17 @@ TEST(Leaf, keysAreSorted)
             break;
 
         l.insert(strs[i].c_str(), strs[i].c_str());
-        CHECK(l.nofItems() == i + 1);
+        ASSERT_TRUE(l.nofItems() == i + 1);
     }
 
     strs.resize(i);
-    CHECK(strs.size() == l.nofItems());
+    ASSERT_TRUE(strs.size() == l.nofItems());
 
     std::sort(strs.begin(), strs.end());
     i = 0;
     for (uint16_t* it = l.beginTable(); it < l.endTable(); ++it)
     {
-        CHECK(l.getKey(it) == ByteString(strs[i++].c_str()));
+        ASSERT_TRUE(l.getKey(it) == ByteString(strs[i++].c_str()));
     }
 }
 
@@ -114,14 +114,14 @@ TEST(Leaf, find)
     l.insert("Test2", "Run");
     l.insert("Test3", "Run");
 
-    CHECK(l.find("Test0") != l.endTable());
-    CHECK(l.find("Test1") != l.endTable());
-    CHECK(l.find("Test2") != l.endTable());
-    CHECK(l.find("Test3") != l.endTable());
+    ASSERT_TRUE(l.find("Test0") != l.endTable());
+    ASSERT_TRUE(l.find("Test1") != l.endTable());
+    ASSERT_TRUE(l.find("Test2") != l.endTable());
+    ASSERT_TRUE(l.find("Test3") != l.endTable());
 
-    CHECK(l.find("Test") == l.endTable());
-    CHECK(l.find("Test11") == l.endTable());
-    CHECK(l.find("Test4") == l.endTable());
+    ASSERT_TRUE(l.find("Test") == l.endTable());
+    ASSERT_TRUE(l.find("Test11") == l.endTable());
+    ASSERT_TRUE(l.find("Test4") == l.endTable());
 }
 
 TEST(Leaf, removeInOppositeOrder)
@@ -135,15 +135,15 @@ TEST(Leaf, removeInOppositeOrder)
     l.insert("Test3", "Run");
 
     l.remove("Test3");
-    CHECK(l.nofItems() == 3);
+    ASSERT_TRUE(l.nofItems() == 3);
     l.remove("Test2");
-    CHECK(l.nofItems() == 2);
+    ASSERT_TRUE(l.nofItems() == 2);
     l.remove("Test1");
-    CHECK(l.nofItems() == 1);
+    ASSERT_TRUE(l.nofItems() == 1);
     l.remove("Test0");
-    CHECK(l.nofItems() == 0);
+    ASSERT_TRUE(l.nofItems() == 0);
 
-    CHECK(free == l.bytesLeft());
+    ASSERT_TRUE(free == l.bytesLeft());
 }
 
 TEST(Leaf, removeInSameOrder)
@@ -157,15 +157,15 @@ TEST(Leaf, removeInSameOrder)
     l.insert("Test3", "Run");
 
     l.remove("Test0");
-    CHECK(l.nofItems() == 3);
+    ASSERT_TRUE(l.nofItems() == 3);
     l.remove("Test1");
-    CHECK(l.nofItems() == 2);
+    ASSERT_TRUE(l.nofItems() == 2);
     l.remove("Test2");
-    CHECK(l.nofItems() == 1);
+    ASSERT_TRUE(l.nofItems() == 1);
     l.remove("Test3");
-    CHECK(l.nofItems() == 0);
+    ASSERT_TRUE(l.nofItems() == 0);
 
-    CHECK(free == l.bytesLeft());
+    ASSERT_TRUE(free == l.bytesLeft());
 }
 
 TEST(Leaf, removeWhatIsNotThere)
@@ -179,7 +179,7 @@ TEST(Leaf, removeWhatIsNotThere)
 
     l.remove("Test");
     l.remove("Test4");
-    CHECK(l.nofItems() == 4);
+    ASSERT_TRUE(l.nofItems() == 4);
 }
 
 TEST(Leaf, removeInRandomOrder)
@@ -210,11 +210,11 @@ TEST(Leaf, removeInRandomOrder)
         size_t items = l.nofItems();
         size_t bytesLeft = l.bytesLeft();
         l.remove(strs[i].c_str());
-        CHECK(items == l.nofItems() + 1);
-        CHECK(bytesLeft < l.bytesLeft());
+        ASSERT_TRUE(items == l.nofItems() + 1);
+        ASSERT_TRUE(bytesLeft < l.bytesLeft());
     }
 
-    CHECK(free == l.bytesLeft());
+    ASSERT_TRUE(free == l.bytesLeft());
 }
 
 TEST(Leaf, split)
@@ -236,7 +236,7 @@ TEST(Leaf, split)
     }
 
     strs.resize(i + 1);
-    CHECK(strs.size() - 1 == l.nofItems());
+    ASSERT_TRUE(strs.size() - 1 == l.nofItems());
 
     Leaf m;
     l.split(&m, strs[i].c_str(), strs[i].c_str());
@@ -246,26 +246,26 @@ TEST(Leaf, split)
     i = 0;
     for (uint16_t* it = l.beginTable(); it < l.endTable(); ++it)
     {
-        CHECK(l.getKey(it) == ByteString(strs[i++].c_str()));
+        ASSERT_TRUE(l.getKey(it) == ByteString(strs[i++].c_str()));
     }
 
     for (uint16_t* it = m.beginTable(); it < m.endTable(); ++it)
     {
-        CHECK(m.getKey(it) == ByteString(strs[i++].c_str()));
+        ASSERT_TRUE(m.getKey(it) == ByteString(strs[i++].c_str()));
     }
 }
 
 TEST(InnerNode, insertGrows)
 {
     InnerNode m;
-    CHECK(m.nofItems() == 0);
+    ASSERT_TRUE(m.nofItems() == 0);
 
     InnerNode n("100", 0, 100);
-    CHECK(n.nofItems() == 1);
-    CHECK(m.bytesLeft() > n.bytesLeft());
+    ASSERT_TRUE(n.nofItems() == 1);
+    ASSERT_TRUE(m.bytesLeft() > n.bytesLeft());
 
     n.insert("200", 200);
-    CHECK(n.nofItems() == 2);
+    ASSERT_TRUE(n.nofItems() == 2);
 }
 
 TEST(InnerNode, insertedItemsCanBeFound)
@@ -275,21 +275,21 @@ TEST(InnerNode, insertedItemsCanBeFound)
     n.insert("400", 400);
     n.insert("300", 300);
 
-    CHECK(n.findPage("10") == 0);
-    CHECK(n.findPage("100") == 100);
-    CHECK(n.findPage("150") == 100);
-    CHECK(n.findPage("200") == 200);
-    CHECK(n.findPage("250") == 200);
-    CHECK(n.findPage("300") == 300);
-    CHECK(n.findPage("350") == 300);
-    CHECK(n.findPage("400") == 400);
-    CHECK(n.findPage("500") == 400);
+    ASSERT_TRUE(n.findPage("10") == 0);
+    ASSERT_TRUE(n.findPage("100") == 100);
+    ASSERT_TRUE(n.findPage("150") == 100);
+    ASSERT_TRUE(n.findPage("200") == 200);
+    ASSERT_TRUE(n.findPage("250") == 200);
+    ASSERT_TRUE(n.findPage("300") == 300);
+    ASSERT_TRUE(n.findPage("350") == 300);
+    ASSERT_TRUE(n.findPage("400") == 400);
+    ASSERT_TRUE(n.findPage("500") == 400);
 
     n.insert("150", 150);
-    CHECK(n.findPage("100") == 100);
-    CHECK(n.findPage("150") == 150);
-    CHECK(n.findPage("160") == 150);
-    CHECK(n.findPage("200") == 200);
+    ASSERT_TRUE(n.findPage("100") == 100);
+    ASSERT_TRUE(n.findPage("150") == 150);
+    ASSERT_TRUE(n.findPage("160") == 150);
+    ASSERT_TRUE(n.findPage("200") == 200);
 }
 
 TEST(InnerNode, leftAndRight)
@@ -300,28 +300,28 @@ TEST(InnerNode, leftAndRight)
     n.insert("300", 300);
 
     uint16_t* it = n.beginTable();
-    CHECK(n.getLeft(it) == 0);
-    CHECK(n.getRight(it) == 100);
-    CHECK(n.getKey(it) == ByteString("100"));
+    ASSERT_TRUE(n.getLeft(it) == 0);
+    ASSERT_TRUE(n.getRight(it) == 100);
+    ASSERT_TRUE(n.getKey(it) == ByteString("100"));
     ++it;
 
-    CHECK(n.getLeft(it) == 100);
-    CHECK(n.getRight(it) == 200);
-    CHECK(n.getKey(it) == ByteString("200"));
+    ASSERT_TRUE(n.getLeft(it) == 100);
+    ASSERT_TRUE(n.getRight(it) == 200);
+    ASSERT_TRUE(n.getKey(it) == ByteString("200"));
     ++it;
 
-    CHECK(n.getLeft(it) == 200);
-    CHECK(n.getRight(it) == 300);
-    CHECK(n.getKey(it) == ByteString("300"));
+    ASSERT_TRUE(n.getLeft(it) == 200);
+    ASSERT_TRUE(n.getRight(it) == 300);
+    ASSERT_TRUE(n.getKey(it) == ByteString("300"));
     ++it;
 
-    CHECK(n.getLeft(it) == 300);
-    CHECK(n.getRight(it) == 400);
-    CHECK(n.getKey(it) == ByteString("400"));
+    ASSERT_TRUE(n.getLeft(it) == 300);
+    ASSERT_TRUE(n.getRight(it) == 400);
+    ASSERT_TRUE(n.getKey(it) == ByteString("400"));
     ++it;
 
-    CHECK(it == n.endTable());
-    CHECK(n.getLeft(it) == 400);
+    ASSERT_TRUE(it == n.endTable());
+    ASSERT_TRUE(n.getLeft(it) == 400);
 }
 
 TEST(InnerNode, split)
@@ -335,27 +335,27 @@ TEST(InnerNode, split)
     InnerNode right;
     ByteString key = n.split(&right);
 
-    CHECK(n.nofItems() == 2);
-    CHECK(right.nofItems() == 2);
-    CHECK(key == ByteString("300"));
+    ASSERT_TRUE(n.nofItems() == 2);
+    ASSERT_TRUE(right.nofItems() == 2);
+    ASSERT_TRUE(key == ByteString("300"));
 
     uint16_t* it = n.beginTable();
-    CHECK(n.getLeft(it) == 0);
-    CHECK(n.getRight(it) == 100);
+    ASSERT_TRUE(n.getLeft(it) == 0);
+    ASSERT_TRUE(n.getRight(it) == 100);
     ++it;
-    CHECK(n.getLeft(it) == 100);
-    CHECK(n.getRight(it) == 200);
+    ASSERT_TRUE(n.getLeft(it) == 100);
+    ASSERT_TRUE(n.getRight(it) == 200);
     ++it;
-    CHECK(it == n.endTable());
+    ASSERT_TRUE(it == n.endTable());
 
     it = right.beginTable();
-    CHECK(right.getLeft(it) == 300);
-    CHECK(right.getRight(it) == 400);
+    ASSERT_TRUE(right.getLeft(it) == 300);
+    ASSERT_TRUE(right.getRight(it) == 400);
     ++it;
-    CHECK(right.getLeft(it) == 400);
-    CHECK(right.getRight(it) == 500);
+    ASSERT_TRUE(right.getLeft(it) == 400);
+    ASSERT_TRUE(right.getRight(it) == 500);
     ++it;
-    CHECK(it == right.endTable());
+    ASSERT_TRUE(it == right.endTable());
 }
 
 TEST(InnerNode, splitInsertsTheNewKeyLeft)
@@ -369,13 +369,13 @@ TEST(InnerNode, splitInsertsTheNewKeyLeft)
     InnerNode right;
     ByteString key = n.split(&right, ByteString("250"), 250);
 
-    CHECK(key == ByteString("300"));
-    CHECK(n.nofItems() == 3);
-    CHECK(right.nofItems() == 2);
+    ASSERT_TRUE(key == ByteString("300"));
+    ASSERT_TRUE(n.nofItems() == 3);
+    ASSERT_TRUE(right.nofItems() == 2);
     auto it = n.endTable() - 1;
-    CHECK(n.getRight(it) == 250);
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(right.getLeft(right.beginTable()) == 300);
+    ASSERT_TRUE(n.getRight(it) == 250);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(right.getLeft(right.beginTable()) == 300);
 }
 TEST(InnerNode, splitInsertsTheNewKeyRight)
 {
@@ -388,12 +388,12 @@ TEST(InnerNode, splitInsertsTheNewKeyRight)
     InnerNode right;
     ByteString key = n.split(&right, ByteString("350"), 350);
 
-    CHECK(key == ByteString("300"));
-    CHECK(n.nofItems() == 2);
-    CHECK(right.nofItems() == 3);
+    ASSERT_TRUE(key == ByteString("300"));
+    ASSERT_TRUE(n.nofItems() == 2);
+    ASSERT_TRUE(right.nofItems() == 3);
     auto it = right.beginTable();
-    CHECK(right.getRight(it) == 350);
-    CHECK(right.getLeft(it) == 300);
+    ASSERT_TRUE(right.getRight(it) == 350);
+    ASSERT_TRUE(right.getLeft(it) == 300);
 }
 
 InnerNode createInnerNode(const std::vector<int>& keys)
@@ -423,30 +423,30 @@ TEST(InnerNode, remove)
     std::vector<int> keys = createKeys(10, 300, 10);
     InnerNode n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::reverse(keys.begin(), keys.end());
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::reverse(keys.begin(), keys.end());
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     std::shuffle(keys.begin(), keys.end(), std::mt19937(std::random_device()()));
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 
     n = createInnerNode(keys);
     removeInnerNode(n, keys);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 }
 
 TEST(InnerNode, removeDetail)
@@ -456,15 +456,15 @@ TEST(InnerNode, removeDetail)
 
     PageIndex page = n.findPage("35");
     n.remove("35");
-    CHECK(n.findPage("35") < page);
+    ASSERT_TRUE(n.findPage("35") < page);
 
     page = n.findPage("99");
     n.remove("99");
-    CHECK(n.findPage("99") < page);
+    ASSERT_TRUE(n.findPage("99") < page);
 
     page = n.findPage("1");
     n.remove("1");
-    CHECK(n.findPage("1") > page);
+    ASSERT_TRUE(n.findPage("1") > page);
 }
 
 TEST(InnerNode, copyToBack)
@@ -480,17 +480,17 @@ TEST(InnerNode, copyToBack)
     m.insert("700", 700);
 
     n.copyToBack(m, m.beginTable(), m.beginTable());
-    CHECK(n.nofItems() == 5);
+    ASSERT_TRUE(n.nofItems() == 5);
 
     n.copyToBack(m, m.beginTable(), m.beginTable() + 1);
-    CHECK(n.nofItems() == 6);
-    CHECK(n.findPage(ByteString("600")) == 600);
+    ASSERT_TRUE(n.nofItems() == 6);
+    ASSERT_TRUE(n.findPage(ByteString("600")) == 600);
 
     n.copyToBack(m, m.beginTable() + 1, m.endTable());
-    CHECK(n.nofItems() == 8);
-    CHECK(n.findPage(ByteString("600")) == 600);
-    CHECK(n.findPage(ByteString("700")) == 700);
-    CHECK(n.findPage(ByteString("800")) == 800);
+    ASSERT_TRUE(n.nofItems() == 8);
+    ASSERT_TRUE(n.findPage(ByteString("600")) == 600);
+    ASSERT_TRUE(n.findPage(ByteString("700")) == 700);
+    ASSERT_TRUE(n.findPage(ByteString("800")) == 800);
 }
 
 TEST(InnerNode, copyToFront)
@@ -506,23 +506,23 @@ TEST(InnerNode, copyToFront)
     m.insert("700", 700);
 
     m.copyToFront(n, n.beginTable(), n.beginTable());
-    CHECK(m.nofItems() == 3);
+    ASSERT_TRUE(m.nofItems() == 3);
 
     m.copyToFront(n, n.endTable() - 1, n.endTable());
-    CHECK(m.nofItems() == 4);
-    CHECK(m.findPage(ByteString("500")) == 500);
-    CHECK(m.getLeft(m.beginTable()) == 400);
+    ASSERT_TRUE(m.nofItems() == 4);
+    ASSERT_TRUE(m.findPage(ByteString("500")) == 500);
+    ASSERT_TRUE(m.getLeft(m.beginTable()) == 400);
 
     m.copyToFront(n, n.beginTable(), n.endTable() - 1);
-    CHECK(m.nofItems() == 8);
+    ASSERT_TRUE(m.nofItems() == 8);
     uint32_t pidx = 100;
     for (auto it = m.beginTable(); it < m.endTable(); ++it)
     {
-        CHECK(m.getRight(it) == pidx);
+        ASSERT_TRUE(m.getRight(it) == pidx);
         pidx += 100;
     }
 
-    CHECK(m.getLeft(m.beginTable()) == 0);
+    ASSERT_TRUE(m.getLeft(m.beginTable()) == 0);
 }
 
 TEST(InnerNode, removeLeftMost)
@@ -531,8 +531,8 @@ TEST(InnerNode, removeLeftMost)
     n.insert("200", 200);
 
     n.remove(ByteString("000"));
-    CHECK(n.getLeft(n.beginTable()) == 100);
-    CHECK(n.getRight(n.beginTable()) == 200);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 100);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 200);
 }
 
 TEST(InnerNode, removeRightOfFirstNode)
@@ -541,8 +541,8 @@ TEST(InnerNode, removeRightOfFirstNode)
     n.insert("200", 200);
 
     n.remove(ByteString("100"));
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 200);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 200);
 }
 
 TEST(InnerNode, removeRightMost)
@@ -551,9 +551,9 @@ TEST(InnerNode, removeRightMost)
     n.insert("200", 200);
 
     n.remove(ByteString("300"));
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(n.nofItems() == 1);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 100);
+    ASSERT_TRUE(n.nofItems() == 1);
 }
 
 TEST(InnerNode, removeSingleEntryRight)
@@ -561,8 +561,8 @@ TEST(InnerNode, removeSingleEntryRight)
     InnerNode n("100", 0, 100);
 
     n.remove(ByteString("300"));
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.nofItems() == 0);
 }
 
 TEST(InnerNode, removeSingleEntryLeft)
@@ -570,8 +570,8 @@ TEST(InnerNode, removeSingleEntryLeft)
     InnerNode n("100", 0, 100);
 
     n.remove(ByteString("050"));
-    CHECK(n.getLeft(n.beginTable()) == 100);
-    CHECK(n.nofItems() == 0);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 100);
+    ASSERT_TRUE(n.nofItems() == 0);
 }
 
 TEST(InnerNode, replaceSingleKeepsSingleEntryCorrect)
@@ -580,8 +580,8 @@ TEST(InnerNode, replaceSingleKeepsSingleEntryCorrect)
 
     n.remove(ByteString("100"));
     n.insert("075", 100);
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 100);
 }
 
 TEST(InnerNode, redistributeLeftPageBigger)
@@ -594,18 +594,18 @@ TEST(InnerNode, redistributeLeftPageBigger)
 
     ByteString key("450");
     key = InnerNode::redistribute(n, m, key);
-    CHECK(key == ByteString("300"));
-    CHECK(n.nofItems() == 2);
-    CHECK(m.nofItems() == 3);
+    ASSERT_TRUE(key == ByteString("300"));
+    ASSERT_TRUE(n.nofItems() == 2);
+    ASSERT_TRUE(m.nofItems() == 3);
 
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(n.getRight(n.beginTable() + 1) == 200);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 100);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 1) == 200);
 
-    CHECK(m.getLeft(m.beginTable()) == 300);
-    CHECK(m.getRight(m.beginTable()) == 400);
-    CHECK(m.getRight(m.beginTable() + 1) == 450);
-    CHECK(m.getRight(m.beginTable() + 2) == 500);
+    ASSERT_TRUE(m.getLeft(m.beginTable()) == 300);
+    ASSERT_TRUE(m.getRight(m.beginTable()) == 400);
+    ASSERT_TRUE(m.getRight(m.beginTable() + 1) == 450);
+    ASSERT_TRUE(m.getRight(m.beginTable() + 2) == 500);
 }
 
 TEST(InnerNode, redistributeLeftPageSmaller)
@@ -618,18 +618,18 @@ TEST(InnerNode, redistributeLeftPageSmaller)
 
     ByteString key("150");
     key = InnerNode::redistribute(n, m, key);
-    CHECK(key == ByteString("300"));
-    CHECK(n.nofItems() == 3);
-    CHECK(m.nofItems() == 2);
+    ASSERT_TRUE(key == ByteString("300"));
+    ASSERT_TRUE(n.nofItems() == 3);
+    ASSERT_TRUE(m.nofItems() == 2);
 
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(n.getRight(n.beginTable() + 1) == 150);
-    CHECK(n.getRight(n.beginTable() + 2) == 200);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 100);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 1) == 150);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 2) == 200);
 
-    CHECK(m.getLeft(m.beginTable()) == 300);
-    CHECK(m.getRight(m.beginTable()) == 400);
-    CHECK(m.getRight(m.beginTable() + 1) == 500);
+    ASSERT_TRUE(m.getLeft(m.beginTable()) == 300);
+    ASSERT_TRUE(m.getRight(m.beginTable()) == 400);
+    ASSERT_TRUE(m.getRight(m.beginTable() + 1) == 500);
 }
 
 TEST(InnerNode, mergeWithRightPage)
@@ -642,13 +642,13 @@ TEST(InnerNode, mergeWithRightPage)
 
     ByteString key("150");
     n.mergeWith(m, key);
-    CHECK(n.nofItems() == 6);
+    ASSERT_TRUE(n.nofItems() == 6);
 
-    CHECK(n.getLeft(n.beginTable()) == 0);
-    CHECK(n.getRight(n.beginTable()) == 100);
-    CHECK(n.getRight(n.beginTable() + 1) == 150);
-    CHECK(n.getRight(n.beginTable() + 2) == 200);
-    CHECK(n.getRight(n.beginTable() + 3) == 300);
-    CHECK(n.getRight(n.beginTable() + 4) == 400);
-    CHECK(n.getRight(n.beginTable() + 5) == 500);
+    ASSERT_TRUE(n.getLeft(n.beginTable()) == 0);
+    ASSERT_TRUE(n.getRight(n.beginTable()) == 100);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 1) == 150);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 2) == 200);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 3) == 300);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 4) == 400);
+    ASSERT_TRUE(n.getRight(n.beginTable() + 5) == 500);
 }

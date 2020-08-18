@@ -1,6 +1,6 @@
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/CommitHandler.h"
@@ -39,12 +39,12 @@ TEST(CommitHandler, getDirtyPageIds)
         cm.makePageWritable(cm.loadPage(i));
 
     auto dirtyPageIds = cm.buildCommitHandler().getDirtyPageIds();
-    CHECK(dirtyPageIds.size() == 20);
+    ASSERT_TRUE(dirtyPageIds.size() == 20);
     std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
 
     auto expected = dirtyPageIds;
     std::iota(expected.begin(), expected.end(), 10);
-    CHECK(dirtyPageIds == expected);
+    ASSERT_TRUE(dirtyPageIds == expected);
 }
 
 TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
@@ -83,14 +83,14 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
     auto origToCopyPages = commitHandler.copyDirtyPages(dirtyPageIds);
 
     // do the test...
-    CHECK(dirtyPageIds.size() == origToCopyPages.size());
+    ASSERT_TRUE(dirtyPageIds.size() == origToCopyPages.size());
     for (auto [orig, cpy]: origToCopyPages)
     {
-        CHECK(orig != cpy);
-        CHECK(TxFs::isEqualPage(cm.getRawFileInterface(), orig, cpy));
+        ASSERT_TRUE(orig != cpy);
+        ASSERT_TRUE(TxFs::isEqualPage(cm.getRawFileInterface(), orig, cpy));
         uint8_t buffer[4096];
         TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
-        CHECK(*buffer < 100);
+        ASSERT_TRUE(*buffer < 100);
     }
 }
 
@@ -134,6 +134,6 @@ TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
     {
         uint8_t buffer[4096];
         TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
-        CHECK(*buffer > 100);
+        ASSERT_TRUE(*buffer > 100);
     }
 }

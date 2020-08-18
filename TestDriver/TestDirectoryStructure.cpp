@@ -1,7 +1,7 @@
 
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"
 
@@ -26,7 +26,7 @@ TEST(DirectoryStructure, FoldersAreNotFound)
     DirectoryStructure ds = makeDirectoryStructure();
 
     auto res = ds.subFolder(DirectoryKey("test"));
-    CHECK(!res);
+    ASSERT_TRUE(!res);
 }
 
 TEST(DirectoryStructure, makeFolderReturnsFolder)
@@ -34,14 +34,14 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
     DirectoryStructure ds = makeDirectoryStructure();
 
     auto res = ds.makeSubFolder(DirectoryKey("test"));
-    CHECK(res);
-    CHECK(*res == Folder { 1 });
+    ASSERT_TRUE(res);
+    ASSERT_TRUE(*res == Folder { 1 });
 
     res = ds.makeSubFolder(DirectoryKey("test"));
-    CHECK(res);
-    CHECK(*res == Folder { 1 });
+    ASSERT_TRUE(res);
+    ASSERT_TRUE(*res == Folder { 1 });
 
-    CHECK(ds.subFolder(DirectoryKey("test")) == *res);
+    ASSERT_TRUE(ds.subFolder(DirectoryKey("test")) == *res);
 }
 
 TEST(DirectoryStructure, makeSubFolder)
@@ -50,8 +50,8 @@ TEST(DirectoryStructure, makeSubFolder)
 
     auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder"));
     auto subsub = ds.makeSubFolder(DirectoryKey(*subFolder, "subsub"));
-    CHECK(subsub);
-    CHECK(subsub == ds.subFolder(DirectoryKey(*subFolder, "subsub")));
+    ASSERT_TRUE(subsub);
+    ASSERT_TRUE(subsub == ds.subFolder(DirectoryKey(*subFolder, "subsub")));
 }
 
 TEST(DirectoryStructure, simpleRemove)
@@ -62,8 +62,8 @@ TEST(DirectoryStructure, simpleRemove)
     auto subsub = ds.makeSubFolder(DirectoryKey(subFolder, "subsub"));
     DirectoryKey dkey(subFolder, "subsub");
     auto nof = ds.remove(dkey);
-    CHECK(nof == 1);
-    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub")));
+    ASSERT_TRUE(nof == 1);
+    ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub")));
 }
 
 TEST(DirectoryStructure, recursiveRemove)
@@ -77,7 +77,7 @@ TEST(DirectoryStructure, recursiveRemove)
     ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
     DirectoryKey dkey("subFolder");
     auto nof = ds.remove(dkey);
-    CHECK(nof == 5);
+    ASSERT_TRUE(nof == 5);
 }
 
 TEST(DirectoryStructure, recursiveRemove2)
@@ -95,26 +95,26 @@ TEST(DirectoryStructure, recursiveRemove2)
     ds.addAttribute(DirectoryKey(subFolder, "attrib"), "test");
     DirectoryKey dkey("subFolder");
     auto nof = ds.remove(dkey);
-    CHECK(nof == 6);
-    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
-    CHECK(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
-    CHECK(!ds.getAttribute(DirectoryKey(subFolder, "attrib")));
-    CHECK(ds.subFolder(DirectoryKey(subFolder2, "subsub1")));
+    ASSERT_TRUE(nof == 6);
+    ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
+    ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
+    ASSERT_TRUE(!ds.getAttribute(DirectoryKey(subFolder, "attrib")));
+    ASSERT_TRUE(ds.subFolder(DirectoryKey(subFolder2, "subsub1")));
 }
 
 TEST(DirectoryStructure, addGetAttribute)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    CHECK(ds.addAttribute(DirectoryKey("attrib"), "test"));
+    ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), "test"));
     auto res = ds.getAttribute(DirectoryKey("attrib"));
-    CHECK(res);
-    CHECK(std::get<std::string>(*res) == "test");
+    ASSERT_TRUE(res);
+    ASSERT_TRUE(std::get<std::string>(*res) == "test");
 
-    CHECK(ds.addAttribute(DirectoryKey("attrib"), 42));
+    ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42));
     res = ds.getAttribute(DirectoryKey("attrib"));
-    CHECK(res);
-    CHECK(std::get<int>(*res) == 42);
+    ASSERT_TRUE(res);
+    ASSERT_TRUE(std::get<int>(*res) == 42);
 }
 
 TEST(DirectoryStructure, attributesDoNotReplaceFolders)
@@ -122,17 +122,17 @@ TEST(DirectoryStructure, attributesDoNotReplaceFolders)
     DirectoryStructure ds = makeDirectoryStructure();
 
     auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
-    CHECK(!ds.addAttribute(DirectoryKey("subFolder"), "test"));
+    ASSERT_TRUE(!ds.addAttribute(DirectoryKey("subFolder"), "test"));
     auto res = ds.getAttribute(DirectoryKey("subFolder"));
-    CHECK(!res);
+    ASSERT_TRUE(!res);
 }
 
 TEST(DirectoryStructure, foldersDoNotReplaceAttributes)
 {
     DirectoryStructure ds = makeDirectoryStructure();
 
-    CHECK(ds.addAttribute(DirectoryKey("subFolder"), "test"));
-    CHECK(!ds.makeSubFolder(DirectoryKey("subFolder")));
+    ASSERT_TRUE(ds.addAttribute(DirectoryKey("subFolder"), "test"));
+    ASSERT_TRUE(!ds.makeSubFolder(DirectoryKey("subFolder")));
 }
 
 TEST(DirectoryStructure, createFile)
@@ -140,13 +140,13 @@ TEST(DirectoryStructure, createFile)
     DirectoryStructure ds = makeDirectoryStructure();
     DirectoryKey dkey("test.file");
 
-    CHECK(ds.createFile(dkey));
+    ASSERT_TRUE(ds.createFile(dkey));
     FileDescriptor desc(100);
-    CHECK(ds.updateFile(dkey, desc));
+    ASSERT_TRUE(ds.updateFile(dkey, desc));
 
-    CHECK(*ds.openFile(dkey) == desc);
-    CHECK(ds.createFile(dkey));
-    CHECK(*ds.openFile(dkey) == FileDescriptor());
+    ASSERT_TRUE(*ds.openFile(dkey) == desc);
+    ASSERT_TRUE(ds.createFile(dkey));
+    ASSERT_TRUE(*ds.openFile(dkey) == FileDescriptor());
 }
 
 TEST(DirectoryStructure, appendFile)
@@ -154,12 +154,12 @@ TEST(DirectoryStructure, appendFile)
     DirectoryStructure ds = makeDirectoryStructure();
     DirectoryKey dkey("test.file");
 
-    CHECK(*ds.appendFile(dkey) == FileDescriptor());
+    ASSERT_TRUE(*ds.appendFile(dkey) == FileDescriptor());
 
     FileDescriptor desc(100);
-    CHECK(ds.updateFile(dkey, desc));
+    ASSERT_TRUE(ds.updateFile(dkey, desc));
 
-    CHECK(*ds.appendFile(dkey) == desc);
+    ASSERT_TRUE(*ds.appendFile(dkey) == desc);
 }
 
 TEST(DirectoryStructure, updateFileNeedsExistingFile)
@@ -168,7 +168,7 @@ TEST(DirectoryStructure, updateFileNeedsExistingFile)
     DirectoryKey dkey("test.file");
 
     FileDescriptor desc(100);
-    CHECK(!ds.updateFile(dkey, desc));
+    ASSERT_TRUE(!ds.updateFile(dkey, desc));
 }
 
 TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
@@ -177,32 +177,32 @@ TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
     DirectoryKey dkey("test.file");
     ds.addAttribute(dkey, 1);
 
-    CHECK(!ds.createFile(dkey));
-    CHECK(!ds.appendFile(dkey));
+    ASSERT_TRUE(!ds.createFile(dkey));
+    ASSERT_TRUE(!ds.appendFile(dkey));
     FileDescriptor desc(100);
-    CHECK(!ds.updateFile(dkey, desc));
+    ASSERT_TRUE(!ds.updateFile(dkey, desc));
 }
 
 TEST(Cursor, creation)
 {
     DirectoryStructure::Cursor cursor;
     auto cur2 = cursor;
-    CHECK(cur2 == cursor);
-    CHECK(!cursor);
+    ASSERT_TRUE(cur2 == cursor);
+    ASSERT_TRUE(!cursor);
 
     DirectoryStructure ds = makeDirectoryStructure();
-    CHECK(ds.addAttribute(DirectoryKey("attrib"), "test"));
+    ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), "test"));
     auto cur3 = ds.find(DirectoryKey("attrib"));
 
-    CHECK(cur3);
-    CHECK(cur3 != cur2);
+    ASSERT_TRUE(cur3);
+    ASSERT_TRUE(cur3 != cur2);
     auto res = cur3.key();
-    CHECK(res.first == DirectoryKey::Root);
-    CHECK(res.second == "attrib");
-    CHECK(std::get<std::string>(cur3.value()) == "test");
-    CHECK(cur3.getValueType() == DirectoryObjType::String);
-    CHECK(cur3.getValueTypeName() == "String");
+    ASSERT_TRUE(res.first == DirectoryKey::Root);
+    ASSERT_TRUE(res.second == "attrib");
+    ASSERT_TRUE(std::get<std::string>(cur3.value()) == "test");
+    ASSERT_TRUE(cur3.getValueType() == DirectoryObjType::String);
+    ASSERT_TRUE(cur3.getValueTypeName() == "String");
 
     auto cur4 = ds.next(cur3);
-    CHECK(!cur4);
+    ASSERT_TRUE(!cur4);
 }

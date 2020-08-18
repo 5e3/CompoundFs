@@ -13,17 +13,20 @@ source_group("" FILES
 	README.md
 	)
 
+include(FetchContent)
 
-# include(FetchContent)
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        release-1.10.0
+)
 
-# FetchContent_Declare(
-  # googletest
-  # GIT_REPOSITORY https://github.com/google/googletest.git
-  # GIT_TAG        release-1.10.0
-# )
 
-# set(gtest_force_shared_crt ON)
-# FetchContent_MakeAvailable(googletest)
+set(gtest_force_shared_crt ON)
+set(INSTALL_GTEST OFF)
+cmake_policy(SET CMP0077 OLD)
+
+FetchContent_MakeAvailable(googletest)
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)

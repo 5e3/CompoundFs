@@ -1,7 +1,7 @@
 
 
 
-#include "Test.h"
+#include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/TypedCacheManager.h"
 #include "../CompoundFs/FileTable.h"
@@ -15,8 +15,8 @@ TEST(TypedCacheManager, newPageCallsCtor)
     TypedCacheManager tcm(cm);
 
     auto pdef = tcm.newPage<FileTable>();
-    CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
-    CHECK(pdef.m_page->empty());
+    ASSERT_TRUE(pdef.m_page->getNext() == PageIdx::INVALID);
+    ASSERT_TRUE(pdef.m_page->empty());
 }
 
 TEST(TypedCacheManager, makePageWritable)
@@ -27,19 +27,19 @@ TEST(TypedCacheManager, makePageWritable)
     {
         auto pdef = tcm.newPage<FileTable>();
         pdef.m_page->setNext(42);
-        CHECK(pdef.m_index == 0);
+        ASSERT_TRUE(pdef.m_index == 0);
     }
 
     {
         auto pdef = tcm.loadPage<FileTable>(0);
-        CHECK(pdef.m_page->getNext() == 42);
+        ASSERT_TRUE(pdef.m_page->getNext() == 42);
         auto pdef2 = tcm.makePageWritable(pdef);
         pdef2.m_page->setNext(1010);
     }
     cm->trim(0);
 
     auto pdef = tcm.loadPage<FileTable>(0);
-    CHECK(pdef.m_page->getNext() == 1010);
+    ASSERT_TRUE(pdef.m_page->getNext() == 1010);
 }
 
 TEST(TypedCacheManager, repurposeCallsCtor)
@@ -49,9 +49,9 @@ TEST(TypedCacheManager, repurposeCallsCtor)
     {
         auto pdef = tcm.newPage<FileTable>();
         pdef.m_page->setNext(42);
-        CHECK(pdef.m_index == 0);
+        ASSERT_TRUE(pdef.m_index == 0);
     }
 
     auto pdef = tcm.repurpose<FileTable>(0);
-    CHECK(pdef.m_page->getNext() == PageIdx::INVALID);
+    ASSERT_TRUE(pdef.m_page->getNext() == PageIdx::INVALID);
 }

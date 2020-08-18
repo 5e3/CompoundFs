@@ -1,5 +1,5 @@
 
-#include "Test.h"
+#include <gtest/gtest.h>
 
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/FileReader.h"
@@ -17,11 +17,11 @@ TEST(FileWriter, CtorCreatesEmptyFileDesc)
 
     FileWriter f(cm);
     FileDescriptor fd = f.close();
-    CHECK(fd == FileDescriptor());
+    ASSERT_TRUE(fd == FileDescriptor());
 
     f.write(0, 0);
     fd = f.close();
-    CHECK(fd == FileDescriptor());
+    ASSERT_TRUE(fd == FileDescriptor());
 }
 
 TEST(FileWriter, WriteCloseCreatesFileDescriptor)
@@ -33,9 +33,9 @@ TEST(FileWriter, WriteCloseCreatesFileDescriptor)
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
 
-    CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == data.size());
-    CHECK(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd != FileDescriptor());
+    ASSERT_TRUE(fd.m_fileSize == data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
 }
 
 TEST(FileWriter, WriteCloseCreatesFileTablePage)
@@ -47,15 +47,15 @@ TEST(FileWriter, WriteCloseCreatesFileTablePage)
     ByteString data("Test");
     f.write(data.begin(), data.end());
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_first == fd.m_last);
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
-    CHECK(fileTablePage.m_index == fd.m_last);
+    ASSERT_TRUE(fileTablePage.m_index == fd.m_last);
 
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.size() == 1);
-    CHECK(is.front() == Interval(0, 1));
+    ASSERT_TRUE(is.size() == 1);
+    ASSERT_TRUE(is.front() == Interval(0, 1));
 }
 
 TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
@@ -70,9 +70,9 @@ TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
 
     FileDescriptor fd = f.close();
 
-    CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 10ULL * data.size());
-    CHECK(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd != FileDescriptor());
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
 }
 
 TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
@@ -93,9 +93,9 @@ TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
 
     fd = f.close();
 
-    CHECK(fd != FileDescriptor());
-    CHECK(fd.m_fileSize == 20ULL * data.size());
-    CHECK(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd != FileDescriptor());
+    ASSERT_TRUE(fd.m_fileSize == 20ULL * data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
 }
 
 TEST(FileWriter, SmallWritesOverPageBoundery)
@@ -109,16 +109,16 @@ TEST(FileWriter, SmallWritesOverPageBoundery)
         f.write(data.begin(), data.end());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000ULL * data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 1000ULL * data.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
-    CHECK(fileTablePage.m_index == fd.m_last);
+    ASSERT_TRUE(fileTablePage.m_index == fd.m_last);
 
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.size() == 1);
-    CHECK(is.front() == Interval(0, 2));
+    ASSERT_TRUE(is.size() == 1);
+    ASSERT_TRUE(is.front() == Interval(0, 2));
 }
 
 TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
@@ -132,25 +132,25 @@ TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
         f.write(data.begin(), data.end());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 1000ULL * data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 1000ULL * data.size());
 
     f.openAppend(fd);
     for (int i = 0; i < 1000; i++)
         f.write(data.begin(), data.end());
 
     fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 2000ULL * data.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 2000ULL * data.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
-    CHECK(fileTablePage.m_index == fd.m_last);
+    ASSERT_TRUE(fileTablePage.m_index == fd.m_last);
 
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.size() == 2);
-    CHECK(is.front() == Interval(0, 2));
-    CHECK(is.back() == Interval(3, 4));
+    ASSERT_TRUE(is.size() == 2);
+    ASSERT_TRUE(is.front() == Interval(0, 2));
+    ASSERT_TRUE(is.back() == Interval(3, 4));
 }
 
 TEST(FileWriter, PageSizeWrites)
@@ -164,13 +164,13 @@ TEST(FileWriter, PageSizeWrites)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, 10));
+    ASSERT_TRUE(is.front() == Interval(0, 10));
 }
 
 TEST(FileWriter, OverPageSizeWrites)
@@ -184,13 +184,13 @@ TEST(FileWriter, OverPageSizeWrites)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, 11));
+    ASSERT_TRUE(is.front() == Interval(0, 11));
 }
 
 TEST(FileWriter, UnderPageSizeWrites)
@@ -204,13 +204,13 @@ TEST(FileWriter, UnderPageSizeWrites)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, 10));
+    ASSERT_TRUE(is.front() == Interval(0, 10));
 }
 
 TEST(FileWriter, LargePageSizeWrites)
@@ -224,13 +224,13 @@ TEST(FileWriter, LargePageSizeWrites)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, 20));
+    ASSERT_TRUE(is.front() == Interval(0, 20));
 }
 
 TEST(FileWriter, LargeSizeWrites)
@@ -244,13 +244,13 @@ TEST(FileWriter, LargeSizeWrites)
         f.write((const uint8_t*) str.c_str(), (const uint8_t*) str.c_str() + str.size());
 
     FileDescriptor fd = f.close();
-    CHECK(fd.m_first == fd.m_last);
-    CHECK(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_first == fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, uint32_t(10 * str.size() / 4096 + 1)));
+    ASSERT_TRUE(is.front() == Interval(0, uint32_t(10 * str.size() / 4096 + 1)));
 }
 
 TEST(FileWriter, LargeSizeWritesMultiFiles)
@@ -269,18 +269,18 @@ TEST(FileWriter, LargeSizeWritesMultiFiles)
 
     FileDescriptor fd = f.close();
     FileDescriptor fd2 = f2.close();
-    CHECK(fd.m_fileSize == 10ULL * str.size());
-    CHECK(fd2.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd.m_fileSize == 10ULL * str.size());
+    ASSERT_TRUE(fd2.m_fileSize == 10ULL * str.size());
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     auto fileTablePage2 = tcm.loadPage<FileTable>(fd2.m_last);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.front() == Interval(0, uint32_t(str.size() / 4096 + 1)));
+    ASSERT_TRUE(is.front() == Interval(0, uint32_t(str.size() / 4096 + 1)));
 
     IntervalSequence is2;
     fileTablePage2.m_page->insertInto(is2);
-    CHECK(is2.totalLength() == 10 * str.size() / 4096 + 1);
+    ASSERT_TRUE(is2.totalLength() == 10 * str.size() / 4096 + 1);
 }
 
 TEST(FileWriter, FillPageTable)
@@ -299,24 +299,24 @@ TEST(FileWriter, FillPageTable)
 
     FileDescriptor fd = f.close();
     FileDescriptor fd2 = f2.close();
-    CHECK(fd.m_fileSize == 2000ULL * str.size());
-    CHECK(fd.m_first != fd.m_last);
+    ASSERT_TRUE(fd.m_fileSize == 2000ULL * str.size());
+    ASSERT_TRUE(fd.m_first != fd.m_last);
 
-    CHECK(fd2.m_fileSize == 2000ULL * str.size());
-    CHECK(fd2.m_first != fd2.m_last);
+    ASSERT_TRUE(fd2.m_fileSize == 2000ULL * str.size());
+    ASSERT_TRUE(fd2.m_first != fd2.m_last);
 
     auto fileTablePage = tcm.loadPage<FileTable>(fd.m_first);
     IntervalSequence is;
     fileTablePage.m_page->insertInto(is);
     fileTablePage = tcm.loadPage<FileTable>(fd.m_last);
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.size() == 2000);
+    ASSERT_TRUE(is.size() == 2000);
 
     fileTablePage = tcm.loadPage<FileTable>(fd2.m_first);
     fileTablePage.m_page->insertInto(is);
     fileTablePage = tcm.loadPage<FileTable>(fd2.m_last);
     fileTablePage.m_page->insertInto(is);
-    CHECK(is.size() == 4000);
+    ASSERT_TRUE(is.size() == 4000);
 }
 
 TEST(FileReader, ReadNullFile)
@@ -324,11 +324,11 @@ TEST(FileReader, ReadNullFile)
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     FileReader f(cm);
 
-    CHECK(f.read(0, 0) == 0);
+    ASSERT_TRUE(f.read(0, 0) == 0);
 
     uint8_t buf;
-    CHECK(f.read(&buf, &buf + 1) == &buf);
-    CHECK(f.bytesLeft() == 0);
+    ASSERT_TRUE(f.read(&buf, &buf + 1) == &buf);
+    ASSERT_TRUE(f.bytesLeft() == 0);
 }
 
 std::vector<uint8_t> makeRandomVector(size_t size)
@@ -398,26 +398,26 @@ TEST(FileReader, ReadSmallFile)
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, v.size());
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 7);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 100);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 999);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
 }
 
@@ -429,38 +429,38 @@ TEST(FileReader, ReadPageSizedFile)
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, v.size());
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 97);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 256);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4095);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4096);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4097);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
 }
 
@@ -472,38 +472,38 @@ TEST(FileReader, ReadBigFile)
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, v.size());
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 97);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 256);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4095);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4096);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4097);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
 }
 
@@ -515,37 +515,37 @@ TEST(FileReader, ReadFragmentedFile)
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, v.size());
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 97);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 256);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4095);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4096);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
     {
         std::vector<uint8_t> res(v.size());
         uint8_t* end = readFile(fd, res, cacheManager, 4097);
-        CHECK(end == (&res[0] + res.size()));
-        CHECK(res == v);
+        ASSERT_TRUE(end == (&res[0] + res.size()));
+        ASSERT_TRUE(res == v);
     }
 }
