@@ -88,7 +88,7 @@ class DirectoryStructure::Cursor
 
 public:
     constexpr Cursor() noexcept = default;
-    constexpr Cursor(const BTree::Cursor& cursor) noexcept
+    Cursor(const BTree::Cursor& cursor) noexcept
         : m_cursor(cursor)
     {}
 

@@ -8,6 +8,8 @@
 #include <vector>
 #include <algorithm>
 #include <assert.h>
+#include <stdexcept>
+#include <string_view>
 
 namespace TxFs
 {
