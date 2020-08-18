@@ -61,7 +61,7 @@ TEST(FreeStore, closeReturnsCorrectFileDescriptor)
     FileDescriptor fsfd(1000); // not supposed to access it => crash
     FreeStore fs(cm, fsfd);
 
-    ASSERT_TRUE(fs.close() == fsfd);
+    ASSERT_EQ(fs.close() , fsfd);
 }
 
 TEST(FreeStore, deleteOneFileIsIncludedInFileDescriptor)
@@ -76,8 +76,8 @@ TEST(FreeStore, deleteOneFileIsIncludedInFileDescriptor)
     FileDescriptor fd = createFile(cm);
 
     fs.deleteFile(fd);
-    ASSERT_TRUE(fsfd != fs.close());
-    ASSERT_TRUE(fsfd.m_first == freeStorePage.m_index);
+    ASSERT_NE(fsfd , fs.close());
+    ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
 }
 
 TEST(FreeStore, forEveryDeletedFileThereIsAtLeastAFreePage)
@@ -100,7 +100,7 @@ TEST(FreeStore, forEveryDeletedFileThereIsAtLeastAFreePage)
     auto is = readAllFreeStorePages(cm, fsfd.m_first);
     ASSERT_TRUE(is.totalLength() >= 50);
     ASSERT_TRUE(fsfd.m_fileSize >= 50 * 4096);
-    ASSERT_TRUE(fsfd.m_first == freeStorePage.m_index);
+    ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
 }
 
 TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
@@ -120,12 +120,12 @@ TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
         fs.deleteFile(fd);
 
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_first == fsfd.m_last);
-    ASSERT_TRUE(fsfd.m_first == freeStorePage.m_index);
+    ASSERT_EQ(fsfd.m_first , fsfd.m_last);
+    ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
 
     auto is = readAllFreeStorePages(cm, fsfd.m_first);
-    ASSERT_TRUE(is.size() == 1);
-    ASSERT_TRUE(fsfd.m_fileSize == is.totalLength() * 4096ULL);
+    ASSERT_EQ(is.size() , 1);
+    ASSERT_EQ(fsfd.m_fileSize , is.totalLength() * 4096ULL);
 }
 
 TEST(FreeStore, deleteBigAndSmallFiles)
@@ -148,7 +148,7 @@ TEST(FreeStore, deleteBigAndSmallFiles)
 
     fsfd = fs.close();
     auto is = readAllFreeStorePages(cm, fsfd.m_first);
-    ASSERT_TRUE(fsfd.m_fileSize == is.totalLength() * 4096ULL);
+    ASSERT_EQ(fsfd.m_fileSize , is.totalLength() * 4096ULL);
 }
 
 TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
@@ -158,10 +158,10 @@ TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)
     FileDescriptor fsfd(1000); // crashes if accessed
     FreeStore fs(cm, fsfd);
 
-    ASSERT_TRUE(fs.allocate(1) == Interval());
+    ASSERT_EQ(fs.allocate(1) , Interval());
 
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_fileSize == 0);
+    ASSERT_EQ(fsfd.m_fileSize , 0);
 }
 
 TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
@@ -174,23 +174,23 @@ TEST(FreeStore, deletedFileCanBeAllocatedAfterClose)
     {
         FreeStore fs(cm, fsfd);
         fs.deleteFile(createFile(cm));
-        ASSERT_TRUE(fs.allocate(1) == Interval()); // available after close
+        ASSERT_EQ(fs.allocate(1) , Interval()); // available after close
         fsfd = fs.close();
     }
     {
         FreeStore fs(cm, fsfd);
-        ASSERT_TRUE(fs.allocate(2).length() == 2);
-        ASSERT_TRUE(fs.allocate(1).length() == 0);
+        ASSERT_EQ(fs.allocate(2).length() , 2);
+        ASSERT_EQ(fs.allocate(1).length() , 0);
 
         fsfd = fs.close();
-        ASSERT_TRUE(fsfd.m_fileSize == 0);
+        ASSERT_EQ(fsfd.m_fileSize , 0);
     }
 
     FreeStore fs(cm, fsfd);
-    ASSERT_TRUE(fs.allocate(1).length() == 0);
+    ASSERT_EQ(fs.allocate(1).length() , 0);
 
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_fileSize == 0);
+    ASSERT_EQ(fsfd.m_fileSize , 0);
 }
 
 TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
@@ -205,25 +205,25 @@ TEST(FreeStore, deallocatedPagesAreAvailableAfterClose)
         for (int i = 0; i < 10; i++)
             fs.deallocate(tcm.newPage<FileTable>().m_index);
 
-        ASSERT_TRUE(fs.allocate(1) == Interval()); // available after close
+        ASSERT_EQ(fs.allocate(1) , Interval()); // available after close
         fsfd = fs.close();
     }
 
     {
         FreeStore fs(cm, fsfd);
-        ASSERT_TRUE(fs.allocate(5).length() == 5);
-        ASSERT_TRUE(fs.allocate(5).length() == 5);
-        ASSERT_TRUE(fs.allocate(5).length() == 0);
+        ASSERT_EQ(fs.allocate(5).length() , 5);
+        ASSERT_EQ(fs.allocate(5).length() , 5);
+        ASSERT_EQ(fs.allocate(5).length() , 0);
 
         fsfd = fs.close();
-        ASSERT_TRUE(fsfd.m_fileSize == 0);
+        ASSERT_EQ(fsfd.m_fileSize , 0);
     }
 
     FreeStore fs(cm, fsfd);
-    ASSERT_TRUE(fs.allocate(5).length() == 0);
+    ASSERT_EQ(fs.allocate(5).length() , 0);
 
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_fileSize == 0);
+    ASSERT_EQ(fsfd.m_fileSize , 0);
 }
 
 TEST(FreeStore, singlePageConsumed)
@@ -241,15 +241,15 @@ TEST(FreeStore, singlePageConsumed)
 
     {
         FreeStore fs(cm, fsfd);
-        ASSERT_TRUE(fs.allocate(1).length() == 1);
+        ASSERT_EQ(fs.allocate(1).length() , 1);
         fsfd = fs.close();
-        ASSERT_TRUE(fsfd.m_fileSize == 0);
+        ASSERT_EQ(fsfd.m_fileSize , 0);
     }
 
     FreeStore fs(cm, fsfd);
-    ASSERT_TRUE(fs.allocate(1).length() == 0);
+    ASSERT_EQ(fs.allocate(1).length() , 0);
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_fileSize == 0);
+    ASSERT_EQ(fsfd.m_fileSize , 0);
 }
 
 TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
@@ -277,22 +277,22 @@ TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
         while (!fs.allocate(251).empty())
             ;
         fsfd = fs.close();
-        ASSERT_TRUE(fsfd.m_fileSize != 0);
+        ASSERT_NE(fsfd.m_fileSize , 0);
     }
     {
         FreeStore fs(cm, fsfd);
         while (!fs.allocate(2000).empty())
             ;
         fsfd = fs.close();
-        ASSERT_TRUE(fsfd.m_fileSize == 0);
-        ASSERT_TRUE(fsfd.m_first == freeStorePage.m_index);
-        ASSERT_TRUE(fsfd.m_last == fsfd.m_first);
+        ASSERT_EQ(fsfd.m_fileSize , 0);
+        ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
+        ASSERT_EQ(fsfd.m_last , fsfd.m_first);
     }
 
     FreeStore fs(cm, fsfd);
-    ASSERT_TRUE(!fs.allocate(1).empty() == 0);
+    ASSERT_EQ(!fs.allocate(1).empty() , 0);
     fsfd = fs.close();
-    ASSERT_TRUE(fsfd.m_fileSize == 0);
-    ASSERT_TRUE(fsfd.m_first == freeStorePage.m_index);
-    ASSERT_TRUE(fsfd.m_last == fsfd.m_first);
+    ASSERT_EQ(fsfd.m_fileSize , 0);
+    ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
+    ASSERT_EQ(fsfd.m_last , fsfd.m_first);
 }

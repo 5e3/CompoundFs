@@ -86,7 +86,7 @@ TEST(FileSharedMutex, canWriteOnXLockedRange)
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
     auto res = _write(handle, "test", 5);
-    ASSERT_TRUE(res == 5);
+    ASSERT_EQ(res , 5);
 }
 
 TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
@@ -97,7 +97,7 @@ TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
     auto res = _write(handle, "test", 5);
-    ASSERT_TRUE(res == -1);
+    ASSERT_EQ(res , -1);
 }
 
 TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
@@ -116,7 +116,7 @@ TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
         File f2 = f;
         int handle = _open_osfhandle((intptr_t) f2.m_handle, 0);
         auto res = _write(handle, "test", 5);
-        ASSERT_TRUE(res == -1);
+        ASSERT_EQ(res , -1);
         exclusive = !exclusive;
     } while (exclusive == false);
 }

@@ -48,7 +48,7 @@ TEST(PageAllocator, allocReusesMemory)
     for (int i = 0; i < 70; i++)
     {
         pages.push_back(alloc.allocate());
-        ASSERT_TRUE(pset.count(pages.back().get()) != 0);
+        ASSERT_NE(pset.count(pages.back().get()) , 0);
     }
 }
 
@@ -64,7 +64,7 @@ TEST(PageAllocator, trimFreesAllButOnePageWithoutOutstandingReferences)
     }
 
     auto statistic = alloc.trim();
-    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_EQ(statistic.first , 1);
     ASSERT_TRUE(statistic.second < 16);
 }
 
@@ -81,13 +81,13 @@ TEST(PageAllocator, trimFreesWhatIsUsefull)
     }
 
     auto statistic = alloc.trim();
-    ASSERT_TRUE(statistic.first == 2);
+    ASSERT_EQ(statistic.first , 2);
     ASSERT_TRUE(statistic.second > 16);
     ASSERT_TRUE(statistic.second < 32);
 
     p.reset();
     statistic = alloc.trim();
-    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_EQ(statistic.first , 1);
     ASSERT_TRUE(statistic.second < 16);
 }
 
@@ -102,14 +102,14 @@ TEST(PageAllocator, allocAfterTrim)
 
     auto stat = alloc.trim();
     auto page = alloc.allocate();
-    ASSERT_TRUE(stat.first == 1 && stat.second == 0);
+    ASSERT_EQ(stat.first , 1 && stat.second == 0);
 }
 
 TEST(PageAllocator, defaultCtorTrimIsNoOp)
 {
     PageAllocator alloc;
     auto stat = alloc.trim();
-    ASSERT_TRUE(stat.first == 0 && stat.second == 0);
+    ASSERT_EQ(stat.first , 0 && stat.second == 0);
 }
 
 TEST(PageAllocator, MovedAllocatorTrimIsNoOp)
@@ -125,7 +125,7 @@ TEST(PageAllocator, MovedAllocatorTrimIsNoOp)
     }
 
     auto stat = alloc.trim();
-    ASSERT_TRUE(stat.first == 1 && stat.second == 1);
+    ASSERT_EQ(stat.first , 1 && stat.second == 1);
 }
 
 TEST(PageAllocator, stressTest)
@@ -140,7 +140,7 @@ TEST(PageAllocator, stressTest)
     }
 
     auto statistic = alloc.trim();
-    ASSERT_TRUE(statistic.first == 1);
+    ASSERT_EQ(statistic.first , 1);
     ASSERT_TRUE(statistic.second < 16);
 }
 
@@ -154,5 +154,5 @@ TEST(PageAllocator, moveTransfersAllInternalsToNewObject)
     pages.clear();
 
     auto statistic = alloc2.trim();
-    ASSERT_TRUE(statistic.first == 1 && statistic.second == 4);
+    ASSERT_EQ(statistic.first , 1 && statistic.second == 4);
 }

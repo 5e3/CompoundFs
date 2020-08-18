@@ -8,7 +8,7 @@ using namespace TxFs;
 TEST(LogPage, size)
 {
     LogPage log(0);
-    ASSERT_TRUE(sizeof(log) == 4096);
+    ASSERT_EQ(sizeof(log) , 4096);
 }
 
 TEST(LogPage, checkSignature)
@@ -29,7 +29,7 @@ TEST(LogPage, storingRetrieving)
     for (auto pc: pageCopies)
         ASSERT_TRUE(lp.pushBack(pc));
 
-    ASSERT_TRUE(lp.getPageCopies() == pageCopies);
+    ASSERT_EQ(lp.getPageCopies() , pageCopies);
 }
 
 TEST(LogPage, sizeTests)
@@ -39,7 +39,7 @@ TEST(LogPage, sizeTests)
     for (uint32_t i = 0; i < LogPage::MAX_ENTRIES; i++)
         ASSERT_TRUE(lp.pushBack({ i, i }));
 
-    ASSERT_TRUE(lp.size() == LogPage::MAX_ENTRIES);
+    ASSERT_EQ(lp.size() , LogPage::MAX_ENTRIES);
     ASSERT_TRUE(!lp.pushBack({ 1, 1 }));
 }
 
@@ -51,8 +51,8 @@ TEST(LogPage, pushBackIterator)
         ASSERT_TRUE(lp.pushBack({ i, i }));
 
     auto pageCopies = lp.getPageCopies();
-    ASSERT_TRUE(lp.pushBack(pageCopies.begin(), pageCopies.end()) == pageCopies.end());
-    ASSERT_TRUE(lp.size() == LogPage::MAX_ENTRIES);
+    ASSERT_EQ(lp.pushBack(pageCopies.begin(), pageCopies.end()) , pageCopies.end());
+    ASSERT_EQ(lp.size() , LogPage::MAX_ENTRIES);
     ASSERT_TRUE(!lp.pushBack({ 1, 1 }));
 }
 
@@ -66,5 +66,5 @@ TEST(LogPage, beginEndCanBeUsedToAppend)
     auto pageCopies = lp.getPageCopies();
     pageCopies.insert(pageCopies.end(), lp.begin(), lp.end());
 
-    ASSERT_TRUE(pageCopies.size() == 2 * LogPage::MAX_ENTRIES);
+    ASSERT_EQ(pageCopies.size() , 2 * LogPage::MAX_ENTRIES);
 }

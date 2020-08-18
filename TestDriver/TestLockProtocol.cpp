@@ -73,7 +73,7 @@ TEST(LockProtocol, commitAccessIsBlockedByReadAccess)
     auto rlock = slp.readAccess();
     auto commitLock = slp.tryCommitAccess(slp.writeAccess());
 
-    ASSERT_TRUE(std::get_if<CommitLock>(&commitLock) == nullptr);
+    ASSERT_EQ(std::get_if<CommitLock>(&commitLock) , nullptr);
 }
 
 TEST(LockProtocol, readAccessCannotStarveCommitAccess)

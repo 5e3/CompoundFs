@@ -26,11 +26,11 @@ TEST(Lock, compileTimeTests)
         Lock l(&cr, [](void* m) { static_cast<CheckRelease*>(m)->release(); });
         Lock l2 = std::move(l);
     }
-    ASSERT_TRUE(cr.m_calls == 1);
+    ASSERT_EQ(cr.m_calls , 1);
 
     Lock l(&cr, [](void* m) { static_cast<CheckRelease*>(m)->release(); });
     l.release();
-    ASSERT_TRUE(cr.m_calls == 2);
+    ASSERT_EQ(cr.m_calls , 2);
 }
 
 TEST(Lock, isSameMutex)
@@ -38,9 +38,9 @@ TEST(Lock, isSameMutex)
     CheckRelease cr;
     Lock l(&cr, [](void* m) { static_cast<CheckRelease*>(m)->release(); });
 
-    ASSERT_TRUE(l.isSameMutex(&cr) == true);
+    ASSERT_EQ(l.isSameMutex(&cr) , true);
     CheckRelease cr2;
-    ASSERT_TRUE(l.isSameMutex(&cr2) == false);
+    ASSERT_EQ(l.isSameMutex(&cr2) , false);
 }
 
 
@@ -54,18 +54,18 @@ TEST(CommitLock, sharedLockReleasesFirst)
     {
         CommitLock lock{Lock(&cr, xrel), Lock(&cr, srel)};
     }
-    ASSERT_TRUE(cr.m_releaseOrder == "SX");
+    ASSERT_EQ(cr.m_releaseOrder , "SX");
 
     CommitLock lock { Lock(&cr, xrel), Lock(&cr, srel) };
     auto xl = lock.release();
-    ASSERT_TRUE(cr.m_releaseOrder == "SXS");
+    ASSERT_EQ(cr.m_releaseOrder , "SXS");
 
     xl.release();
-    ASSERT_TRUE(cr.m_releaseOrder == "SXSX");
+    ASSERT_EQ(cr.m_releaseOrder , "SXSX");
 
     CommitLock lock2 { Lock(&cr, xrel), Lock(&cr, srel) };
     lock2.release();
-    ASSERT_TRUE(cr.m_releaseOrder == "SXSXSX");
+    ASSERT_EQ(cr.m_releaseOrder , "SXSXSX");
 }
 
 

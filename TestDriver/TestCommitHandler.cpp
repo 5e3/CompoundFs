@@ -39,12 +39,12 @@ TEST(CommitHandler, getDirtyPageIds)
         cm.makePageWritable(cm.loadPage(i));
 
     auto dirtyPageIds = cm.buildCommitHandler().getDirtyPageIds();
-    ASSERT_TRUE(dirtyPageIds.size() == 20);
+    ASSERT_EQ(dirtyPageIds.size() , 20);
     std::sort(dirtyPageIds.begin(), dirtyPageIds.end());
 
     auto expected = dirtyPageIds;
     std::iota(expected.begin(), expected.end(), 10);
-    ASSERT_TRUE(dirtyPageIds == expected);
+    ASSERT_EQ(dirtyPageIds , expected);
 }
 
 TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
@@ -83,10 +83,10 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
     auto origToCopyPages = commitHandler.copyDirtyPages(dirtyPageIds);
 
     // do the test...
-    ASSERT_TRUE(dirtyPageIds.size() == origToCopyPages.size());
+    ASSERT_EQ(dirtyPageIds.size() , origToCopyPages.size());
     for (auto [orig, cpy]: origToCopyPages)
     {
-        ASSERT_TRUE(orig != cpy);
+        ASSERT_NE(orig , cpy);
         ASSERT_TRUE(TxFs::isEqualPage(cm.getRawFileInterface(), orig, cpy));
         uint8_t buffer[4096];
         TxFs::readPage(cm.getRawFileInterface(), orig, buffer);

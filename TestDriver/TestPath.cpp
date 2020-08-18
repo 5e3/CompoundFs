@@ -29,9 +29,9 @@ TEST(Path, noSubFolderDoesNotChangePath)
     Path p2 = p;
 
     ASSERT_TRUE(p.create(&ds));
-    ASSERT_TRUE(p.m_root == Path::AbsoluteRoot);
-    ASSERT_TRUE(p.m_relativePath == "test");
-    ASSERT_TRUE(p == p2);
+    ASSERT_EQ(p.m_root , Path::AbsoluteRoot);
+    ASSERT_EQ(p.m_relativePath , "test");
+    ASSERT_EQ(p , p2);
 }
 
 TEST(Path, createCreatesSubFolders)
@@ -41,10 +41,10 @@ TEST(Path, createCreatesSubFolders)
     Path p2 = p;
 
     ASSERT_TRUE(p.create(&ds));
-    ASSERT_TRUE(p.m_root != Path::AbsoluteRoot);
-    ASSERT_TRUE(p.m_relativePath == "folder2");
+    ASSERT_NE(p.m_root , Path::AbsoluteRoot);
+    ASSERT_EQ(p.m_relativePath , "folder2");
     ASSERT_TRUE(ds.subFolder(DirectoryKey("folder")));
-    ASSERT_TRUE(p != p2);
+    ASSERT_NE(p , p2);
 }
 
 TEST(Path, creationOfFolderFailsWhenTheNameIsUsedForAnAttribute)
@@ -57,11 +57,11 @@ TEST(Path, creationOfFolderFailsWhenTheNameIsUsedForAnAttribute)
     Path p2("folder/folder/attribute/test");
     Path p3 = p2;
     ASSERT_TRUE(!p2.create(&ds));
-    ASSERT_TRUE(p2 == p3);
+    ASSERT_EQ(p2 , p3);
 
     ds.remove(DirectoryKey(p.m_root, p.m_relativePath));
     ASSERT_TRUE(p2.create(&ds));
-    ASSERT_TRUE(p2 != p3);
+    ASSERT_NE(p2 , p3);
 }
 
 TEST(Path, reduceFindsSubFolders)
@@ -75,9 +75,9 @@ TEST(Path, reduceFindsSubFolders)
     ASSERT_TRUE(p2.create(&ds));
     ASSERT_TRUE(p3.reduce(&ds));
 
-    ASSERT_TRUE(p == p2);
-    ASSERT_TRUE(p == p3);
-    ASSERT_TRUE(p.m_root != Path::AbsoluteRoot);
-    ASSERT_TRUE(p.m_relativePath == "file.file");
+    ASSERT_EQ(p , p2);
+    ASSERT_EQ(p , p3);
+    ASSERT_NE(p.m_root , Path::AbsoluteRoot);
+    ASSERT_EQ(p.m_relativePath , "file.file");
 }
 

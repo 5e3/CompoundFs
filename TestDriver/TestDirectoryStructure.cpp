@@ -35,13 +35,13 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
 
     auto res = ds.makeSubFolder(DirectoryKey("test"));
     ASSERT_TRUE(res);
-    ASSERT_TRUE(*res == Folder { 1 });
+    ASSERT_EQ(*res , Folder { 1 });
 
     res = ds.makeSubFolder(DirectoryKey("test"));
     ASSERT_TRUE(res);
-    ASSERT_TRUE(*res == Folder { 1 });
+    ASSERT_EQ(*res , Folder { 1 });
 
-    ASSERT_TRUE(ds.subFolder(DirectoryKey("test")) == *res);
+    ASSERT_EQ(ds.subFolder(DirectoryKey("test")) , *res);
 }
 
 TEST(DirectoryStructure, makeSubFolder)
@@ -51,7 +51,7 @@ TEST(DirectoryStructure, makeSubFolder)
     auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder"));
     auto subsub = ds.makeSubFolder(DirectoryKey(*subFolder, "subsub"));
     ASSERT_TRUE(subsub);
-    ASSERT_TRUE(subsub == ds.subFolder(DirectoryKey(*subFolder, "subsub")));
+    ASSERT_EQ(subsub , ds.subFolder(DirectoryKey(*subFolder, "subsub")));
 }
 
 TEST(DirectoryStructure, simpleRemove)
@@ -62,7 +62,7 @@ TEST(DirectoryStructure, simpleRemove)
     auto subsub = ds.makeSubFolder(DirectoryKey(subFolder, "subsub"));
     DirectoryKey dkey(subFolder, "subsub");
     auto nof = ds.remove(dkey);
-    ASSERT_TRUE(nof == 1);
+    ASSERT_EQ(nof , 1);
     ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub")));
 }
 
@@ -77,7 +77,7 @@ TEST(DirectoryStructure, recursiveRemove)
     ds.makeSubFolder(DirectoryKey(subFolder, "subsub4"));
     DirectoryKey dkey("subFolder");
     auto nof = ds.remove(dkey);
-    ASSERT_TRUE(nof == 5);
+    ASSERT_EQ(nof , 5);
 }
 
 TEST(DirectoryStructure, recursiveRemove2)
@@ -95,7 +95,7 @@ TEST(DirectoryStructure, recursiveRemove2)
     ds.addAttribute(DirectoryKey(subFolder, "attrib"), "test");
     DirectoryKey dkey("subFolder");
     auto nof = ds.remove(dkey);
-    ASSERT_TRUE(nof == 6);
+    ASSERT_EQ(nof , 6);
     ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
     ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
     ASSERT_TRUE(!ds.getAttribute(DirectoryKey(subFolder, "attrib")));
@@ -109,12 +109,12 @@ TEST(DirectoryStructure, addGetAttribute)
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), "test"));
     auto res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_TRUE(std::get<std::string>(*res) == "test");
+    ASSERT_EQ(std::get<std::string>(*res) , "test");
 
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42));
     res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_TRUE(std::get<int>(*res) == 42);
+    ASSERT_EQ(std::get<int>(*res) , 42);
 }
 
 TEST(DirectoryStructure, attributesDoNotReplaceFolders)
@@ -144,9 +144,9 @@ TEST(DirectoryStructure, createFile)
     FileDescriptor desc(100);
     ASSERT_TRUE(ds.updateFile(dkey, desc));
 
-    ASSERT_TRUE(*ds.openFile(dkey) == desc);
+    ASSERT_EQ(*ds.openFile(dkey) , desc);
     ASSERT_TRUE(ds.createFile(dkey));
-    ASSERT_TRUE(*ds.openFile(dkey) == FileDescriptor());
+    ASSERT_EQ(*ds.openFile(dkey) , FileDescriptor());
 }
 
 TEST(DirectoryStructure, appendFile)
@@ -154,12 +154,12 @@ TEST(DirectoryStructure, appendFile)
     DirectoryStructure ds = makeDirectoryStructure();
     DirectoryKey dkey("test.file");
 
-    ASSERT_TRUE(*ds.appendFile(dkey) == FileDescriptor());
+    ASSERT_EQ(*ds.appendFile(dkey) , FileDescriptor());
 
     FileDescriptor desc(100);
     ASSERT_TRUE(ds.updateFile(dkey, desc));
 
-    ASSERT_TRUE(*ds.appendFile(dkey) == desc);
+    ASSERT_EQ(*ds.appendFile(dkey) , desc);
 }
 
 TEST(DirectoryStructure, updateFileNeedsExistingFile)
@@ -187,7 +187,7 @@ TEST(Cursor, creation)
 {
     DirectoryStructure::Cursor cursor;
     auto cur2 = cursor;
-    ASSERT_TRUE(cur2 == cursor);
+    ASSERT_EQ(cur2 , cursor);
     ASSERT_TRUE(!cursor);
 
     DirectoryStructure ds = makeDirectoryStructure();
@@ -195,13 +195,13 @@ TEST(Cursor, creation)
     auto cur3 = ds.find(DirectoryKey("attrib"));
 
     ASSERT_TRUE(cur3);
-    ASSERT_TRUE(cur3 != cur2);
+    ASSERT_NE(cur3 , cur2);
     auto res = cur3.key();
-    ASSERT_TRUE(res.first == DirectoryKey::Root);
-    ASSERT_TRUE(res.second == "attrib");
-    ASSERT_TRUE(std::get<std::string>(cur3.value()) == "test");
-    ASSERT_TRUE(cur3.getValueType() == DirectoryObjType::String);
-    ASSERT_TRUE(cur3.getValueTypeName() == "String");
+    ASSERT_EQ(res.first , DirectoryKey::Root);
+    ASSERT_EQ(res.second , "attrib");
+    ASSERT_EQ(std::get<std::string>(cur3.value()) , "test");
+    ASSERT_EQ(cur3.getValueType() , DirectoryObjType::String);
+    ASSERT_EQ(cur3.getValueTypeName() , "String");
 
     auto cur4 = ds.next(cur3);
     ASSERT_TRUE(!cur4);

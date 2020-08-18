@@ -12,7 +12,7 @@ using namespace TxFs;
 TEST(FileTable, Empty)
 {
     FileTable ft;
-    ASSERT_TRUE(sizeof(ft) == 4096);
+    ASSERT_EQ(sizeof(ft) , 4096);
 
     IntervalSequence is;
     ft.insertInto(is);
@@ -32,7 +32,7 @@ TEST(FileTable, transferBackAndForth)
     ASSERT_TRUE(is.empty());
 
     ft.insertInto(is);
-    ASSERT_TRUE(is == is2);
+    ASSERT_EQ(is , is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace)
@@ -51,7 +51,7 @@ TEST(FileTable, transferNotEnoughSpace)
     while (!is.empty())
         is3.pushBack(is.popFront());
 
-    ASSERT_TRUE(is3 == is2);
+    ASSERT_EQ(is3 , is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace2)
@@ -70,7 +70,7 @@ TEST(FileTable, transferNotEnoughSpace2)
     while (!is.empty())
         is3.pushBack(is.popFront());
 
-    ASSERT_TRUE(is3 == is2);
+    ASSERT_EQ(is3 , is2);
 }
 
 TEST(FileTable, transferNotEnoughSpace3)
@@ -97,5 +97,5 @@ TEST(FileTable, transferNotEnoughSpace3)
     for (auto& ft: fts)
         ft.insertInto(is3);
 
-    ASSERT_TRUE(is3 == is2);
+    ASSERT_EQ(is3 , is2);
 }
