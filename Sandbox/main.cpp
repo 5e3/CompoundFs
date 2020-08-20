@@ -1,359 +1,162 @@
-#include "../CompoundFs/ByteString.h"
-#include "../CompoundFs/FileDescriptor.h"
-#include <memory>
-#include <tuple>
-#include <utility>
-#include <iostream>
-#include <variant>
 
-using namespace TxFs;
-//
-// struct Version
-//{
-//    int m_major = 0;
-//    int m_minor = 0;
-//    int m_patch = 0;
-//};
-//
-// struct Folder
-//{
-//    uint32_t m_folderId;
-//};
-//
-// struct Empty {};
-//
-// template<typename Tuple>
-// struct ToVariant;
-//
-// template<typename... Args>
-// struct ToVariant<std::tuple<Args...>>
-//{
-//    using Variant = std::variant<Args ...>;
-//
-//};
-//
-//
-// enum class DirectoryType : uint8_t { Empty, File, Folder, Version };
-// using DirectoryTypeList = std::tuple<Empty, FileDescriptor, Folder, Version>;
-// static const char* const Names[] = { "Empty", "File", "Folder", "Version" };
-// using DirectoryVariant = ToVariant<DirectoryTypeList>::Variant;
-//
-// template <class T, class Tuple>
-// struct Index;
-//
-// template <class T, class... Types>
 
-// struct Index<T, std::tuple<T, Types...>> {
-//    static const std::size_t value = 0;
-//    static const DirectoryType m_type = DirectoryType::Empty;
-//};
-//
-// template <class T, class U, class... Types>
-// struct Index<T, std::tuple<U, Types...>> {
-//    static const std::size_t value = 1 + Index<T, std::tuple<Types...>>::value;
-//    static const DirectoryType m_type = (DirectoryType)value;
-//};
-//
-// template<typename T>
-// auto makeTuple(const T&);
-//
-// auto makeTuple(const Version& v)
-//{
-//    return std::make_tuple(v.m_major, v.m_minor, v.m_patch);
-//}
-//
-// auto makeTuple(const Folder& v)
-//{
-//    return std::make_tuple(v.m_folderId);
-//}
-//
-// auto makeTuple(const FileDescriptor& v)
-//{
-//    return std::make_tuple(v.m_first, v.m_last, v.m_fileSize);
-//}
-//
-// auto makeTuple(const Empty& v)
-//{
-//    return std::make_tuple();
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-// template <typename T, typename Tuple, std::size_t... Inds>
-// T helperMakeFromTuple(Tuple&& tuple, std::index_sequence<Inds...>)
-//{
-//    return T{ std::get<Inds>(std::forward<Tuple>(tuple))... };
-//}
-//
-// template <typename T, typename Tuple>
-// T makeFromTuple(Tuple&& tuple)
-//{
-//    return helperMakeFromTuple<T>(std::forward<Tuple>(tuple),
-//        std::make_index_sequence<std::tuple_size<std::remove_reference_t<Tuple>>::value>());
-//}
-//
-//
-// template<typename T>
-// Blob makeBlob(const T& value)
-//{
-//    return Blob();
-//}
-//
-// template<typename T>
-// constexpr const char* getType(const T&)
-//{
-//    return Names[Index<T, DirectoryTypeList>::value];
-//}
-//
-// template <typename T>
-// auto variantFromBlob(const Blob& blob)
-//{
-//    decltype(makeTuple(T())) t;
-//    auto rt = makeFromTuple<T>(t);
-//    return DirectoryVariant(rt);
-//
-//}
-//
-// using variantFromBlobFunc = DirectoryVariant(*)(const Blob&);
-//
-// template <typename T>
-// struct VariantFromBlobFuncArray;
-//
-// template <typename... Args>
-// struct VariantFromBlobFuncArray < std::tuple<Args...>>
-//{
-//    static inline variantFromBlobFunc funcs[] = { variantFromBlob<Args> ... };
-//};
-//
-// using Func = int(*)();
-//
-// const Func g_funcVect[] = { [] {return 5;}, [] {return 3;} };
-//
-// int main()
-//{
-//    Version v = { 1, 2, 3 };
-//    //Blob b = makeBlob(v);
-//    std::cout << getType(v) << "\n" << getType(FileDescriptor());
-//    auto t = makeTuple(v);
-//    Version v2 = makeFromTuple<Version>(t);
-//    //Version v3 = std::make_from_tuple<Version>(t);
-//    decltype(makeTuple(Version())) t2 = makeTuple(v2);
-//
-//    //VariantFromBlobFuncArray<DirectoryTypeList>::funcs[3](Blob());
-//    DirectoryVariant dv;
-//    auto var = variantFromBlob<Version>(Blob());
-//}
+#include <stdint.h>
+#include <algorithm>
+#include <string_view>
+#include <type_traits>
+#include <stdexcept>
+#include <vector>
 
-//#include <deque>
-//
-//struct Generic
-//{
-//    std::vector<uint8_t> m_value;
-//};
-//
-//template <typename Tuple>
-//struct ToVariant;
-//
-//template <typename... Args>
-//struct ToVariant<std::tuple<Args...>>
-//{
-//    using Variant = std::variant<Args...>;
-//};
-//
-//using Types = std::tuple<uint8_t, uint32_t, uint64_t, std::string>;
-//using Buffer = std::deque<uint8_t>;
-//using Variant = ToVariant<Types>::Variant;
-//
-//template <typename T>
-//Variant BufferToVariant(Buffer& buf)
-//{
-//    T val;
-//    std::copy(buf.begin(), buf.begin() + sizeof(T), (uint8_t*) &val);
-//    buf.erase(buf.begin(), buf.begin() + sizeof(T));
-//    return val;
-//}
-//
-//using BufferToVariantFuncType = Variant (*)(Buffer&);
-//
-//template <typename T>
-//struct BufferToVariantFuncArray;
-//
-//template <typename... Args>
-//struct BufferToVariantFuncArray<std::tuple<Args...>>
-//{
-//    inline static const BufferToVariantFuncType m_funcs[] = { BufferToVariant<Args>... };
-//};
-//
-//size_t t2iHelper(size_t in, std::true_type)
-//{
-//    return in;
-//}
-//
-//size_t t2iHelper(size_t, std::false_type)
-//{
-//    return 0;
-//}
-//
-//template <typename Tuple>
-//struct TypeToIndex;
-//
-//template <typename... Args>
-//struct TypeToIndex<std::tuple<Args...>>
-//{
-//    template <typename T>
-//    static constexpr size_t getIndex()
-//    {
-//        static_assert((std::is_same<T, Args>::value + ...) == 1, "Type has to match one of the tuple<> types!");
-//        size_t i = 0;
-//        return (t2iHelper(i++, std::is_same<T, Args>()) + ...);
-//    }
-//};
-//
-//struct Test
-//{
-//    // static const size_t s = TypeToIndex<Types>::getIndex<uint32_t>();
-//};
-//
-//using TestVariant = std::tuple<double, std::pair<double, double>, std::pair<int, int>, std::string>;
-//
-//template <class T>
-//constexpr auto supportsPushBack(T* x) -> decltype(&T::push_back, std::true_type {})
-//{
-//    return {};
-//}
-//constexpr auto supportsPushBack(...) -> std::false_type
-//{
-//    return {};
-//}
-//
-//template <typename T>
-//ByteString convertToBlob(T* value)
-//{
-//    if constexpr (supportsPushBack(value))
-//    {
-//        return ByteString();
-//    }
-//    else
-//    {
-//        return ByteString();
-//    }
-//}
-//
-//template <typename T, template <typename... Ts> class Tmpl>
-//struct IsClassTemplate : std::false_type
-//{};
-//
-//template <template <typename... Ts> class Tmpl, typename... Args>
-//struct IsClassTemplate<Tmpl<Args...>, Tmpl> : std::true_type
-//{};
-//
-//#include <array>
-//
-//template <typename T>
-//auto fromBlob(const ByteStringView& blob, const uint8_t* begin = nullptr)
-//{
-//    if (!begin)
-//        begin = blob.begin() + 1;
-//
-//    if constexpr (IsClassTemplate<T, std::vector>::value)
-//    {
-//        T vec((blob.end() - begin) / sizeof(T::value_type));
-//        std::copy(begin, blob.end(), (uint8_t*) &vec[0]);
-//        return vec;
-//    }
-//    else if constexpr (std::is_same<T, std::string>::value)
-//    {
-//        return std::string(begin, blob.end());
-//    }
-//    else
-//    {
-//        T value;
-//        std::copy(begin, blob.end(), (uint8_t*) &value);
-//        return value;
-//    }
-//}
-//
-//std::tuple<int, float, double, std::string> types;
-//using Var = std::variant<std::string, int>;
-//using Var2 = std::variant<std::string, int, double>;
-//
-//#include <random>
-//
-//int main()
-//{
-//    std::random_device rd;
-//    std::mt19937_64 mt(rd());
-//    mt.seed(1);
-//
-//    std::vector<int> vi;
-//    for (auto i: { 0, 100 })
-//        vi.push_back(i);
-//
-//    // ByteString b;
-//    // fromBlob<std::vector<float>>(b);
-//    // fromBlob<std::string>(b);
-//    // fromBlob<int>(b);
-//
-//    // func(5);
-//    // func("test");
-//    // Var v = "test";
-//    // Var2 v2 = *v;
-//}
-
-class ReadLock
+namespace TxFs
 {
+template <typename T>
+using EnableWithString = std::enable_if_t<std::is_convertible_v<T, std::string_view>>;
 
+class ByteStringView
+{
+public:
+    constexpr ByteStringView() noexcept
+        : m_data(nullptr)
+        , m_length(0) {};
+    constexpr ByteStringView(const uint8_t* data, uint8_t length) noexcept
+        : m_data(data)
+        , m_length(length) {};
+
+    template <typename TStr, typename = EnableWithString<TStr>>
+    ByteStringView(TStr&& str)
+    {
+        std::string_view sv { str };
+        if (sv.size() > std::numeric_limits<uint8_t>::max())
+            throw std::runtime_error("ByteStringView: size too big");
+
+        m_data = reinterpret_cast<const uint8_t*>(sv.data());
+        m_length = static_cast<uint8_t>(sv.size());
+    }
+
+    template <typename TStr, typename = EnableWithString<TStr>>
+    ByteStringView& operator=(TStr&& str)
+    {
+        ByteStringView bsv = str;
+        *this = bsv;
+        return *this;
+    }
+
+    friend bool operator==(ByteStringView lhs, ByteStringView rhs);
+    friend bool operator!=(ByteStringView lhs, ByteStringView rhs);
+    friend bool operator<(ByteStringView lhs, ByteStringView rhs);
+
+    constexpr size_t size() const noexcept { return m_length; }
+    constexpr const uint8_t* data() const noexcept { return m_data; }
+    static constexpr ByteStringView fromStream(const uint8_t* stream) noexcept { return ByteStringView(stream + 1, *stream); }
+
+private:
+    const uint8_t* m_data;
+    uint8_t m_length;
 };
 
-//
-//
-//class LockProtocoll
-//{
-//public:
-//    ReadLock readAccess();
-//    std::optional<ReadLock> tryReadAccess();
-//    void release(ReadLock&& readLock);
-//
-//    WriteLock writeAccess();
-//    std::optional<WriteLock> tryWriteAccess();
-//    void release(WriteLock&& writeLock);
-//
-//    CommitLock commitAccess(WriteLock&& writeLock);
-//    std::variant<WriteLock, CommitLock> tryCommitAccess(WriteLock&& writeLock);
-//    WriteLock release(CommitLock&& commitLock);
-//};
-
-#include <memory>
-#include <filesystem>
-#include <system_error>
-
-struct Test
+const uint8_t* toStream(ByteStringView bsv, uint8_t* dest)
 {
-    Test() = default;
-    Test(int i) : m_i(i) {};
-    int m_i;
-};
-
-Test f()
-{
-    int i = 6;
-    return Test(i);
+    *dest = bsv.size();
+    return std::copy(bsv.data(), bsv.data() + bsv.size(), ++dest);
 }
 
-int main()
+inline bool operator==(ByteStringView lhs, ByteStringView rhs)
 {
-    std::error_code ec;
-    //std::filesystem::remove("/&%:/myEmptyDirectoryOrFile", ec);  
-    ec = { 39, std::system_category() };
-    auto msg = ec.message();
-    std::system_error se(39, std::system_category(), "Konnte nicht tun");
-    msg = se.what();
+    return std::equal(lhs.m_data, lhs.m_data + lhs.m_length, rhs.m_data, rhs.m_data + rhs.m_length);
+}
 
-    Test t = {};
+inline bool operator!=(ByteStringView lhs, ByteStringView rhs)
+{
+    return !(lhs == rhs);
+}
+
+inline bool operator<(ByteStringView lhs, ByteStringView rhs)
+{
+    return std::lexicographical_compare(lhs.m_data, lhs.m_data + lhs.m_length, rhs.m_data, rhs.m_data + rhs.m_length);
+}
+
+class ByteString
+{
+public:
+    ByteString() noexcept = default;
+
+    ByteString(ByteStringView bsv)
+        : m_buffer(bsv.data(), bsv.data() + bsv.size())
+    {}
+    ByteString& operator=(ByteStringView bsv)
+    {
+        ByteString bs(bsv);
+        std::swap(bs.m_buffer, m_buffer);
+        return *this;
+    }
+
+    template <typename TStr, typename = EnableWithString<TStr>>
+    ByteString(TStr&& str)
+        : ByteString(ByteStringView(str))
+    {}
+
+    template <typename TStr, typename = EnableWithString<TStr>>
+    ByteString& operator=(TStr&& str)
+    {
+        *this = ByteString(str);
+        return *this;
+    }
+
+    operator ByteStringView() const { return ByteStringView(&m_buffer[0], m_buffer.size()); }
+    size_t size() const { return m_buffer.size(); }
+
+private:
+    std::vector<uint8_t> m_buffer;
+};
+
+}
+
+#include <gtest/gtest.h>
+#include <string>
+
+void checkEqual(TxFs::ByteStringView bsv, const std::string& ref)
+{
+    if (bsv != ref)
+        throw std::runtime_error("test failed");
+}
+
+
+using namespace TxFs;
+
+TEST(ByteString, creation)
+{
+    ByteString b = "test";
+    ASSERT_EQ(b, "test");
+
+    b = "test2";
+    ASSERT_EQ(b, "test2");
+
+    ByteString b2 = std::move(b);
+    ASSERT_EQ(b2, "test2");
+    ASSERT_EQ(b.size(), 0);
+}
+
+TEST(ByteString, tooLongStringThrows)
+{
+    std::string s(256, '-');
+    ASSERT_THROW(ByteString bs(s), std::exception);
+    ASSERT_THROW(ByteStringView bsv(s), std::exception);
+}
+
+TEST(ByteStringView, fromStreamConvertsbackToStream)
+{
+    uint8_t stream[256];
+    std::string s(255, '-');
+    auto end = toStream(s, stream);
+    ASSERT_EQ(end, stream + 256);
+
+    ByteString bs = ByteStringView::fromStream(stream);
+    ASSERT_EQ(bs, s);
+    checkEqual(std::string(s), s);
+}
+
+int main(int argc, char** argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
