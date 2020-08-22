@@ -17,8 +17,8 @@ namespace
 FileDescriptor createFile(std::shared_ptr<CacheManager> cm)
 {
     FileWriter rfw(cm);
-    ByteString data("X");
-    rfw.write(data.begin(), data.end());
+    ByteStringView data("X");
+    rfw.write(data.data(), data.end());
     return rfw.close();
 }
 

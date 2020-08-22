@@ -80,7 +80,7 @@ TEST(BTree, insertNewKeyInsertsAndReturnsInserted)
         bt.insert(s.c_str(), "TestData");
     }
 
-    auto res = bt.insert("TestKey", "TestValue", [](const ByteStringView&) {
+    auto res = bt.insert("TestKey", "TestValue", [](ByteStringView) {
         throw std::runtime_error("");
         return true;
     });
@@ -99,19 +99,19 @@ TEST(BTree, canControlReplacementWithStrategy)
         bt.insert(s.c_str(), "TestData");
     }
 
-    bt.insert("TestKey", "TestValue", [](const ByteStringView&) {
+    bt.insert("TestKey", "TestValue", [](ByteStringView) {
         throw std::runtime_error("");
         return true;
     });
 
-    auto res = bt.insert("TestKey", "TestValue1", [](const ByteStringView&) { return false; });
+    auto res = bt.insert("TestKey", "TestValue1", [](ByteStringView) { return false; });
 
     ASSERT_EQ(std::get<BTree::Unchanged>(res).m_currentValue.current().second, ByteString("TestValue"));
 
-    res = bt.insert("TestKey", "TestValue2", [](const ByteStringView&) { return true; });
+    res = bt.insert("TestKey", "TestValue2", [](ByteStringView) { return true; });
 
-    ASSERT_EQ(std::get<BTree::Replaced>(res).m_beforeValue, ByteString("TestValue"));
-    ASSERT_EQ(bt.find("TestKey").value(), ByteString("TestValue2"));
+    ASSERT_EQ(std::get<BTree::Replaced>(res).m_beforeValue, "TestValue");
+    ASSERT_EQ(bt.find("TestKey").value(), "TestValue2");
 }
 
 TEST(BTree, emptyTreeReturnsFalseCursor)
@@ -136,8 +136,8 @@ TEST(BTree, cursorPointsToCurrentItem)
     }
 
     auto cur = bt.begin("100");
-    ASSERT_EQ(cur.current().first, ByteString("100"));
-    ASSERT_EQ(cur.current().second, ByteString("100 Test"));
+    ASSERT_EQ(cur.current().first, "100");
+    ASSERT_EQ(cur.current().second, "100 Test");
 }
 
 TEST(BTree, cursorIterates)
@@ -174,7 +174,7 @@ TEST(BTree, cursorNextPointsToNext)
 
     auto cur = bt.begin("100");
     cur = bt.next(cur);
-    ASSERT_EQ(cur.current().first, ByteString("101"));
+    ASSERT_EQ(cur.current().first, "101");
 }
 
 TEST(BTree, cursorKeepsPageInMemory)
@@ -192,8 +192,8 @@ TEST(BTree, cursorKeepsPageInMemory)
     auto pagesStillInMem = cm->trim(0);
 
     ASSERT_EQ(pagesStillInMem, 1);
-    ASSERT_EQ(cur.current().first, ByteString("250"));
-    ASSERT_EQ(cur.current().second, ByteString("250 Test"));
+    ASSERT_EQ(cur.current().first, "250");
+    ASSERT_EQ(cur.current().second, "250 Test");
 
     cur = BTree::Cursor();
     pagesStillInMem = cm->trim(0);
@@ -247,7 +247,7 @@ TEST(BTree, removeNonExistantKeyReturnsEmptyOptional)
     }
 
     ASSERT_TRUE(!bt.remove("Test"));
-    ASSERT_EQ(bt.remove("399").value() , ByteString("399 Test"));
+    ASSERT_EQ(bt.remove("399").value() , "399 Test");
 }
 
 TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
@@ -299,7 +299,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 800; i++)
     {
-        ASSERT_EQ(cursor.key() , ByteString(keys[i].c_str()));
+        ASSERT_EQ(cursor.key() , keys[i]);
         cursor = bt.next(cursor);
     }
     ASSERT_TRUE(!cursor);
@@ -343,7 +343,7 @@ TEST(BTree, insertAfterRemoveWorks)
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 3000; i++)
     {
-        ASSERT_EQ(cursor.key() , ByteString(keys[i].c_str()));
+        ASSERT_EQ(cursor.key() , keys[i]);
         cursor = bt.next(cursor);
     }
     ASSERT_TRUE(!cursor);
@@ -375,8 +375,8 @@ TEST(BTree, removeInReverseOrder)
     auto cursor = bt.begin("");
     for (size_t i = 2000; i < 3000; i++)
     {
-        ASSERT_EQ(cursor.key() , ByteString(keys[i].c_str()));
-        ASSERT_EQ(bt.find(ByteString(keys[i].c_str())) , cursor);
+        ASSERT_EQ(cursor.key() , keys[i]);
+        ASSERT_EQ(bt.find(keys[i]) , cursor);
         cursor = bt.next(cursor);
     }
     ASSERT_TRUE(!cursor);

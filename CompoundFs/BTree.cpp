@@ -31,7 +31,7 @@ BTree::BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIn
         m_rootIndex = m_cacheManager.newPage<Leaf>(PageIdx::INVALID, PageIdx::INVALID).m_index;
 }
 
-BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value, ReplacePolicy replacePolicy)
+BTree::InsertResult BTree::insert(ByteStringView key, ByteStringView value, ReplacePolicy replacePolicy)
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -51,7 +51,8 @@ BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value
         if (ventry.size() == value.size())
         {
             // replace at the same position
-            std::copy(value.begin(), value.end(), ventry.begin());
+            auto ventryPtr = const_cast<uint8_t*>(ventry.data());
+            std::copy(value.data(), value.data()+value.size(), ventryPtr);
             return result;
         }
         leafDef.m_page->remove(key);
@@ -73,9 +74,9 @@ BTree::InsertResult BTree::insert(const ByteString& key, const ByteString& value
     return result;
 }
 
-std::optional<ByteString> BTree::insert(const ByteString& key, const ByteString& value)
+std::optional<ByteString> BTree::insert(ByteStringView key, ByteStringView value)
 {
-    auto res = insert(key, value, [](const ByteStringView&) { return true; });
+    auto res = insert(key, value, [](ByteStringView) { return true; });
     auto replaced = std::get_if<Replaced>(&res);
     if (replaced)
         return replaced->m_beforeValue;
@@ -97,7 +98,7 @@ void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
     }
 }
 
-std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, const ByteString& key,
+std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, ByteStringView key,
                                                         const InnerNodeStack& stack)
 {
     assert(inner.m_page->nofItems() == 1);
@@ -125,7 +126,7 @@ std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inne
     return right.m_page;
 }
 
-std::optional<ByteString> BTree::remove(ByteString key)
+std::optional<ByteString> BTree::remove(ByteStringView key)
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -143,7 +144,7 @@ std::optional<ByteString> BTree::remove(ByteString key)
 
     unlinkLeaveNode(leaf);
     m_freePages.push_back(leafDef.m_index);
-    while (stack.size() > 0)
+    while (!stack.empty())
     {
         auto inner = m_cacheManager.makePageWritable(stack.back());
         inner.m_page->remove(key);
@@ -172,7 +173,7 @@ std::optional<ByteString> BTree::remove(ByteString key)
     return beforeValue;
 }
 
-ConstPageDef<Leaf> BTree::findLeaf(const ByteString& key, InnerNodeStack& stack) const
+ConstPageDef<Leaf> BTree::findLeaf(ByteStringView key, InnerNodeStack& stack) const
 {
     PageIndex id = m_rootIndex;
     while (true)
@@ -180,12 +181,12 @@ ConstPageDef<Leaf> BTree::findLeaf(const ByteString& key, InnerNodeStack& stack)
         auto nodeDef = m_cacheManager.loadPage<Node>(id);
         if (nodeDef.m_page->m_type == NodeType::Leaf)
             return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(nodeDef.m_page), id);
-        stack.push_back(ConstPageDef<InnerNode>(std::static_pointer_cast<const InnerNode>(nodeDef.m_page), id));
+        stack.emplace_back(std::static_pointer_cast<const InnerNode>(nodeDef.m_page), id);
         id = stack.back().m_page->findPage(key);
     }
 }
 
-void BTree::propagate(InnerNodeStack& stack, const ByteString& keyToInsert, PageIndex left, PageIndex right)
+void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageIndex left, PageIndex right)
 {
     ByteString key = keyToInsert;
     while (!stack.empty())
@@ -207,7 +208,7 @@ void BTree::propagate(InnerNodeStack& stack, const ByteString& keyToInsert, Page
     m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
 }
 
-BTree::Cursor BTree::find(const ByteString& key) const
+BTree::Cursor BTree::find(ByteStringView key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);
@@ -219,7 +220,7 @@ BTree::Cursor BTree::find(const ByteString& key) const
     return Cursor(leafDef.m_page, it);
 }
 
-BTree::Cursor BTree::begin(const ByteString& key) const
+BTree::Cursor BTree::begin(ByteStringView key) const
 {
     InnerNodeStack stack;
     stack.reserve(5);

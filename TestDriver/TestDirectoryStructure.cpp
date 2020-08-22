@@ -109,12 +109,12 @@ TEST(DirectoryStructure, addGetAttribute)
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), "test"));
     auto res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(std::get<std::string>(*res) , "test");
+    ASSERT_EQ(res->toValue<std::string>(), "test");
 
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42));
     res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(std::get<int>(*res) , 42);
+    ASSERT_EQ(res->toValue<int>(), 42);
 }
 
 TEST(DirectoryStructure, attributesDoNotReplaceFolders)
@@ -199,9 +199,10 @@ TEST(Cursor, creation)
     auto res = cur3.key();
     ASSERT_EQ(res.first , DirectoryKey::Root);
     ASSERT_EQ(res.second , "attrib");
-    ASSERT_EQ(std::get<std::string>(cur3.value()) , "test");
-    ASSERT_EQ(cur3.getValueType() , DirectoryObjType::String);
-    ASSERT_EQ(cur3.getValueTypeName() , "String");
+    auto attrib = cur3.value();
+    ASSERT_EQ(attrib.toValue<std::string>() , "test");
+    ASSERT_EQ(attrib.getType(), TreeValue::Type::String);
+    ASSERT_EQ(attrib.getTypeName(), "String");
 
     auto cur4 = ds.next(cur3);
     ASSERT_TRUE(!cur4);

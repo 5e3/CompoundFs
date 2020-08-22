@@ -7,6 +7,7 @@ set (Sources
 		TestBTree.cpp
 		TestCacheManager.cpp
 		TestCommitHandler.cpp
+		TestByteString.cpp
 		TestDirectoryObjects.cpp
 		TestDirectoryStructure.cpp
 		TestFile.cpp
@@ -24,6 +25,7 @@ set (Sources
 		TestPageMetaData.cpp
 		TestPath.cpp
 		TestReadOnlyFile.cpp
+		TestTreeValue.cpp
 		TestTypedCacheManager.cpp
 	)
 	

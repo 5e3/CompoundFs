@@ -9,6 +9,7 @@
 
 #include "Node.h"
 #include "ByteString.h"
+#include "TableKeyCompare.h"
 
 namespace TxFs
 {
@@ -44,11 +45,13 @@ public:
         return m_end - m_begin;
     }
 
-    constexpr bool hasSpace(const ByteString& key, const ByteString& value) const noexcept
+    constexpr bool hasSpace(ByteStringView key, ByteStringView value) const noexcept
     {
-        size_t size = sizeof(uint16_t) + key.size() + value.size();
+        size_t size = sizeof(uint16_t) + key.size() + value.size() + 2;
         return size <= bytesLeft();
     }
+
+    uint16_t toIndex(const uint8_t* pos) const { return static_cast<uint16_t>(pos - m_data);}
 
     constexpr uint16_t* beginTable() const noexcept
     {
@@ -61,71 +64,68 @@ public:
     constexpr ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return ByteStringView(m_data + *it);
+        return ByteStringView::fromStream(m_data + *it);
     }
 
     constexpr ByteStringView getLowestKey() const noexcept
     {
         assert(beginTable() != endTable());
-        return ByteStringView(m_data + *beginTable());
+        return ByteStringView::fromStream(m_data + *beginTable());
     }
 
     constexpr ByteStringView getValue(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return ByteStringView(getKey(it).end());
+        auto key = getKey(it);
+        return ByteStringView::fromStream(key.data() + key.size());
     }
 
-    void insert(const ByteString& key, const ByteString& value) noexcept
+    void insert(ByteStringView key, ByteStringView value) noexcept
     {
         assert(hasSpace(key, value));
 
         uint16_t begin = m_begin;
-        std::copy(key.begin(), key.end(), &m_data[m_begin]);
-        m_begin += key.size();
-        std::copy(value.begin(), value.end(), &m_data[m_begin]);
-        m_begin += value.size();
+        auto end = toStream(key, &m_data[m_begin]);
+        end = toStream(value, end);
+        //m_begin += key.size() + 1 + value.size() + 1;
+        m_begin = toIndex(end);
 
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         std::copy(beginTable(), it, beginTable() - 1);
         *(it - 1) = begin;
         m_end -= sizeof(uint16_t);
     }
 
-    uint16_t* lowerBound(const ByteString& key) const noexcept
+    uint16_t* lowerBound(ByteStringView key) const noexcept
     {
-        KeyCmp keyCmp(m_data);
+        TableKeyCompare keyCmp(m_data);
         return std::lower_bound(beginTable(), endTable(), key, keyCmp);
     }
 
-    uint16_t* find(const ByteString& key) const noexcept
+    uint16_t* find(ByteStringView key) const noexcept
     {
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         if (it == endTable())
             return it;
-        ByteStringView kentry(&m_data[*it]);
-        if (kentry == key)
+        if (getKey(it) == key)
             return it;
         return endTable();
     }
 
-    void remove(const ByteString& key) noexcept
+    void remove(ByteStringView key) noexcept
     {
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         if (it == endTable())
             return;
-        ByteStringView kentry(&m_data[*it]);
+        auto kentry = getKey(it);
         if (kentry != key)
             return;
 
         uint16_t index = *it;
         // copy what comes after to this place
-        ByteStringView ventry(kentry.end());
-        uint16_t size = kentry.size() + ventry.size();
-        std::copy(ventry.end(), &m_data[m_begin], kentry.begin());
+        auto ventry = getValue(it);    
+        uint16_t size = toIndex(ventry.end()) - *it;
+        std::copy(ventry.end(), (const uint8_t*)&m_data[m_begin], &m_data[*it]);
         m_begin -= size;
 
         // copy what comes before to this place
@@ -138,7 +138,7 @@ public:
                 *it -= size;
     }
 
-    void split(Leaf* rightLeaf, const ByteString& key, const ByteString& value) noexcept
+    void split(Leaf* rightLeaf, ByteStringView key, ByteStringView value) noexcept
     {
         Leaf tmp = *this;
         const uint16_t* it = tmp.findSplitPoint();
@@ -146,7 +146,7 @@ public:
         fill(tmp, tmp.beginTable(), it);
         rightLeaf->fill(tmp, it, tmp.endTable());
 
-        KeyCmp keyCmp(m_data);
+        TableKeyCompare keyCmp(m_data);
         if (keyCmp(*(endTable() - 1), key))
             rightLeaf->insert(key, value);
         else
@@ -159,10 +159,7 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            ByteStringView keyEntry(m_data + *it);
-            size += keyEntry.size();
-            ByteStringView valueEntry(keyEntry.end());
-            size += valueEntry.size();
+            size += toIndex(getValue(it).end()) - *it;
             if (size > (m_begin / 2U))
                 return it;
         }
@@ -175,15 +172,13 @@ private:
         m_begin = 0;
         m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));
         uint16_t* destTable = beginTable();
-        uint8_t* data = (uint8_t*) leaf.m_data;
         for (const uint16_t* it = begin; it < end; ++it)
         {
-            ByteStringView key(data + *it);
-            ByteStringView value(key.end());
-            std::copy(key.begin(), value.end(), m_data + m_begin);
+            auto end = toStream(leaf.getKey(it), &m_data[m_begin]);
+            end = toStream(leaf.getValue(it), end);
             *destTable = m_begin;
             destTable++;
-            m_begin += key.size() + value.size();
+            m_begin = toIndex(end);
         }
     }
 };

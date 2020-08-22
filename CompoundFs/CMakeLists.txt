@@ -13,6 +13,7 @@ set (Sources
 		FileSystem.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp
+		TreeValue.cpp
 		Path.cpp
 	)
 	
@@ -47,6 +48,8 @@ set (Headers
 		Path.h
 		RawFileInterface.h
 		ReadOnlyFile.h
+		TableKeyCompare.h
+		TreeValue.h
 		TypedCacheManager.h
 		TxFs.natvis
 	)

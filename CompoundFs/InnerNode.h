@@ -9,6 +9,7 @@
 
 #include "Node.h"
 #include "ByteString.h"
+#include "TableKeyCompare.h"
 
 namespace TxFs
 {
@@ -28,30 +29,32 @@ public:
         m_data[0] = 0;
     }
 
-    InnerNode(const ByteString& key, PageIndex left, PageIndex right) noexcept
+    InnerNode(ByteStringView key, PageIndex left, PageIndex right) noexcept
         : Node(0, sizeof(m_data), NodeType::Inner)
     {
-        std::copy(key.begin(), key.end(), m_data + m_begin);
+        auto end = toStream(key, m_data);
         m_leftMost = left;
-        setPageId(m_data + m_begin + key.size(), right);
+        end = setPageId(end, right);
         m_end -= sizeof(uint16_t);
         *beginTable() = m_begin;
-        m_begin += key.size() + sizeof(PageIndex);
+        m_begin = toIndex(end);
     }
 
     constexpr bool empty() const noexcept { return m_begin == 0; }
     constexpr size_t nofItems() const noexcept { return (sizeof(m_data) - m_end) / sizeof(uint16_t); }
     constexpr size_t size() const noexcept { return sizeof(m_data) - bytesLeft(); }
+    uint16_t toIndex(const uint8_t* pos) const { return static_cast<uint16_t>(pos - m_data); }
 
+ 
     constexpr size_t bytesLeft() const noexcept
     {
         assert(m_end >= m_begin);
         return m_end - m_begin;
     }
 
-    constexpr bool hasSpace(const ByteString& key) const noexcept
+    constexpr bool hasSpace(ByteStringView key) const noexcept
     {
-        size_t size = key.size() + sizeof(PageIndex) + sizeof(uint16_t);
+        size_t size = key.size() + 1 + sizeof(PageIndex) + sizeof(uint16_t);
         return size <= bytesLeft();
     }
 
@@ -66,7 +69,7 @@ public:
     constexpr ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
-        return ByteStringView(m_data + *it);
+        return ByteStringView::fromStream(m_data + *it);
     }
 
     constexpr PageIndex getLeft(const uint16_t* it) const noexcept
@@ -82,17 +85,22 @@ public:
         return getPageId(getKey(it).end());
     }
 
-    void insert(const ByteString& key, PageIndex right) noexcept
+    uint16_t* lowerBound(ByteStringView key) const noexcept
+    {
+        TableKeyCompare keyCmp(m_data);
+        return std::lower_bound(beginTable(), endTable(), key, keyCmp);
+    }
+
+    void insert(ByteStringView key, PageIndex right) noexcept
     {
         assert(hasSpace(key));
 
         uint16_t begin = m_begin;
-        std::copy(key.begin(), key.end(), m_data + m_begin);
-        setPageId(m_data + m_begin + key.size(), right);
-        m_begin += key.size() + sizeof(PageIndex);
+        auto end = toStream(key, m_data + m_begin);
+        end = setPageId(end, right);
+        m_begin = toIndex(end);
 
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         std::copy(beginTable(), it, beginTable() - 1);
         *(it - 1) = begin;
         m_end -= sizeof(uint16_t);
@@ -100,39 +108,34 @@ public:
 
     uint16_t* findKey(ByteStringView key) const noexcept
     {
-        KeyCmp keyCmp(m_data);
-        auto it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         assert(nofItems() > 0);
         if (it == endTable())
             --it;
         return it;
     }
 
-    PageIndex findPage(const ByteString& key) const noexcept
+    PageIndex findPage(ByteStringView key) const noexcept
     {
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
         if (it == endTable())
             return getLeft(it);
-        ByteStringView kentry(m_data + *it);
-        if (kentry == key)
+        if (getKey(it) == key)
             return getRight(it);
         return getLeft(it);
     }
 
-    void remove(const ByteString& key) noexcept
+    void remove(ByteStringView key) noexcept
     {
         assert(nofItems() > 0);
-
-        KeyCmp keyCmp(m_data);
-        uint16_t* it = std::lower_bound(beginTable(), endTable(), key, keyCmp);
+        uint16_t* it = lowerBound(key);
 
         // make sure that we can delete the key and its *right* PageId
         if (it == endTable())
             --it;
         else
         {
-            if (ByteStringView(m_data + *it) != key)
+            if (getKey(it) != key)
             {
                 // must be the left PageId
                 if (it == beginTable())
@@ -143,12 +146,11 @@ public:
         }
         assert(getRight(it) == findPage(key));
 
-        ByteStringView kentry(m_data + *it);
         uint16_t index = *it;
         // copy what comes after to this place
-        uint16_t size = kentry.size() + sizeof(PageIndex);
-        ;
-        std::copy(m_data + *it + size, m_data + m_begin, kentry.begin());
+        const uint8_t* end = getKey(it).end() + sizeof(PageIndex);
+        uint16_t size = toIndex(end) - *it;
+        std::copy(end, (const uint8_t*) m_data + m_begin, m_data + *it);
         m_begin -= size;
 
         // copy what comes before to this place
@@ -169,12 +171,12 @@ public:
         assert(it != tmp.endTable());
         fill(tmp, tmp.beginTable(), it);
         rightNode->fill(tmp, it + 1, tmp.endTable());
-        ByteString middleKey(tmp.m_data + *it);
+        ByteString middleKey = ByteStringView::fromStream(tmp.m_data + *it);
         return middleKey;
     }
 
     // returns middle key
-    ByteString split(InnerNode* rightNode, const ByteString& key, PageIndex page) noexcept
+    ByteString split(InnerNode* rightNode, ByteStringView key, PageIndex page) noexcept
     {
         auto keyMiddle = split(rightNode);
 
@@ -229,8 +231,8 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            ByteStringView key(from.m_data + *it);
-            data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
+            auto end = from.getKey(it).end() + sizeof(PageIndex);
+            data = std::copy(from.m_data + *it, end, data);
             idx++;
         }
         assert(idx == beginTable());
@@ -248,8 +250,8 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            ByteStringView key(from.m_data + *it);
-            data = std::copy(key.begin(), key.end() + sizeof(PageIndex), data);
+            auto end = from.getKey(it).end() + sizeof(PageIndex);
+            data = std::copy(from.m_data + *it, end, data);
             idx++;
         }
         assert(idx == endTable());
@@ -278,10 +280,10 @@ private:
         return res;
     }
 
-    void setPageId(uint8_t* dest, PageIndex page) noexcept
+    uint8_t* setPageId(uint8_t* dest, PageIndex page) noexcept
     {
         const uint8_t* src = (uint8_t*) &page;
-        std::copy(src, src + sizeof(PageIndex), dest);
+        return std::copy(src, src + sizeof(PageIndex), dest);
     }
 
     const uint16_t* findSplitPoint(size_t splitPoint) const noexcept
@@ -289,8 +291,7 @@ private:
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
         {
-            ByteStringView keyEntry(m_data + *it);
-            size += keyEntry.size() + sizeof(PageIndex);
+            size += (toIndex(getKey(it).end()) + sizeof(PageIndex)) - *it;
             if (size > splitPoint)
                 return it;
         }

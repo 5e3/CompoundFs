@@ -8,49 +8,6 @@
 
 using namespace TxFs;
 
-TEST(ByteString, Ctor)
-{
-    ByteString a;
-    ASSERT_EQ(a.size() , 1);
-
-    ByteString b("Nils");
-    ASSERT_EQ(b.size() , 5);
-
-    ByteString c("Senta");
-    ASSERT_TRUE(!(b == c));
-    ASSERT_EQ(b , b);
-
-    ByteString d = c;
-    ASSERT_EQ(d , c);
-    ASSERT_NE(d.begin() , c.begin());
-
-    b = d;
-    ASSERT_EQ(b , c);
-    ASSERT_NE(b.begin() , c.begin());
-
-    ByteString e(b.begin());
-    ASSERT_EQ(e , b);
-    ASSERT_NE(e.begin() , b.begin());
-}
-
-TEST(ByteStringView, Transformations)
-{
-    ByteString b("Senta");
-    ByteStringView br = b;
-    ASSERT_EQ(br.begin() , b.begin());
-
-    ByteString c(std::move(b));
-    ASSERT_EQ(br.begin() , c.begin());
-
-    b = br; // reassignment after move is legal
-    ASSERT_NE(br.begin() , b.begin());
-    ASSERT_EQ(br , b);
-
-    br = b;
-    c = std::move(b);
-    ASSERT_EQ(br.begin() , c.begin());
-}
-
 TEST(Node, hasPageSize)
 {
     Leaf l;

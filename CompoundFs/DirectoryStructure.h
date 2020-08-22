@@ -4,7 +4,7 @@
 #include "CacheManager.h"
 #include "FreeStore.h"
 #include "BTree.h"
-#include "DirectoryObjects.h"
+#include "TreeValue.h"
 #include <memory>
 #include <cstdint>
 
@@ -21,24 +21,24 @@ public:
     static constexpr Folder Root { 0 };
 
 public:
-    DirectoryKey(std::string_view name)
+    DirectoryKey(ByteStringView name)
     {
-        m_key.pushBack(Root);
-        m_key.pushBack(name);
+        m_key.push(Root);
+        m_key.push(name); 
     }
 
-    DirectoryKey(Folder folder, std::string_view name)
+    DirectoryKey(Folder folder, ByteStringView name)
     {
-        m_key.pushBack(folder);
-        m_key.pushBack(name);
+        m_key.push(folder);
+        m_key.push(name);
     }
 
-    DirectoryKey(Folder folder) noexcept { m_key.pushBack(folder); }
+    DirectoryKey(Folder folder) noexcept { m_key.push(folder); }
 
-    constexpr ByteStringView asByteStringView() const noexcept { return m_key; }
+    operator ByteStringView () const noexcept { return m_key; }
 
 private:
-    MutableByteString m_key;
+    ByteStringStream m_key;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -55,10 +55,9 @@ public:
     std::optional<Folder> makeSubFolder(const DirectoryKey& dkey);
     std::optional<Folder> subFolder(const DirectoryKey& dkey) const;
 
-    bool addAttribute(const DirectoryKey& dkey, const ByteStringOps::Variant& attribute);
-    std::optional<ByteStringOps::Variant> getAttribute(const DirectoryKey& dkey) const;
+    bool addAttribute(const DirectoryKey& dkey, const TreeValue& attribute);
+    std::optional<TreeValue> getAttribute(const DirectoryKey& dkey) const;
 
-    size_t remove(const DirectoryKey& dkey);
     size_t remove(ByteStringView key);
     size_t remove(Folder folder);
 
@@ -96,9 +95,9 @@ public:
     constexpr bool operator!=(const Cursor& rhs) const noexcept { return !(m_cursor == rhs.m_cursor); }
 
     std::pair<Folder,std::string_view> key() const;
-    ByteStringOps::Variant value() const { return ByteStringOps::toVariant(m_cursor.value());}
-    DirectoryObjType getValueType() const { return ByteStringOps::getType(m_cursor.value()); }
-    std::string getValueTypeName() const { return ByteStringOps::getTypeName(m_cursor.value()); }
+    TreeValue value() const { return TreeValue::fromStream(m_cursor.value());}
+    TreeValue::Type getValueType() const { return value().getType(); }
+    std::string getValueTypeName() const { return std::string(value().getTypeName()); }
     constexpr explicit operator bool() const noexcept { return m_cursor.operator bool(); }
 
 private:
@@ -109,12 +108,12 @@ private:
 
 inline DirectoryStructure::Cursor DirectoryStructure::find(const DirectoryKey& dkey) const
 {
-    return m_btree.find(dkey.asByteStringView());
+    return m_btree.find(dkey);
 }
 
 inline DirectoryStructure::Cursor DirectoryStructure::begin(const DirectoryKey& dkey) const
 {
-    return m_btree.begin(dkey.asByteStringView());
+    return m_btree.begin(dkey);
 }
 
 inline DirectoryStructure::Cursor DirectoryStructure::next(Cursor cursor) const 

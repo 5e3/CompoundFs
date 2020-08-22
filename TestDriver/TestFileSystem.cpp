@@ -49,28 +49,28 @@ TEST(FileSystem, readAfterWrite)
 {
     auto fs = makeFileSystem();
     auto handle = fs.appendFile("folder/file.file").value();
-    ByteString data("test");
+    ByteStringView data("test");
     auto size = data.size();
-    ASSERT_EQ(size , fs.write(handle, data.begin(), data.size()));
+    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
     fs.close(handle);
 
     uint8_t buf[10];
     auto readHandle = fs.readFile("folder/file.file");
     ASSERT_TRUE(readHandle);
     ASSERT_EQ(size , fs.read(*readHandle, buf, sizeof(buf)));
-    ASSERT_EQ(data , ByteString(buf));
+    ASSERT_EQ(data , ByteStringView(buf,size));
 }
 
 TEST(FileSystem, readAfterAppendAfterWrite)
 {
     auto fs = makeFileSystem();
     auto handle = fs.createFile("folder/file.file").value();
-    ByteString data("test");
+    ByteStringView data("test");
     auto size = data.size();
-    ASSERT_EQ(size , fs.write(handle, data.begin(), data.size()));
+    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
     fs.close(handle);
     handle = fs.appendFile("folder/file.file").value();
-    ASSERT_EQ(size , fs.write(handle, data.begin(), data.size()));
+    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
     fs.close(handle);
 
     uint8_t buf[20];
@@ -131,7 +131,7 @@ TEST(FileSystem, attribute)
 
     auto attribute = fs.getAttribute("folder/attribute");
     ASSERT_TRUE(attribute);
-    ASSERT_EQ(*attribute , ByteStringOps::Variant(42.42));
+    ASSERT_EQ(attribute->toValue<double>() , 42.42);
 }
 
 TEST(FileSystem, remove)
@@ -151,7 +151,8 @@ TEST(FileSystem, Cursor)
     ASSERT_TRUE(fs.addAttribute("folder/folder/attrib", 5));
     auto cur = fs.find("folder/folder/attrib");
     ASSERT_TRUE(cur);
-    ASSERT_EQ(std::get<int>(cur.value()) , 5);
+    auto attrib = cur.value();
+    ASSERT_EQ(attrib.toValue<int>() , 5);
 }
 
 TEST(FileSystem, commitClosesAllFileHandles)

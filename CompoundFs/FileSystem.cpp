@@ -109,7 +109,7 @@ std::optional<Folder> FileSystem::subFolder(Path path) const
     return m_directoryStructure.subFolder(DirectoryKey(path.m_root, path.m_relativePath));
 }
 
-bool FileSystem::addAttribute(Path path, const ByteStringOps::Variant& attribute)
+bool FileSystem::addAttribute(Path path, const TreeValue& attribute)
 {
     if (!path.create(&m_directoryStructure))
         return false;
@@ -117,7 +117,7 @@ bool FileSystem::addAttribute(Path path, const ByteStringOps::Variant& attribute
     return m_directoryStructure.addAttribute(DirectoryKey(path.m_root, path.m_relativePath), attribute);
 }
 
-std::optional<ByteStringOps::Variant> FileSystem::getAttribute(Path path) const
+std::optional<TreeValue> FileSystem::getAttribute(Path path) const
 {
     if (!path.reduce(&m_directoryStructure))
         return std::nullopt;

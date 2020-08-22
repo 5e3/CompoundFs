@@ -1,7 +1,6 @@
 
 #include "Path.h"
 
-
 using namespace TxFs;
 
 bool Path::create(DirectoryStructure* ds)
@@ -37,5 +36,3 @@ bool Path::subFolderWalk(TFunc&& func)
     m_root = root;
     return true;
 }
-
-

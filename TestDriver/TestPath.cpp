@@ -4,7 +4,6 @@
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/Path.h"
 #include "../CompoundFs/DirectoryStructure.h"
-#include "../CompoundFs/FileSystem.h"
 
 using namespace TxFs;
 

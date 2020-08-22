@@ -29,8 +29,8 @@ TEST(FileWriter, WriteCloseCreatesFileDescriptor)
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
-    ByteString data("Test");
-    f.write(data.begin(), data.end());
+    ByteStringView data("Test");
+    f.write(data.data(), data.end());
     FileDescriptor fd = f.close();
 
     ASSERT_NE(fd , FileDescriptor());
@@ -44,8 +44,8 @@ TEST(FileWriter, WriteCloseCreatesFileTablePage)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    ByteString data("Test");
-    f.write(data.begin(), data.end());
+    ByteStringView data("Test");
+    f.write(data.data(), data.end());
     FileDescriptor fd = f.close();
     ASSERT_EQ(fd.m_first , fd.m_last);
 
@@ -63,10 +63,10 @@ TEST(FileWriter, MultipleWritesCreatesDescOfAppropriateSize)
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
-    ByteString data("Test");
+    ByteStringView data("Test");
 
     for (int i = 0; i < 10; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     FileDescriptor fd = f.close();
 
@@ -80,16 +80,16 @@ TEST(FileWriter, MultipleOpenCreatesDescOfAppropriateSize)
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
 
     FileWriter f(cm);
-    ByteString data("Test");
+    ByteStringView data("Test");
 
     for (int i = 0; i < 10; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     FileDescriptor fd = f.close();
 
     f.openAppend(fd);
     for (int i = 0; i < 10; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     fd = f.close();
 
@@ -104,9 +104,9 @@ TEST(FileWriter, SmallWritesOverPageBoundery)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    ByteString data("Test");
+    ByteStringView data("Test0");
     for (int i = 0; i < 1000; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     FileDescriptor fd = f.close();
     ASSERT_EQ(fd.m_first , fd.m_last);
@@ -127,9 +127,9 @@ TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
     TypedCacheManager tcm(cm);
 
     FileWriter f(cm);
-    ByteString data("Test");
+    ByteStringView data("Test0");
     for (int i = 0; i < 1000; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     FileDescriptor fd = f.close();
     ASSERT_EQ(fd.m_first , fd.m_last);
@@ -137,7 +137,7 @@ TEST(FileWriter, SmallWritesWithAppendOverPageBoundery)
 
     f.openAppend(fd);
     for (int i = 0; i < 1000; i++)
-        f.write(data.begin(), data.end());
+        f.write(data.data(), data.end());
 
     fd = f.close();
     ASSERT_EQ(fd.m_first , fd.m_last);

@@ -85,7 +85,7 @@ void ReadOnlyFile<TFile>::truncate(size_t)
 template <typename TFile>
 Lock ReadOnlyFile<TFile>::defaultAccess()
 {
-    return readAccess();
+    return TFile::readAccess();
 }
 
 template <typename TFile>
