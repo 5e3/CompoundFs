@@ -44,7 +44,7 @@ set (Headers
 		PageDef.h
 		PageMetaData.h
 		Path.h
-		RawFileInterface.h
+		FileInterface.h
 		ReadOnlyFile.h
 		TableKeyCompare.h
 		TreeValue.h

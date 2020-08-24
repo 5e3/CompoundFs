@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include "PageAllocator.h"
 #include "LockProtocol.h"
 
@@ -13,7 +13,7 @@
 namespace TxFs
 {
 
-class MemoryFile : public RawFileInterface
+class MemoryFile : public FileInterface
 {
 public:
     MemoryFile();

@@ -5,7 +5,7 @@
 #include "Node.h"
 #include "PageMetaData.h"
 #include "Lock.h"
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <memory>
@@ -19,10 +19,10 @@ struct Cache final
     using DivertedPageIds = std::unordered_map<PageIndex, PageIndex>;
     using NewPageIds = std::unordered_set<PageIndex>;
 
-    RawFileInterface* file() { return m_rawFileInterface.get(); }
-    const RawFileInterface* file() const { return m_rawFileInterface.get(); }
+    FileInterface* file() { return m_fileInterface.get(); }
+    const FileInterface* file() const { return m_fileInterface.get(); }
 
-    std::unique_ptr<RawFileInterface> m_rawFileInterface;
+    std::unique_ptr<FileInterface> m_fileInterface;
     PageCache m_pageCache;
     DivertedPageIds m_divertedPageIds;
     NewPageIds m_newPageIds;

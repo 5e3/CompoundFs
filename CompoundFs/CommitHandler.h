@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include "Cache.h"
 
 #include <vector>

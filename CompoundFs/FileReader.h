@@ -5,7 +5,7 @@
 #include "FileTable.h"
 #include "TypedCacheManager.h"
 #include "PageDef.h"
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include <algorithm>
 
 namespace TxFs
@@ -65,13 +65,13 @@ public:
             PageIndex pageId = m_pageSequence.front().begin();
             if ((pageOffset + blockSize) >= 4096)
             {
-                begin = m_cacheManager.getRawFileInterface()->readPage(pageId, pageOffset, begin,
+                begin = m_cacheManager.getFileInterface()->readPage(pageId, pageOffset, begin,
                                                                        begin + (4096 - pageOffset));
                 nextInterval(1); // remove that page
             }
             else
             {
-                begin = m_cacheManager.getRawFileInterface()->readPage(pageId, pageOffset, begin, begin + blockSize);
+                begin = m_cacheManager.getFileInterface()->readPage(pageId, pageOffset, begin, begin + blockSize);
             }
         }
 
@@ -80,7 +80,7 @@ public:
         while (pages > 0)
         {
             Interval iv = nextInterval((uint32_t) pages);
-            begin = m_cacheManager.getRawFileInterface()->readPages(iv, begin);
+            begin = m_cacheManager.getFileInterface()->readPages(iv, begin);
             pages -= iv.length();
         }
 
@@ -88,7 +88,7 @@ public:
         if (end - begin)
         {
             PageIndex pageId = nextInterval(0).begin();
-            begin = m_cacheManager.getRawFileInterface()->readPage(pageId, 0, begin, end);
+            begin = m_cacheManager.getFileInterface()->readPage(pageId, 0, begin, end);
         }
 
         m_curFilePos += blockSize;

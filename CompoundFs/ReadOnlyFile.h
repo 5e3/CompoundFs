@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include <stdexcept>
 #include <utility>
 
@@ -9,7 +9,7 @@ namespace TxFs
 {
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Decorator for RawFileInterface derivatives. Throws an exception on every write operation.
+/// Decorator for FileInterface derivatives. Throws an exception on every write operation.
 template <typename TFile>
 class ReadOnlyFile : public TFile
 {

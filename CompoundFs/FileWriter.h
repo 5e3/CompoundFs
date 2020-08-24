@@ -7,7 +7,7 @@
 #include "FileTable.h"
 #include "TypedCacheManager.h"
 #include "PageDef.h"
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include <algorithm>
 
 namespace TxFs
@@ -57,7 +57,7 @@ public:
         {
             size_t pageOffset = size_t(m_fileDescriptor.m_fileSize % 4096);
             const uint8_t* newEndInPage = begin + std::min(4096 - pageOffset, blockSize);
-            m_cacheManager.getRawFileInterface()->writePage(m_pageSequence.back().end() - 1, pageOffset, begin,
+            m_cacheManager.getFileInterface()->writePage(m_pageSequence.back().end() - 1, pageOffset, begin,
                                                             newEndInPage);
             begin = newEndInPage;
         }
@@ -68,7 +68,7 @@ public:
         {
             Interval iv = m_cacheManager.allocatePageInterval(pages);
             m_pageSequence.pushBack(iv);
-            m_cacheManager.getRawFileInterface()->writePages(iv, begin);
+            m_cacheManager.getFileInterface()->writePages(iv, begin);
             begin += static_cast<size_t>(iv.length()) * 4096;
             pages -= iv.length();
         }
@@ -78,7 +78,7 @@ public:
         {
             Interval iv = m_cacheManager.allocatePageInterval(1);
             m_pageSequence.pushBack(iv);
-            m_cacheManager.getRawFileInterface()->writePage(iv.begin(), 0, begin, end);
+            m_cacheManager.getFileInterface()->writePage(iv.begin(), 0, begin, end);
         }
         m_fileDescriptor.m_fileSize += blockSize;
 

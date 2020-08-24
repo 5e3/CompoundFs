@@ -8,10 +8,10 @@ namespace TxFs
 class Lock;
 class CommitLock;
 
-class RawFileInterface
+class FileInterface
 {
 public:
-    virtual ~RawFileInterface() = default;
+    virtual ~FileInterface() = default;
 
     virtual Interval newInterval(size_t maxPages) = 0;
     virtual const uint8_t* writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end) = 0;
@@ -30,39 +30,39 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-inline void readPage(const RawFileInterface* rfi, PageIndex idx, void* page)
+inline void readPage(const FileInterface* fi, PageIndex idx, void* page)
 {
     uint8_t* buffer = static_cast<uint8_t*>(page);
-    rfi->readPage(idx, 0, buffer, buffer + 4096);
+    fi->readPage(idx, 0, buffer, buffer + 4096);
 }
-inline void writePage(RawFileInterface* rfi, PageIndex idx, const void* page)
+inline void writePage(FileInterface* fi, PageIndex idx, const void* page)
 {
     const uint8_t* buffer = static_cast<const uint8_t*>(page);
-    rfi->writePage(idx, 0, buffer, buffer + 4096);
+    fi->writePage(idx, 0, buffer, buffer + 4096);
 }
 
-inline void copyPage(RawFileInterface* rfi, PageIndex from, PageIndex to)
+inline void copyPage(FileInterface* fi, PageIndex from, PageIndex to)
 {
     uint8_t buffer[4096];
-    readPage(rfi, from, buffer);
-    writePage(rfi, to, buffer);
+    readPage(fi, from, buffer);
+    writePage(fi, to, buffer);
 }
 
-inline bool isEqualPage(const RawFileInterface* rfi, PageIndex p1, PageIndex p2)
+inline bool isEqualPage(const FileInterface* fi, PageIndex p1, PageIndex p2)
 {
     std::vector<uint8_t[4096]> buffer(2);
-    readPage(rfi, p1, buffer[0]);
-    readPage(rfi, p2, buffer[1]);
+    readPage(fi, p1, buffer[0]);
+    readPage(fi, p2, buffer[1]);
     return memcmp(buffer[0], buffer[1], 4096) == 0;
 }
 
 template<typename TCont>
-inline void clearPages(RawFileInterface* rfi, const TCont& cont)
+inline void clearPages(FileInterface* fi, const TCont& cont)
 {
     uint8_t buf[4096];
     memset(buf, 0, sizeof(buf));
     for (auto idx: cont)
-        writePage(rfi, idx, buf);
+        writePage(fi, idx, buf);
 }
 
 }

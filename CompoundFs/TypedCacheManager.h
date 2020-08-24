@@ -45,7 +45,7 @@ public:
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }
 
-    RawFileInterface* getRawFileInterface() const { return m_cacheManager->getRawFileInterface(); }
+    FileInterface* getFileInterface() const { return m_cacheManager->getFileInterface(); }
     Interval allocatePageInterval(size_t maxPages) { return m_cacheManager->allocatePageInterval(maxPages); }
 
 private:

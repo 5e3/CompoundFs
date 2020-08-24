@@ -1,6 +1,6 @@
 
 #include "CacheManager.h"
-#include "RawFileInterface.h"
+#include "FileInterface.h"
 #include "TypedCacheManager.h"
 #include "LogPage.h"
 #include "CommitHandler.h"
@@ -12,9 +12,9 @@
 
 using namespace TxFs;
 
-CacheManager::CacheManager(std::unique_ptr<RawFileInterface> rfi, uint32_t maxPages) noexcept
+CacheManager::CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages) noexcept
     : m_pageMemoryAllocator(maxPages) 
-    , m_cache { std::move(rfi) }
+    , m_cache { std::move(fi) }
     , m_maxCachedPages(maxPages)
 {
     m_cache.m_lock = m_cache.file()->defaultAccess();
@@ -132,7 +132,7 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
             m_pageIntervalAllocator = std::function<Interval(size_t)>();
         return iv;
     }
-    return m_cache.m_rawFileInterface->newInterval(maxPages);
+    return m_cache.m_fileInterface->newInterval(maxPages);
 }
 
 /// Find all pages that are currently not pinned.
@@ -180,7 +180,7 @@ void CacheManager::removeFromCache(std::vector<PrioritizedPage>::iterator begin,
 std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
 {
     std::vector<std::pair<PageIndex, PageIndex>> res;
-    auto size = m_cache.m_rawFileInterface->currentSize();
+    auto size = m_cache.m_fileInterface->currentSize();
     if (!size)
         return res;
 
@@ -207,8 +207,8 @@ CommitHandler CacheManager::buildCommitHandler()
 }
 
 // TODO: Needed for testing. Unclear what we do with this?
-std::unique_ptr<RawFileInterface> CacheManager::handOverFile()
+std::unique_ptr<FileInterface> CacheManager::handOverFile()
 {
     m_cache.m_lock.release(); // we have to release that lock
-    return std::move(m_cache.m_rawFileInterface);
+    return std::move(m_cache.m_fileInterface);
 }

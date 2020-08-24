@@ -216,7 +216,7 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
         bt.insert(s.c_str(), s.c_str());
     }
 
-    auto size = cm->getRawFileInterface()->currentSize();
+    auto size = cm->getFileInterface()->currentSize();
 
     for (auto key: keys)
     {
@@ -270,7 +270,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
         auto res = bt.remove(keys[i].c_str());
         ASSERT_TRUE(res);
     }
-    clearPages(cm->getRawFileInterface(), bt.getFreePages());
+    clearPages(cm->getFileInterface(), bt.getFreePages());
 
     for (size_t i = 0; i < 1000; i++)
     {
@@ -294,7 +294,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
         ASSERT_TRUE(res);
     }
     ASSERT_TRUE(bt.getFreePages().size() > size);
-    clearPages(cm->getRawFileInterface(), bt.getFreePages());
+    clearPages(cm->getFileInterface(), bt.getFreePages());
 
     auto cursor = bt.begin("");
     for (size_t i = 0; i < 800; i++)

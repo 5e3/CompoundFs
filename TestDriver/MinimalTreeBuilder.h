@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "../CompoundFs/RawFileInterface.h"
+#include "../CompoundFs/FileInterface.h"
 #include "../CompoundFs/CacheManager.h"
 #include "../CompoundFs/TypedCacheManager.h"
 #include "../CompoundFs/InnerNode.h"
@@ -23,8 +23,8 @@ struct MinimalTreeBuilder
         PageIndex m_index;
     };
 
-    MinimalTreeBuilder(std::unique_ptr<RawFileInterface> rfi)
-        : m_cacheManager(std::make_shared<CacheManager>(std::move(rfi)))
+    MinimalTreeBuilder(std::unique_ptr<FileInterface> fi)
+        : m_cacheManager(std::make_shared<CacheManager>(std::move(fi)))
         , m_typedCacheManager(m_cacheManager)
         , m_leafKey(1)
     {}

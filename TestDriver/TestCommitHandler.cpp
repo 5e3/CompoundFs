@@ -12,7 +12,7 @@ using namespace TxFs;
 
 TEST(CommitHandler, getDirtyPageIds)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         // create new pages
         CacheManager cm(std::move(file));
@@ -49,7 +49,7 @@ TEST(CommitHandler, getDirtyPageIds)
 
 TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         // prepare some pages with contents
         CacheManager cm(std::move(file));
@@ -87,16 +87,16 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
     for (auto [orig, cpy]: origToCopyPages)
     {
         ASSERT_NE(orig , cpy);
-        ASSERT_TRUE(TxFs::isEqualPage(cm.getRawFileInterface(), orig, cpy));
+        ASSERT_TRUE(TxFs::isEqualPage(cm.getFileInterface(), orig, cpy));
         uint8_t buffer[4096];
-        TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
+        TxFs::readPage(cm.getFileInterface(), orig, buffer);
         ASSERT_TRUE(*buffer < 100);
     }
 }
 
 TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         // prepare some pages with contents
         CacheManager cm(std::move(file));
@@ -133,7 +133,7 @@ TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
     for (auto orig: dirtyPageIds)
     {
         uint8_t buffer[4096];
-        TxFs::readPage(cm.getRawFileInterface(), orig, buffer);
+        TxFs::readPage(cm.getFileInterface(), orig, buffer);
         ASSERT_TRUE(*buffer > 100);
     }
 }

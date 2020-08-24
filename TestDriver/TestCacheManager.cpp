@@ -10,16 +10,16 @@ using namespace TxFs;
 
 namespace
 {
-    uint8_t readByte(const RawFileInterface* rfi, PageIndex idx)
+    uint8_t readByte(const FileInterface* fi, PageIndex idx)
     {
         uint8_t res;
-        rfi->readPage(idx, 0, &res, &res + 1);
+        fi->readPage(idx, 0, &res, &res + 1);
         return res;
     }
 
-    void writeByte(RawFileInterface* rfi, PageIndex idx, uint8_t val)
+    void writeByte(FileInterface* fi, PageIndex idx, uint8_t val)
     {
-        rfi->writePage(idx, 0, &val, &val + 1);
+        fi->writePage(idx, 0, &val, &val + 1);
     }
     }
 
@@ -42,7 +42,7 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     }
     auto p2 = cm.loadPage(idx);
     ASSERT_EQ(*p2.m_page , 0xaa);
-    ASSERT_NE(readByte(cm.getRawFileInterface(), idx) , *p2.m_page);
+    ASSERT_NE(readByte(cm.getFileInterface(), idx) , *p2.m_page);
 }
 
 TEST(CacheManager, loadPageIsCachedButNotWritten)
@@ -57,7 +57,7 @@ TEST(CacheManager, loadPageIsCachedButNotWritten)
     ASSERT_EQ(p , p2);
 
     *std::const_pointer_cast<uint8_t>(p.m_page) = 99;
-    ASSERT_EQ(readByte(cm.getRawFileInterface(), id) , 42);
+    ASSERT_EQ(readByte(cm.getFileInterface(), id) , 42);
 }
 
 TEST(CacheManager, trimReducesSizeOfCache)
@@ -85,7 +85,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     cm.trim(0);
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getRawFileInterface(), i) , i + 1);
+        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
@@ -103,10 +103,10 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     ASSERT_EQ(cm.trim(0) , 2);
 
     for (int i = 1; i < 9; i++)
-        ASSERT_EQ(readByte(cm.getRawFileInterface(), i) , i + 1);
+        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
 
-    ASSERT_NE(readByte(cm.getRawFileInterface(), 0) , *p1.m_page);
-    ASSERT_NE(readByte(cm.getRawFileInterface(), 9) , *p2.m_page);
+    ASSERT_NE(readByte(cm.getFileInterface(), 0) , *p1.m_page);
+    ASSERT_NE(readByte(cm.getFileInterface(), 9) , *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
@@ -130,7 +130,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getRawFileInterface(), i) , i + 10);
+        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
@@ -154,12 +154,12 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getRawFileInterface(), i) , i + 1);
+        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)
@@ -188,7 +188,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)
@@ -214,7 +214,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         *p = i + 20;
     }
     cm.trim(0);
-    ASSERT_EQ(cm.getRawFileInterface()->currentSize() , 20);
+    ASSERT_EQ(cm.getFileInterface()->currentSize() , 20);
 
     for (int i = 0; i < 10; i++)
     {
@@ -225,7 +225,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 
 TEST(CacheManager, dirtyPagesGetDiverted)
 {
-    std::unique_ptr<RawFileInterface> file = std::make_unique<MemoryFile>();
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
     {
         CacheManager cm(std::move(file));
         for (int i = 0; i < 10; i++)

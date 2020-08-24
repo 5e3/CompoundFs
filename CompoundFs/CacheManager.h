@@ -30,7 +30,7 @@ class CommitHandler;
 class CacheManager final
 {
 public:
-    CacheManager(std::unique_ptr<RawFileInterface> rfi, uint32_t maxPages = 256) noexcept;
+    CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages = 256) noexcept;
     CacheManager(CacheManager&&) = default;
 
     template <typename TCallable>
@@ -46,8 +46,8 @@ public:
 
     CommitHandler buildCommitHandler();
     std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
-    RawFileInterface* getRawFileInterface() { return m_cache.file(); }
-    std::unique_ptr<RawFileInterface> handOverFile();
+    FileInterface* getFileInterface() { return m_cache.file(); }
+    std::unique_ptr<FileInterface> handOverFile();
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }

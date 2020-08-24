@@ -28,25 +28,25 @@ void CommitHandler::commit()
         return;
     }
 
-    auto fileSize = m_cache.m_rawFileInterface->currentSize();
+    auto fileSize = m_cache.m_fileInterface->currentSize();
     {
         // order the file writes: make sure the copies are visible before the Logs
         auto origToCopyPages = copyDirtyPages(dirtyPageIds);
-        m_cache.m_rawFileInterface->flushFile();
+        m_cache.m_fileInterface->flushFile();
 
         // make sure the Logs are visible before we overwrite original contents
         writeLogs(origToCopyPages);
-        m_cache.m_rawFileInterface->flushFile();
+        m_cache.m_fileInterface->flushFile();
     }
 
     exclusiveLockedCommit(dirtyPageIds);
-    m_cache.m_rawFileInterface->flushFile();
-    m_cache.m_rawFileInterface->truncate(fileSize);
+    m_cache.m_fileInterface->flushFile();
+    m_cache.m_fileInterface->truncate(fileSize);
 }
 
 void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds)
 {
-    auto commitLock = m_cache.m_rawFileInterface->commitAccess(std::move(m_cache.m_lock));
+    auto commitLock = m_cache.m_fileInterface->commitAccess(std::move(m_cache.m_lock));
     updateDirtyPages(dirtyPageIds);
     writeCachedPages();
 
@@ -58,7 +58,7 @@ void CommitHandler::lockedWriteCachedPages()
     if (m_cache.m_newPageIds.empty())
         return;
 
-    auto commitLock = m_cache.m_rawFileInterface->commitAccess(std::move(m_cache.m_lock));
+    auto commitLock = m_cache.m_fileInterface->commitAccess(std::move(m_cache.m_lock));
     writeCachedPages();
     m_cache.m_lock = commitLock.release();
 }
@@ -87,7 +87,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CommitHandler::copyDirtyPages(const
     std::vector<std::pair<PageIndex, PageIndex>> origToCopyPages;
     origToCopyPages.reserve(dirtyPageIds.size());
 
-    auto interval = m_cache.m_rawFileInterface->newInterval(dirtyPageIds.size());
+    auto interval = m_cache.m_fileInterface->newInterval(dirtyPageIds.size());
     assert(interval.length() == dirtyPageIds.size()); // here the file is just growing
     auto nextPage = interval.begin();
 
