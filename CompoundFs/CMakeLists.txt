@@ -7,7 +7,6 @@ set (Sources
 		CacheManager.cpp
 		CommitHandler.cpp
 		Composit.cpp
-		DirectoryObjects.cpp
 		DirectoryStructure.cpp
 		FileSharedMutex.cpp
 		FileSystem.cpp
@@ -24,7 +23,6 @@ set (Headers
 		CacheManager.h
 		CommitHandler.h
 		Composit.h
-		DirectoryObjects.h
 		DirectoryStructure.h
 		FileDescriptor.h
 		FileReader.h
