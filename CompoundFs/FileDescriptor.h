@@ -6,7 +6,7 @@
 namespace TxFs
 {
 
-struct FileDescriptor
+struct FileDescriptor final
 {
     PageIndex m_first;
     PageIndex m_last;

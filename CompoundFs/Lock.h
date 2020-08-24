@@ -7,7 +7,7 @@
 namespace TxFs
 {
 
-class Lock
+class Lock final
 {
 private:
     using ReleaseFunc = void (*)(void*);
@@ -36,7 +36,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////
 
-class CommitLock
+class CommitLock final
 {
 public:
     constexpr CommitLock() noexcept = default;

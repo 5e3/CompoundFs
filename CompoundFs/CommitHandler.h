@@ -12,7 +12,7 @@
 namespace TxFs
 {
 
-class CommitHandler
+class CommitHandler final
 {
 public:
     CommitHandler(Cache& cache) noexcept;

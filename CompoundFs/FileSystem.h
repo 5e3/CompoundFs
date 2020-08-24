@@ -12,7 +12,7 @@ class Path;
 
 //////////////////////////////////////////////////////////////////////////
 
-class FileSystem
+class FileSystem final
 {
 public:
     using Cursor = DirectoryStructure::Cursor;

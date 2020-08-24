@@ -11,7 +11,7 @@
 namespace TxFs
 {
 
-class FileTable
+class FileTable final
 {
     uint16_t m_begin;
     uint16_t m_end;

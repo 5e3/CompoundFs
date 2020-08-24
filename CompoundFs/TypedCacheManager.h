@@ -8,7 +8,7 @@
 namespace TxFs
 {
 
-class TypedCacheManager
+class TypedCacheManager final
 {
 public:
     TypedCacheManager(const std::shared_ptr<CacheManager>& cacheManager)

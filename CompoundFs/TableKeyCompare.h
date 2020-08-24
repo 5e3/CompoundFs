@@ -6,7 +6,7 @@
 namespace TxFs
 {
 
-class TableKeyCompare
+class TableKeyCompare final
 {
 
 public:

@@ -13,7 +13,7 @@ namespace TxFs
 
 //////////////////////////////////////////////////////////////////////////
 
-class FileReader
+class FileReader final
 {
 public:
     FileReader(const std::shared_ptr<CacheManager>& cacheManager)

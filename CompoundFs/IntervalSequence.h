@@ -14,7 +14,7 @@
 namespace TxFs
 {
 
-class IntervalSequence
+class IntervalSequence final
 {
 public:
     void pushBack(Interval iv)

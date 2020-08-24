@@ -7,7 +7,7 @@
 
 namespace TxFs
 {
-    class FileSharedMutex
+    class FileSharedMutex final
     {
     public:
         FileSharedMutex(void* handle, uint64_t begin, uint64_t end)

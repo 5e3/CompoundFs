@@ -19,7 +19,7 @@ namespace TxFs
 /// during its commit-phase in close() it will use its own page-pool to
 /// satisfy page-allocation requests for meta-data pages.
 
-class FreeStore
+class FreeStore final
 {
 public:
     FreeStore(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor fd)

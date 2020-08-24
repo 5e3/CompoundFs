@@ -16,7 +16,7 @@ namespace TxFs
 #pragma pack(push)
 #pragma pack(1)
 
-class InnerNode : public Node
+class InnerNode final : public Node
 {
     uint8_t m_data[4087];
     PageIndex m_leftMost;

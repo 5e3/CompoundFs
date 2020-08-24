@@ -12,7 +12,7 @@ namespace TxFs
 
 /// Implements the lock-protocol.
 template <typename TSharedMutex, typename TMutex>
-class LockProtocol
+class LockProtocol final
 {
 public:
     Lock readAccess();

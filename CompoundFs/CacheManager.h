@@ -27,7 +27,7 @@ class CommitHandler;
 /// persists enough information to allow rollback from *any* incomplete update
 /// operation. As a result a write operation either completes or does not
 /// affect the previous state of the file therefore the file is never corrupted.
-class CacheManager
+class CacheManager final
 {
 public:
     CacheManager(std::unique_ptr<RawFileInterface> rfi, uint32_t maxPages = 256) noexcept;

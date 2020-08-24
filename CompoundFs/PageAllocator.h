@@ -8,7 +8,7 @@
 
 namespace TxFs
 {
-class PageAllocator
+class PageAllocator final
 {
 public:
     PageAllocator(size_t pagesPerBlock=16);

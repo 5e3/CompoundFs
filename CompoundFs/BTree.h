@@ -20,7 +20,7 @@ class InnerNode;
 
 //////////////////////////////////////////////////////////////////////////
 
-class BTree
+class BTree final
 {
     using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
 
@@ -60,7 +60,7 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 
-class BTree::Cursor
+class BTree::Cursor final
 {
     friend class BTree;
 

@@ -16,7 +16,7 @@ namespace TxFs
 #pragma pack(push)
 #pragma pack(1)
 
-class Leaf : public Node
+class Leaf final : public Node
 {
     uint8_t m_data[4083];
     PageIndex m_prev;

@@ -13,7 +13,7 @@
 namespace TxFs
 {
 
-struct Cache
+struct Cache final
 {
     using PageCache = std::unordered_map<PageIndex, CachedPage>;
     using DivertedPageIds = std::unordered_map<PageIndex, PageIndex>;

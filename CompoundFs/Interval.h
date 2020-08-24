@@ -6,7 +6,7 @@
 
 namespace TxFs
 {
-class Interval
+class Interval final
 {
 public:
     constexpr Interval() noexcept

@@ -13,7 +13,7 @@
 namespace TxFs
 {
 
-class FileWriter
+class FileWriter final
 {
 public:
     FileWriter(const std::shared_ptr<CacheManager>& cacheManager, size_t highWaterMark = 250000)

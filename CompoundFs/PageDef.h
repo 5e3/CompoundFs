@@ -10,7 +10,7 @@ template <typename TPage>
 struct PageDef;
 
 template <typename TPage>
-struct ConstPageDef
+struct ConstPageDef final
 {
     std::shared_ptr<const TPage> m_page;
     PageIndex m_index;
@@ -38,7 +38,7 @@ struct ConstPageDef
 /////////////////////////////////////////////////////////
 
 template <typename TPage>
-struct PageDef
+struct PageDef final
 {
     std::shared_ptr<TPage> m_page;
     PageIndex m_index;

@@ -5,7 +5,7 @@
 namespace TxFs
 {
 
-class Path
+class Path final
 {
 public:
     static constexpr Folder AbsoluteRoot = DirectoryKey::Root;

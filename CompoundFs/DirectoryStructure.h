@@ -15,7 +15,7 @@ enum class Folder : uint32_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class DirectoryKey
+class DirectoryKey final
 {
 public:
     static constexpr Folder Root { 0 };
@@ -43,7 +43,7 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class DirectoryStructure
+class DirectoryStructure final
 {
 public:
     class Cursor;
@@ -81,7 +81,7 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 
-class DirectoryStructure::Cursor
+class DirectoryStructure::Cursor final
 {
     friend class DirectoryStructure;
 

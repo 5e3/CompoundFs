@@ -17,7 +17,7 @@ using EnableWithString = std::enable_if_t<std::is_convertible_v<T, std::string_v
 template <typename T>
 using DisableWithString = std::enable_if_t<!std::is_same_v<T, std::string>>;
 
-class ByteStringView
+class ByteStringView final
 {
 public:
     constexpr ByteStringView() noexcept
@@ -84,7 +84,7 @@ inline bool operator<(ByteStringView lhs, ByteStringView rhs)
     return std::lexicographical_compare(lhs.m_data, lhs.m_data + lhs.m_length, rhs.m_data, rhs.m_data + rhs.m_length);
 }
 
-class ByteString
+class ByteString final
 {
 public:
     ByteString() noexcept = default;
@@ -123,7 +123,7 @@ private:
 template<typename T>
 using EnableSimpleTypes = std::enable_if_t<std::is_trivially_copyable<T>::value>;
 
-class ByteStringStream
+class ByteStringStream final
 {
 public:
     ByteStringStream()

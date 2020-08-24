@@ -8,7 +8,7 @@ namespace TxFs
 {
 using PageIndex = uint32_t;
 
-class LogPage
+class LogPage final
 {
 public:
     struct PageCopies

@@ -13,6 +13,7 @@ template <class... Ts> overload(Ts...) -> overload<Ts...>;
 template<typename... Ts>
 void defaultCreate(size_t index, std::variant<Ts...>& var)
 {
+    index = std::min(index, size_t(TreeValue::Type::Unknown));
     static std::array<std::variant<Ts...>, sizeof...(Ts)> defaultCreatedTypes { Ts()... };
     var = defaultCreatedTypes.at(index);
 }

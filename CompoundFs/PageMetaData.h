@@ -33,7 +33,7 @@ struct PageMetaData
 
 ///////////////////////////////////////////////////////////////////////////
 
-struct CachedPage : PageMetaData
+struct CachedPage final : PageMetaData
 {
     std::shared_ptr<uint8_t> m_page;
 
@@ -42,7 +42,7 @@ struct CachedPage : PageMetaData
 
 ///////////////////////////////////////////////////////////////////////////
 
-struct PrioritizedPage : PageMetaData
+struct PrioritizedPage final : PageMetaData
 {
     PageIndex m_id;
 
