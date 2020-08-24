@@ -124,7 +124,7 @@ TEST(FileSystem, subFolder)
 TEST(FileSystem, attribute)
 {
     auto fs = makeFileSystem();
-    auto success = fs.addAttribute("folder/attribute", 42);
+    auto success = fs.addAttribute("folder/attribute", "test");
     ASSERT_TRUE(success);
     success = fs.addAttribute("folder/attribute", 42.42);
     ASSERT_TRUE(success);
@@ -137,7 +137,7 @@ TEST(FileSystem, attribute)
 TEST(FileSystem, remove)
 {
     auto fs = makeFileSystem();
-    auto success = fs.addAttribute("folder/attribute", 42);
+    auto success = fs.addAttribute("folder/attribute", 42.42);
     ASSERT_TRUE(success);
 
     ASSERT_EQ(fs.remove("folder/attribute") , 1);
@@ -148,11 +148,11 @@ TEST(FileSystem, remove)
 TEST(FileSystem, Cursor)
 {
     auto fs = makeFileSystem();
-    ASSERT_TRUE(fs.addAttribute("folder/folder/attrib", 5));
+    ASSERT_TRUE(fs.addAttribute("folder/folder/attrib", 5.5));
     auto cur = fs.find("folder/folder/attrib");
     ASSERT_TRUE(cur);
     auto attrib = cur.value();
-    ASSERT_EQ(attrib.toValue<int>() , 5);
+    ASSERT_EQ(attrib.toValue<double>() , 5.5);
 }
 
 TEST(FileSystem, commitClosesAllFileHandles)

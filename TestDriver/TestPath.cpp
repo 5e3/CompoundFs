@@ -52,7 +52,7 @@ TEST(Path, creationOfFolderFailsWhenTheNameIsUsedForAnAttribute)
     Path p("folder/folder/attribute");
 
     ASSERT_TRUE(p.create(&ds));
-    ds.addAttribute(DirectoryKey(p.m_root, p.m_relativePath), 1);
+    ds.addAttribute(DirectoryKey(p.m_root, p.m_relativePath), 1.1);
     Path p2("folder/folder/attribute/test");
     Path p3 = p2;
     ASSERT_TRUE(!p2.create(&ds));

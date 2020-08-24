@@ -15,8 +15,58 @@ TEST(TreeValue, toAndFromString)
     TreeValue tv2 = TreeValue::fromStream(bsv);
 }
 
-TEST(TreeValue, comparison)
+TEST(TreeValue, wrongTypeIndexReturnsUnknownType)
 {
-    TreeValue tv = 1.1;
-    //ASSERT_EQ(tv, 1.1);
+    ByteStringStream bss;
+    TreeValue tv = "test";
+
+    tv.toStream(bss);
+    ByteStringView bsv = bss;
+    uint8_t* typeIndex = const_cast<uint8_t*>(bsv.data());
+    *typeIndex = 100; // never do this!
+    TreeValue tv2 = TreeValue::fromStream(bsv);
+    ASSERT_EQ(tv2.getType(), TreeValue::Type::Unknown);
+}
+
+template <typename T>
+struct TestTreeValue : ::testing::Test
+{
+    T initialize() const
+    {
+        auto values = std::make_tuple(
+            FileDescriptor(1, 2, std::numeric_limits<uint64_t>::max()), 
+            Folder { std::numeric_limits<uint32_t>::max() },
+            Version { 1, 1, std::numeric_limits<uint32_t>::max() }, 
+            std::numeric_limits<double>::max(),
+            std::numeric_limits<uint64_t>::max(),
+            std::string("test"));
+        return std::get<T>(values);
+    }
+
+    TestTreeValue()
+        : m_value(initialize())
+    {}
+
+    T m_value;
+
+
+};
+
+using TreeValueTypes = ::testing::Types<FileDescriptor, Folder, Version, double, uint64_t, std::string>;
+TYPED_TEST_SUITE(TestTreeValue, TreeValueTypes);
+
+TYPED_TEST(TestTreeValue, streamInOfStreamOutIsEqual)
+{
+    TreeValue tv = this->m_value;
+    ByteStringStream bss;
+    tv.toStream(bss);
+
+    TreeValue tv2 = TreeValue::fromStream(bss);
+    ASSERT_EQ(this->m_value, tv2.toValue<TypeParam>());
+}
+
+TYPED_TEST(TestTreeValue, toValueWithWrongTypeThrows)
+{
+    TreeValue tv;
+    ASSERT_THROW(tv.toValue<TypeParam>(), std::exception);
 }

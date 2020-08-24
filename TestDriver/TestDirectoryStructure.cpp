@@ -111,10 +111,10 @@ TEST(DirectoryStructure, addGetAttribute)
     ASSERT_TRUE(res);
     ASSERT_EQ(res->toValue<std::string>(), "test");
 
-    ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42));
+    ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42.42));
     res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(res->toValue<int>(), 42);
+    ASSERT_EQ(res->toValue<double>(), 42.42);
 }
 
 TEST(DirectoryStructure, attributesDoNotReplaceFolders)
@@ -175,7 +175,7 @@ TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
 {
     DirectoryStructure ds = makeDirectoryStructure();
     DirectoryKey dkey("test.file");
-    ds.addAttribute(dkey, 1);
+    ds.addAttribute(dkey, 1.1);
 
     ASSERT_TRUE(!ds.createFile(dkey));
     ASSERT_TRUE(!ds.appendFile(dkey));
