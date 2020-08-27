@@ -50,6 +50,7 @@ set (Headers
 		TreeValue.h
 		TypedCacheManager.h
 		TxFs.natvis
+		Board.txt
 	)
 	
 

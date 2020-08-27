@@ -1,0 +1,17 @@
+
+- make sure TreeValues that do not change create no dirty pages (Files, Attributes, Folders)
+- allow FreeStore to initialize layzily
+- make BTree's root node stay at the same physical place (only insert() should influence this)
+- allow PageAllocator to use operator new for linux implementations
+- test commit phase with a special class derived from FileInterface throwing exceptions controlled by a counter
+- implement FileInterface for real files for Windows / Linux
+- implement file locks for Linux (https://man7.org/linux/man-pages/man2/fcntl.2.html or end of https://apenwarr.ca/log/20101213)
+- implement rollback() for FileSystem
+- implement rollback() at file open readonly/writable
+- error handling for FileSystem
+- unit test cases for FileInterface
+- after commit()/rollback() FileSystem is still usable
+- add XXH3 checksum (https://github.com/Cyan4973/xxHash/releases/tag/v0.8.0)
+- add LZ4 compression
+- add GPL3 license (https://tldrlegal.com/licenses/browse)
+
