@@ -180,8 +180,8 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
     if (std::holds_alternative<BTree::Unchanged>(res))
         return false;
 
-    auto inserted = std::get_if<BTree::Inserted>(&res);
-    if (!inserted)
+    auto replaced = std::get_if<BTree::Replaced>(&res);
+    if (replaced)
         return true;
 
     remove(dkey);

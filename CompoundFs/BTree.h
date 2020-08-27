@@ -23,6 +23,7 @@ class InnerNode;
 class BTree final
 {
     using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
+    struct KeyInserter;
 
 public:
     class Cursor;

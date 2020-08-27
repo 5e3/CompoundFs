@@ -10,18 +10,6 @@
 using namespace TxFs;
 
 //////////////////////////////////////////////////////////////////////////
-BTree::Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept
-    : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
-{}
-
-std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const
-{
-    const auto& [leaf, index] = *m_position;
-    auto it = leaf->beginTable() + index;
-    return std::make_pair(leaf->getKey(it), leaf->getValue(it));
-}
-
-//////////////////////////////////////////////////////////////////////////
 
 BTree::BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex)
     : m_cacheManager(cacheManager)
@@ -31,47 +19,75 @@ BTree::BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIn
         m_rootIndex = m_cacheManager.newPage<Leaf>(PageIdx::INVALID, PageIdx::INVALID).m_index;
 }
 
-BTree::InsertResult BTree::insert(ByteStringView key, ByteStringView value, ReplacePolicy replacePolicy)
+struct BTree::KeyInserter
 {
-    InnerNodeStack stack;
-    stack.reserve(5);
+    ByteStringView m_key;
+    ByteStringView m_value;
+    BTree* m_btree;
+    InnerNodeStack m_stack;
+    ConstPageDef<Leaf> m_constLeafDef;
 
-    auto leafDef = m_cacheManager.makePageWritable(findLeaf(key, stack));
-    auto it = leafDef.m_page->find(key);
-    InsertResult result;
-
-    if (it != leafDef.m_page->endTable())
+    const uint16_t* findExact()
     {
-        // there is already an entry for that key
-        ByteStringView ventry = leafDef.m_page->getValue(it);
-        if (!replacePolicy(ventry))
-            return Unchanged { Cursor(leafDef.m_page, it) };
+        m_constLeafDef = m_btree->findLeaf(m_key, m_stack);
+        auto it = m_constLeafDef.m_page->find(m_key);
 
-        result = Replaced { ventry };
-        if (ventry.size() == value.size())
+        return it == m_constLeafDef.m_page->endTable() ? nullptr : it;
+    }
+
+    InsertResult insertExistingKey(ReplacePolicy replacePolicy, const uint16_t* it)
+    {
+        ByteStringView ventry = m_constLeafDef.m_page->getValue(it);
+        if (!replacePolicy(ventry))
+            return Unchanged { Cursor(m_constLeafDef.m_page, it) };
+
+        InsertResult res = Replaced { ventry };
+        if (ventry == m_value)
+            return res;
+
+        auto leafDef = m_btree->m_cacheManager.makePageWritable(m_constLeafDef);
+        if (ventry.size() == m_value.size())
         {
             // replace at the same position
             auto ventryPtr = const_cast<uint8_t*>(ventry.data());
-            std::copy(value.data(), value.data()+value.size(), ventryPtr);
-            return result;
+            std::copy(m_value.data(), m_value.end(), ventryPtr);
+            return res;
         }
-        leafDef.m_page->remove(key);
+
+        leafDef.m_page->remove(m_key);
+        insertNewKey(leafDef);
+        return res;
     }
 
-    if (leafDef.m_page->hasSpace(key, value))
+    void insertNewKey(PageDef<Leaf> leafDef)
     {
-        leafDef.m_page->insert(key, value);
-        return result;
+        if (leafDef.m_page->hasSpace(m_key, m_value))
+        {
+            leafDef.m_page->insert(m_key, m_value);
+            return;
+        }
+
+        // link rightLeaf to the right hand-side of leafDef
+        auto rightLeaf = m_btree->m_cacheManager.newPage<Leaf>(leafDef.m_index, leafDef.m_page->getNext());
+        leafDef.m_page->setNext(rightLeaf.m_index);
+
+        // split and move up
+        leafDef.m_page->split(rightLeaf.m_page.get(), m_key, m_value);
+        m_btree->propagate(m_stack, rightLeaf.m_page->getLowestKey(), leafDef.m_index, rightLeaf.m_index);
     }
 
-    // link rightLeaf to the right hand-side of leafDef
-    auto rightLeaf = m_cacheManager.newPage<Leaf>(leafDef.m_index, leafDef.m_page->getNext());
-    leafDef.m_page->setNext(rightLeaf.m_index);
+    void insertNewKey() { insertNewKey(m_btree->m_cacheManager.makePageWritable(m_constLeafDef)); }
+};
 
-    // split and move up
-    leafDef.m_page->split(rightLeaf.m_page.get(), key, value);
-    propagate(stack, rightLeaf.m_page->getLowestKey(), leafDef.m_index, rightLeaf.m_index);
-    return result;
+BTree::InsertResult BTree::insert(ByteStringView key, ByteStringView value, ReplacePolicy replacePolicy)
+{
+    KeyInserter keyInserter { key, value, this };
+    auto it = keyInserter.findExact();
+    if (it)
+        return keyInserter.insertExistingKey(replacePolicy, it);
+
+    keyInserter.insertNewKey();
+    return Inserted {};
 }
 
 std::optional<ByteString> BTree::insert(ByteStringView key, ByteStringView value)
@@ -247,4 +263,17 @@ BTree::Cursor BTree::next(Cursor cursor) const
 
     const auto& nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
     return Cursor(nextLeaf, nextLeaf->beginTable());
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+BTree::Cursor::Cursor(const std::shared_ptr<const Leaf>& leaf, const uint16_t* it) noexcept
+    : m_position({ leaf, uint16_t(it - leaf->beginTable()) })
+{}
+
+std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const
+{
+    const auto& [leaf, index] = *m_position;
+    auto it = leaf->beginTable() + index;
+    return std::make_pair(leaf->getKey(it), leaf->getValue(it));
 }

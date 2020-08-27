@@ -164,22 +164,7 @@ TEST(FileSystem, commitClosesAllFileHandles)
     auto readHandle = fs.readFile("folder/file.file").value();
     auto writeHandle = fs.createFile("folder/file2.file").value();
     fs.commit();
-    try
-    {
-        fs.close(readHandle);
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&)
-    {
-    }
-
-    try
-    {
-        fs.close(writeHandle);
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&)
-    {
-    }
+    ASSERT_THROW(fs.close(readHandle), std::exception);
+    ASSERT_THROW(fs.close(writeHandle), std::exception);
 }
 
