@@ -78,7 +78,7 @@ CommitLock LockProtocol<TSMutex, TXMutex>::commitAccess(Lock&& writeLock)
     std::unique_lock ulock(m_signal);
 
     m_shared.lock();
-    return CommitLock(Lock(&m_shared, [](void* m) { static_cast<TSMutex*>(m)->unlock(); }), std::move(writeLock));
+    return CommitLock(std::move(writeLock), Lock(&m_shared, [](void* m) { static_cast<TSMutex*>(m)->unlock(); }));
 }
 
 template <typename TSMutex, typename TXMutex>
@@ -94,7 +94,7 @@ std::variant<CommitLock, Lock> LockProtocol<TSMutex, TXMutex>::tryCommitAccess(L
     if (!m_shared.try_lock())
         return std::move(writeLock);
     
-    return CommitLock(Lock(&m_shared, [](void* m) { static_cast<TSMutex*>(m)->unlock(); }), std::move(writeLock));
+    return CommitLock(std::move(writeLock), Lock(&m_shared, [](void* m) { static_cast<TSMutex*>(m)->unlock(); }));
 }
 
 }

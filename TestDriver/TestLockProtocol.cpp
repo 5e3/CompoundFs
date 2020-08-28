@@ -51,6 +51,16 @@ TEST(LockProtocol, commitAccessThrowsOnWrongParam)
     catch (std::exception&) {}
 }
 
+TEST(LockProtocol, canCommitAccessTwice)
+{
+    SimpleLockProtocoll slp;
+    auto lock = slp.writeAccess();
+    auto commit = slp.commitAccess(std::move(lock));
+    lock = commit.release();
+    auto commit2 = slp.commitAccess(std::move(lock));
+    lock = commit2.release();
+}
+
 TEST(LockProtocol, readAccessIsNotBlockedByWriteAccess)
 {
     SimpleLockProtocoll slp;
