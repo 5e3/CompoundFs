@@ -128,9 +128,9 @@ Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
     if (m_pageIntervalAllocator)
     {
         auto iv = m_pageIntervalAllocator(maxPages);
-        if (iv.begin() == PageIdx::INVALID)
-            m_pageIntervalAllocator = std::function<Interval(size_t)>();
-        return iv;
+        if (iv.begin() != PageIdx::INVALID)
+            return iv;
+        m_pageIntervalAllocator = std::function<Interval(size_t)>();
     }
     return m_cache.m_fileInterface->newInterval(maxPages);
 }
@@ -211,4 +211,11 @@ std::unique_ptr<FileInterface> CacheManager::handOverFile()
 {
     m_cache.m_lock.release(); // we have to release that lock
     return std::move(m_cache.m_fileInterface);
+}
+
+void CacheManager::rollback()
+{
+    m_cache.m_pageCache.clear();
+    m_cache.m_newPageIds.clear();
+    m_cache.m_divertedPageIds.clear();
 }

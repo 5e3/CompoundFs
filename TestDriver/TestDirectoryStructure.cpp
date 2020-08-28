@@ -35,11 +35,11 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
 
     auto res = ds.makeSubFolder(DirectoryKey("test"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(*res , Folder { 1 });
+    auto folder = *res;
 
     res = ds.makeSubFolder(DirectoryKey("test"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(*res , Folder { 1 });
+    ASSERT_EQ(*res , folder);
 
     ASSERT_EQ(ds.subFolder(DirectoryKey("test")) , *res);
 }

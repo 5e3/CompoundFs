@@ -4,6 +4,7 @@
 #include "ByteString.h"
 #include "TreeValue.h"
 #include "CommitHandler.h"
+#include <assert.h>
 
 using namespace TxFs;
 
@@ -25,11 +26,19 @@ struct ValueStream
 
 DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
                                        PageIndex rootIndex, uint32_t maxFolderId)
-    : m_cacheManager(cacheManager)
+    : m_freeStoreDescriptor(freeStore)
+    , m_cacheManager(cacheManager)
     , m_btree(cacheManager, rootIndex)
     , m_maxFolderId(maxFolderId)
-    , m_freeStore(cacheManager, freeStore)
-{}
+    , m_freeStore(cacheManager, m_freeStoreDescriptor)
+{
+    connectFreeStore();
+}
+
+void DirectoryStructure::connectFreeStore()
+{
+    m_cacheManager->setPageIntervalAllocator([fs = &m_freeStore](size_t maxPages) { return fs->allocate(maxPages); });
+}
 
 std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey)
 {
@@ -200,8 +209,19 @@ void DirectoryStructure::commit()
     for (auto page: divertedPageIds)
         m_freeStore.deallocate(page);
 
-    auto fileDescriptor = m_freeStore.close();
+    m_freeStoreDescriptor = m_freeStore.close();
     commitHandler.commit();
+    assert(commitHandler.empty());
+
+    m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
+    connectFreeStore();
+}
+
+void DirectoryStructure::rollback()
+{
+    m_cacheManager->rollback();
+    m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
+    connectFreeStore();
 }
 
 //////////////////////////////////////////////////////////////////////////

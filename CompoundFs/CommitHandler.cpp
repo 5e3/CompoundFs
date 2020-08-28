@@ -61,6 +61,7 @@ void CommitHandler::lockedWriteCachedPages()
     auto commitLock = m_cache.m_fileInterface->commitAccess(std::move(m_cache.m_lock));
     writeCachedPages();
     m_cache.m_lock = commitLock.release();
+    m_cache.m_newPageIds.clear();
 }
 
 /// Get the original ids of the PageClass::Dirty pages. Some of them may
@@ -148,4 +149,9 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
         begin = logPage.pushBack(begin, origToCopyPages.end());
         TxFs::writePage(m_cache.file(), pageIndex, &logPage);
     }
+}
+
+bool CommitHandler::empty() const
+{
+    return m_cache.m_pageCache.empty() && m_cache.m_newPageIds.empty() && m_cache.m_divertedPageIds.empty();
 }

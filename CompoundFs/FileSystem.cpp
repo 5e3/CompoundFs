@@ -180,6 +180,12 @@ void FileSystem::commit()
     m_directoryStructure.commit();
 }
 
+void FileSystem::rollback()
+{
+    closeAllFiles();
+    m_directoryStructure.rollback();
+}
+
 void FileSystem::closeAllFiles()
 {
     for (auto& [key, openFile]: m_openWriters)
@@ -190,3 +196,5 @@ void FileSystem::closeAllFiles()
     m_openWriters.clear();
     m_openReaders.clear();
 }
+
+

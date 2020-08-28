@@ -48,6 +48,7 @@ public:
     std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
     FileInterface* getFileInterface() { return m_cache.file(); }
     std::unique_ptr<FileInterface> handOverFile();
+    void rollback();
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }

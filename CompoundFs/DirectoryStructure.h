@@ -50,7 +50,7 @@ public:
 
 public:
     DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
-                       PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 1);
+                       PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
 
     std::optional<Folder> makeSubFolder(const DirectoryKey& dkey);
     std::optional<Folder> subFolder(const DirectoryKey& dkey) const;
@@ -71,8 +71,13 @@ public:
     Cursor next(Cursor cursor) const;
 
     void commit();
+    void rollback();
 
 private:
+    void connectFreeStore();
+
+private:
+    FileDescriptor m_freeStoreDescriptor;
     std::shared_ptr<CacheManager> m_cacheManager;
     BTree m_btree;
     uint32_t m_maxFolderId;

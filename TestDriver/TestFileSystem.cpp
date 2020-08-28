@@ -168,6 +168,19 @@ TEST(FileSystem, commitClosesAllFileHandles)
     ASSERT_THROW(fs.close(writeHandle), std::exception);
 }
 
+TEST(FileSystem, rollbackClosesAllFileHandles)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("folder/file.file").value();
+    fs.close(handle);
+
+    auto readHandle = fs.readFile("folder/file.file").value();
+    auto writeHandle = fs.createFile("folder/file2.file").value();
+    fs.rollback();
+    ASSERT_THROW(fs.close(readHandle), std::exception);
+    ASSERT_THROW(fs.close(writeHandle), std::exception);
+}
+
 TEST(FileSystem, fileSizeReturnsCurrentFileSize)
 {
     auto fs = makeFileSystem();
@@ -191,48 +204,114 @@ class FileSystemTester : public ::testing::Test
 public:
     std::shared_ptr<CacheManager> m_cacheManager;
     FileSystem m_fileSystem;
+    std::string m_fileData;
+
     FileSystemTester()
         : m_cacheManager(std::make_shared<CacheManager>(std::make_unique<MemoryFile>()))
         , m_fileSystem(m_cacheManager, FileDescriptor(1))
+        , m_fileData(5000, '1')
     {
         TypedCacheManager tcm(m_cacheManager);
         auto freeStorePage = tcm.newPage<FileTable>();
         assert(freeStorePage.m_index == 1);
 
-        createFileSystem();
+        fillFileSystem();
     }
 
-    void createFileSystem()
+    void fillFileSystem()
     { 
         m_fileSystem.addAttribute("test/attribute", "test");
-        std::string ones (5000, '1');
         auto handle = *m_fileSystem.createFile("test/file1.txt");
-        m_fileSystem.write(handle, ones.data(), ones.size());
+        m_fileSystem.write(handle, m_fileData.data(), m_fileData.size());
         m_fileSystem.close(handle);
 
         handle = *m_fileSystem.createFile("test/file2.txt");
-        m_fileSystem.write(handle, ones.data(), ones.size());
+        m_fileSystem.write(handle, m_fileData.data(), m_fileData.size());
         m_fileSystem.close(handle);
+    }
 
-        //m_cacheManager->trim(0);    
+    std::string readFile(ReadHandle handle)
+    { 
+        auto size = m_fileSystem.fileSize(handle);
+        std::string data(size, ' ');
+        m_fileSystem.read(handle, data.data(), size);
+        return data;
+    }
+
+    void checkFileSystem()
+    { 
+        auto attribute = m_fileSystem.getAttribute("test/attribute").value();
+        ASSERT_EQ(attribute.toValue<std::string>(), "test");
+
+        auto handle = m_fileSystem.readFile("test/file1.txt").value();
+        auto data = readFile(handle);
+        ASSERT_EQ(data, m_fileData);
+        data.clear();
+
+        auto handle2 = m_fileSystem.readFile("test/file2.txt").value();
+        auto data2 = readFile(handle2);
+        ASSERT_EQ(data2, m_fileData);
+        
+        m_fileSystem.close(handle);
+        m_fileSystem.close(handle2);
     }
 };
 
 TEST_F(FileSystemTester, selfTest)
 {
-    ASSERT_EQ(*m_fileSystem.fileSize("test/file1.txt"), 5000);
-    ASSERT_EQ(*m_fileSystem.fileSize("test/file2.txt"), 5000);
-    ASSERT_EQ(m_fileSystem.getAttribute("test/attribute")->toValue<std::string>(), "test");
+    checkFileSystem();
 }
 
-TEST_F(FileSystemTester, afterCommitFsObjectsStillAvailable)
+TEST_F(FileSystemTester, afterCommitItemsStillAvailable)
 {
-    auto fsize = m_cacheManager->getFileInterface()->currentSize();
     m_fileSystem.commit();
-    auto fsize2 = m_cacheManager->getFileInterface()->currentSize();
-    ASSERT_EQ(fsize, fsize2);
-
-    ASSERT_EQ(*m_fileSystem.fileSize("test/file1.txt"), 5000);
-    ASSERT_EQ(*m_fileSystem.fileSize("test/file2.txt"), 5000);
-    ASSERT_EQ(m_fileSystem.getAttribute("test/attribute")->toValue<std::string>(), "test");
+    checkFileSystem();
 }
+
+TEST_F(FileSystemTester, writingDataIncreasesCompositSize)
+{
+    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    auto handle = *m_fileSystem.createFile("test3.txt");
+    m_fileSystem.write(handle, m_fileData.data(), m_fileData.size());
+    m_fileSystem.close(handle);
+    ASSERT_GT (m_cacheManager->getFileInterface()->currentSize(), compositSize);
+}
+
+//TEST_F(FileSystemTester, rollbackRemovesAllEntries)
+//{
+//    m_fileSystem.rollback();
+//    ASSERT_FALSE(m_fileSystem.getAttribute("test/attribute"));
+//    ASSERT_FALSE(m_fileSystem.readFile("test/file1.txt"));
+//    ASSERT_FALSE(m_fileSystem.readFile("test/file2.txt"));
+//}
+
+TEST_F(FileSystemTester, rollbackReducesCompositSize)
+{
+    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    m_fileSystem.rollback();
+    ASSERT_LT(m_cacheManager->getFileInterface()->currentSize(), compositSize);
+}
+
+TEST_F(FileSystemTester, rollbackMakesDeletedItemsReapear)
+{
+    m_fileSystem.commit();
+    m_fileSystem.remove("test");
+    ASSERT_FALSE(m_fileSystem.getAttribute("test/attribute"));
+    ASSERT_FALSE(m_fileSystem.readFile("test/file1.txt"));
+    ASSERT_FALSE(m_fileSystem.readFile("test/file2.txt"));
+
+    m_fileSystem.rollback();
+    checkFileSystem();
+}
+
+TEST_F(FileSystemTester, commitedDeletedSpaceGetsReused)
+{
+    m_fileSystem.commit();
+    m_fileSystem.remove("test");
+    m_fileSystem.commit();
+    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    auto handle = *m_fileSystem.createFile("test3.txt");
+    m_fileSystem.write(handle, m_fileData.data(), m_fileData.size());
+    ASSERT_EQ(m_cacheManager->getFileInterface()->currentSize(), compositSize);
+}
+

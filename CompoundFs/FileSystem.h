@@ -47,6 +47,7 @@ public:
     Cursor next(Cursor cursor) const;
 
     void commit();
+    void rollback();
 
 private:
     void closeAllFiles();
