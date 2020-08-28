@@ -168,3 +168,71 @@ TEST(FileSystem, commitClosesAllFileHandles)
     ASSERT_THROW(fs.close(writeHandle), std::exception);
 }
 
+TEST(FileSystem, fileSizeReturnsCurrentFileSize)
+{
+    auto fs = makeFileSystem();
+    auto handle = fs.createFile("folder/file.file").value();
+    ByteStringView data("test");
+    ASSERT_EQ(fs.fileSize(handle), 0);
+    fs.write(handle, data.data(), data.size());
+    ASSERT_EQ(fs.fileSize(handle), data.size());
+
+    fs.write(handle, data.data(), data.size());
+    ASSERT_EQ(fs.fileSize(handle),2* data.size());
+    fs.close(handle);
+
+    ASSERT_EQ(*fs.fileSize("folder/file.file"), 2*data.size());
+    auto handle2 = *fs.readFile("folder/file.file");
+    ASSERT_EQ(fs.fileSize(handle2), 2*data.size());
+}
+
+class FileSystemTester : public ::testing::Test
+{
+public:
+    std::shared_ptr<CacheManager> m_cacheManager;
+    FileSystem m_fileSystem;
+    FileSystemTester()
+        : m_cacheManager(std::make_shared<CacheManager>(std::make_unique<MemoryFile>()))
+        , m_fileSystem(m_cacheManager, FileDescriptor(1))
+    {
+        TypedCacheManager tcm(m_cacheManager);
+        auto freeStorePage = tcm.newPage<FileTable>();
+        assert(freeStorePage.m_index == 1);
+
+        createFileSystem();
+    }
+
+    void createFileSystem()
+    { 
+        m_fileSystem.addAttribute("test/attribute", "test");
+        std::string ones (5000, '1');
+        auto handle = *m_fileSystem.createFile("test/file1.txt");
+        m_fileSystem.write(handle, ones.data(), ones.size());
+        m_fileSystem.close(handle);
+
+        handle = *m_fileSystem.createFile("test/file2.txt");
+        m_fileSystem.write(handle, ones.data(), ones.size());
+        m_fileSystem.close(handle);
+
+        //m_cacheManager->trim(0);    
+    }
+};
+
+TEST_F(FileSystemTester, selfTest)
+{
+    ASSERT_EQ(*m_fileSystem.fileSize("test/file1.txt"), 5000);
+    ASSERT_EQ(*m_fileSystem.fileSize("test/file2.txt"), 5000);
+    ASSERT_EQ(m_fileSystem.getAttribute("test/attribute")->toValue<std::string>(), "test");
+}
+
+TEST_F(FileSystemTester, afterCommitFsObjectsStillAvailable)
+{
+    auto fsize = m_cacheManager->getFileInterface()->currentSize();
+    m_fileSystem.commit();
+    auto fsize2 = m_cacheManager->getFileInterface()->currentSize();
+    ASSERT_EQ(fsize, fsize2);
+
+    ASSERT_EQ(*m_fileSystem.fileSize("test/file1.txt"), 5000);
+    ASSERT_EQ(*m_fileSystem.fileSize("test/file2.txt"), 5000);
+    ASSERT_EQ(m_fileSystem.getAttribute("test/attribute")->toValue<std::string>(), "test");
+}

@@ -96,6 +96,7 @@ public:
     }
 
     uint64_t bytesLeft() const { return m_fileSize - m_curFilePos; }
+    uint64_t size() const { return m_fileSize; }
 
     template <class TIter>
     uint8_t* readIterator(TIter begin, TIter end)

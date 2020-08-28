@@ -1,5 +1,6 @@
 
-- make sure TreeValues that do not change create no dirty pages (Files, Attributes, Folders)
+- make sure TreeValues that do not change create no dirty pages (Files, Attributes, Folders) - DONE
+	- add unit test
 - allow FreeStore to initialize layzily
 - make BTree's root node stay at the same physical place (only insert() should influence this)
 - allow PageAllocator to use operator new for linux implementations

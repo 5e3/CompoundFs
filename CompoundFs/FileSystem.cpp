@@ -63,6 +63,19 @@ std::optional<ReadHandle> FileSystem::readFile(Path path)
     return ReadHandle { m_nextHandle++ };
 }
 
+std::optional<uint64_t> FileSystem::fileSize(Path path)
+{
+    if (!path.reduce(&m_directoryStructure))
+        return std::nullopt;
+
+    auto fileDescriptor = m_directoryStructure.openFile(DirectoryKey(path.m_root, path.m_relativePath));
+
+    if (!fileDescriptor)
+        return std::nullopt;
+
+    return fileDescriptor->m_fileSize;
+}
+
 size_t FileSystem::read(ReadHandle file, void* ptr, size_t size)
 {
     uint8_t* begin = (uint8_t*) ptr;
@@ -91,6 +104,18 @@ void FileSystem::close(ReadHandle file)
 {
     [[maybe_unused]] auto res = m_openReaders.at(file); // throws if non-existant
     m_openReaders.erase(file);
+}
+
+uint64_t FileSystem::fileSize(WriteHandle file) const
+{
+    const auto& openFile = m_openWriters.at(file);
+    return openFile.m_fileWriter.size();
+}
+
+uint64_t FileSystem::fileSize(ReadHandle file) const
+{
+    const auto& openFile = m_openReaders.at(file);
+    return openFile.size();
 }
 
 std::optional<Folder> FileSystem::makeSubFolder(Path path)

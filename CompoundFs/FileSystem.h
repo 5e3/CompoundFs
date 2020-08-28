@@ -24,12 +24,15 @@ public:
     std::optional<WriteHandle> createFile(Path path);
     std::optional<WriteHandle> appendFile(Path path);
     std::optional<ReadHandle> readFile(Path path);
+    std::optional<uint64_t> fileSize(Path path);
 
     size_t read(ReadHandle file, void* ptr, size_t size);
     size_t write(WriteHandle file, const void* ptr, size_t size);
 
     void close(WriteHandle file);
     void close(ReadHandle file);
+    uint64_t fileSize(WriteHandle file) const;
+    uint64_t fileSize(ReadHandle file) const;
 
     std::optional<Folder> makeSubFolder(Path path);
     std::optional<Folder> subFolder(Path path) const;

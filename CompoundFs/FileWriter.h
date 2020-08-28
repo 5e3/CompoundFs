@@ -120,6 +120,8 @@ public:
         write((uint8_t*) &begin[0], (uint8_t*) &begin[end - begin]);
     }
 
+    uint64_t size() const { return m_fileDescriptor.m_fileSize; }
+
 private:
     IntervalSequence m_pageSequence;
     TypedCacheManager m_cacheManager;
