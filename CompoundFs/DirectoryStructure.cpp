@@ -8,21 +8,22 @@
 
 using namespace TxFs;
 
-struct ValueStream
+namespace
 {
-    ValueStream(const TreeValue& value) 
-    { 
-        value.toStream(m_byteStringStream); 
-    }
-
-    operator ByteStringView() const
+    struct ValueStream
     {
-        return static_cast<ByteStringView>(m_byteStringStream);
-    }
+        ValueStream(const TreeValue& value) { value.toStream(m_byteStringStream); }
 
-    ByteStringStream m_byteStringStream;
-};
+        operator ByteStringView() const { return static_cast<ByteStringView>(m_byteStringStream); }
 
+        ByteStringStream m_byteStringStream;
+    };
+
+    // ------------------------------------------------------------------------
+
+    constexpr Folder            SystemFolder { 1 };
+    constexpr std::string_view  CompositeSizeAttributeName { "CompositeSize" };
+}
 
 DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
                                        PageIndex rootIndex, uint32_t maxFolderId)
@@ -32,6 +33,7 @@ DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cach
     , m_maxFolderId(maxFolderId)
     , m_freeStore(cacheManager, m_freeStoreDescriptor)
 {
+    assert(static_cast<Folder>(m_maxFolderId) > SystemFolder);
     connectFreeStore();
 }
 
@@ -237,12 +239,6 @@ void DirectoryStructure::rollback()
 
     m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
     connectFreeStore();
-}
-
-namespace
-{
-constexpr Folder SystemFolder { 1 };
-constexpr std::string_view CompositeSizeAttributeName { "CompositeSize"};
 }
 
 void DirectoryStructure::storeCompositeSize(size_t csize)
