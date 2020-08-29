@@ -17,6 +17,6 @@ TEST(ReadOnlyFile, UnmodifiedCacheManagerCanCommitReadOnly)
     mf.newInterval(1);
     CacheManager cm(std::make_unique<ReadOnlyFile<MemoryFile>>(std::move(mf)));
     cm.loadPage(0);
-    cm.buildCommitHandler().commit();
+    cm.getCommitHandler().commit();
 
 }

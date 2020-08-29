@@ -183,6 +183,14 @@ TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
     ASSERT_TRUE(!ds.updateFile(dkey, desc));
 }
 
+TEST(DirectoryStructure, storeCompositeSizeEqualsRetrieveCompositeSize)
+{
+    auto ds = makeDirectoryStructure();
+    size_t csize = 1000;
+    ds.storeCompositeSize(csize);
+    ASSERT_EQ(ds.retrieveCompositeSize(), csize);
+}
+
 TEST(Cursor, creation)
 {
     DirectoryStructure::Cursor cursor;

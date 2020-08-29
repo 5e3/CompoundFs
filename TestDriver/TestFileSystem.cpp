@@ -17,7 +17,9 @@ FileSystem makeFileSystem()
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
     FileDescriptor fsfd(freeStorePage.m_index);
-    return FileSystem(cm, fsfd);
+    auto fs =  FileSystem(cm, fsfd);
+    fs.commit();
+    return fs;
 }
 
 }
@@ -214,6 +216,7 @@ public:
         TypedCacheManager tcm(m_cacheManager);
         auto freeStorePage = tcm.newPage<FileTable>();
         assert(freeStorePage.m_index == 1);
+        m_fileSystem.commit();
 
         fillFileSystem();
     }

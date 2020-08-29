@@ -28,6 +28,7 @@ public:
     std::vector<PageIndex> getDivertedPageIds() const;
     std::vector<PageIndex> getDirtyPageIds() const;
     bool empty() const;
+    size_t getCompositeSize() const;
 
 private:
     Cache& m_cache;

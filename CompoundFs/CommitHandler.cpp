@@ -136,6 +136,7 @@ void CommitHandler::writeCachedPages()
             TxFs::writePage(m_cache.file(), page.first, page.second.m_page.get());
     }
     m_cache.m_pageCache.clear();
+    m_cache.m_newPageIds.clear();
 }
 
 /// Fill the log pages with data and write them to the file.
@@ -154,4 +155,9 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
 bool CommitHandler::empty() const
 {
     return m_cache.m_pageCache.empty() && m_cache.m_newPageIds.empty() && m_cache.m_divertedPageIds.empty();
+}
+
+size_t CommitHandler::getCompositeSize() const
+{
+    return m_cache.m_fileInterface->currentSize();
 }

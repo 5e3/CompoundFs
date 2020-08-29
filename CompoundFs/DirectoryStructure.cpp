@@ -35,6 +35,16 @@ DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cach
     connectFreeStore();
 }
 
+DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
+    : m_freeStoreDescriptor(std::move(ds.m_freeStoreDescriptor))
+    , m_cacheManager(std::move(ds.m_cacheManager))
+    , m_btree(std::move(ds.m_btree))
+    , m_maxFolderId(std::move(ds.m_maxFolderId))
+    , m_freeStore(std::move(ds.m_freeStore))
+{
+    connectFreeStore();
+}
+
 void DirectoryStructure::connectFreeStore()
 {
     m_cacheManager->setPageIntervalAllocator([fs = &m_freeStore](size_t maxPages) { return fs->allocate(maxPages); });
@@ -203,26 +213,51 @@ void DirectoryStructure::commit()
     for (auto page : freePages)
         m_freeStore.deallocate(page);
 
-    auto commitHandler = m_cacheManager->buildCommitHandler();
+    auto commitHandler = m_cacheManager->getCommitHandler();
 
     auto divertedPageIds = commitHandler.getDivertedPageIds();
     for (auto page: divertedPageIds)
         m_freeStore.deallocate(page);
 
     m_freeStoreDescriptor = m_freeStore.close();
+    auto csize = commitHandler.getCompositeSize();
+    storeCompositeSize(csize);
     commitHandler.commit();
     assert(commitHandler.empty());
 
     m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
     connectFreeStore();
+    assert(csize == commitHandler.getCompositeSize());
 }
 
 void DirectoryStructure::rollback()
 {
-    m_cacheManager->rollback();
+    auto csize = retrieveCompositeSize();
+    m_cacheManager->rollback(csize);
+
     m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
     connectFreeStore();
 }
+
+namespace
+{
+constexpr Folder SystemFolder { 1 };
+constexpr std::string_view CompositeSizeAttributeName { "CompositeSize"};
+}
+
+void DirectoryStructure::storeCompositeSize(size_t csize)
+{ 
+    DirectoryKey key(SystemFolder, CompositeSizeAttributeName);
+    addAttribute(key, static_cast<uint64_t>(csize));
+}
+
+size_t DirectoryStructure::retrieveCompositeSize()
+{
+    DirectoryKey key(SystemFolder, CompositeSizeAttributeName);
+    auto attribute = getAttribute(key);
+    return attribute->toValue<uint64_t>(); // throws if not there
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 

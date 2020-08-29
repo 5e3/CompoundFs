@@ -201,7 +201,7 @@ std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
     return res;
 }
 
-CommitHandler CacheManager::buildCommitHandler()
+CommitHandler CacheManager::getCommitHandler()
 {
     return CommitHandler(m_cache);
 }
@@ -213,9 +213,11 @@ std::unique_ptr<FileInterface> CacheManager::handOverFile()
     return std::move(m_cache.m_fileInterface);
 }
 
-void CacheManager::rollback()
+void CacheManager::rollback(size_t compositeSize)
 {
     m_cache.m_pageCache.clear();
     m_cache.m_newPageIds.clear();
     m_cache.m_divertedPageIds.clear();
+    assert(compositeSize <= m_cache.file()->currentSize());
+    m_cache.m_fileInterface->truncate(compositeSize);
 }

@@ -51,6 +51,8 @@ public:
 public:
     DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
                        PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
+    DirectoryStructure(DirectoryStructure&&);
+    DirectoryStructure& operator=(DirectoryStructure&&);
 
     std::optional<Folder> makeSubFolder(const DirectoryKey& dkey);
     std::optional<Folder> subFolder(const DirectoryKey& dkey) const;
@@ -72,6 +74,9 @@ public:
 
     void commit();
     void rollback();
+
+    void storeCompositeSize(size_t csize);
+    size_t retrieveCompositeSize();
 
 private:
     void connectFreeStore();

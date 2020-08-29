@@ -44,11 +44,11 @@ public:
     Interval allocatePageInterval(size_t maxPages) noexcept;
     size_t trim(uint32_t maxPages);
 
-    CommitHandler buildCommitHandler();
+    CommitHandler getCommitHandler();
     std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
     FileInterface* getFileInterface() { return m_cache.file(); }
     std::unique_ptr<FileInterface> handOverFile();
-    void rollback();
+    void rollback(size_t compositSize);
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }

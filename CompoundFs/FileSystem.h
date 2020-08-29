@@ -19,7 +19,9 @@ public:
 
 public:
     FileSystem(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
-               PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 1);
+               PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
+    FileSystem(FileSystem&&) = default;
+    FileSystem& operator=(FileSystem&&) = default;
 
     std::optional<WriteHandle> createFile(Path path);
     std::optional<WriteHandle> appendFile(Path path);
