@@ -29,7 +29,7 @@ TEST(TreeValue, wrongTypeIndexReturnsUnknownType)
 }
 
 template <typename T>
-struct TestTreeValue : ::testing::Test
+struct TreeValueTester : ::testing::Test
 {
     T initialize() const
     {
@@ -43,7 +43,7 @@ struct TestTreeValue : ::testing::Test
         return std::get<T>(values);
     }
 
-    TestTreeValue()
+    TreeValueTester()
         : m_value(initialize())
     {}
 
@@ -53,9 +53,9 @@ struct TestTreeValue : ::testing::Test
 };
 
 using TreeValueTypes = ::testing::Types<FileDescriptor, Folder, Version, double, uint64_t, std::string>;
-TYPED_TEST_SUITE(TestTreeValue, TreeValueTypes);
+TYPED_TEST_SUITE(TreeValueTester, TreeValueTypes);
 
-TYPED_TEST(TestTreeValue, streamInOfStreamOutIsEqual)
+TYPED_TEST(TreeValueTester, streamInOfStreamOutIsEqual)
 {
     TreeValue tv = this->m_value;
     ByteStringStream bss;
@@ -65,7 +65,7 @@ TYPED_TEST(TestTreeValue, streamInOfStreamOutIsEqual)
     ASSERT_EQ(this->m_value, tv2.toValue<TypeParam>());
 }
 
-TYPED_TEST(TestTreeValue, toValueWithWrongTypeThrows)
+TYPED_TEST(TreeValueTester, toValueWithWrongTypeThrows)
 {
     TreeValue tv;
     ASSERT_THROW(tv.toValue<TypeParam>(), std::exception);
