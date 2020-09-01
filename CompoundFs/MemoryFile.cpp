@@ -3,7 +3,6 @@
 #include "MemoryFile.h"
 #include <memory>
 
-
 using namespace TxFs;
 
 MemoryFile::MemoryFile()
@@ -21,10 +20,11 @@ Interval MemoryFile::newInterval(size_t maxPages)
     return Interval(idx, idx + uint32_t(maxPages));
 }
 
-const uint8_t* MemoryFile::writePage(PageIndex idx, size_t pageOffset, const uint8_t* begin,
-                                     const uint8_t* end)
+const uint8_t* MemoryFile::writePage(PageIndex idx, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
     auto p = m_file.at(idx);
+    if (pageOffset + (end - begin) > 4096)
+        throw std::runtime_error("MemoryFile::writePage over page boundary");
     std::copy(begin, end, p.get() + pageOffset);
     return end;
 }
@@ -43,6 +43,8 @@ const uint8_t* MemoryFile::writePages(Interval iv, const uint8_t* page)
 uint8_t* MemoryFile::readPage(PageIndex idx, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
     auto p = m_file.at(idx);
+    if (pageOffset + (end - begin) > 4096)
+        throw std::runtime_error("MemoryFile::readPage over page boundary");
     return std::copy(p.get() + pageOffset, p.get() + pageOffset + (end - begin), begin);
 }
 
@@ -57,8 +59,7 @@ uint8_t* MemoryFile::readPages(Interval iv, uint8_t* page) const
 }
 
 void MemoryFile::flushFile()
-{
-}
+{}
 
 void MemoryFile::truncate(size_t numberOfPages)
 {
