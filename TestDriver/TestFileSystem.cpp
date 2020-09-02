@@ -86,13 +86,7 @@ TEST(FileSystem, doubleCloseWriteHandleThrows)
     auto fs = makeFileSystem();
     auto handle = fs.createFile("folder/file.file").value();
     fs.close(handle);
-    try
-    {
-        fs.close(handle);
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&)
-    {}
+    ASSERT_THROW(fs.close(handle), std::exception);
 }
 
 TEST(FileSystem, doubleCloseReadHandleThrows)
@@ -103,13 +97,7 @@ TEST(FileSystem, doubleCloseReadHandleThrows)
 
     auto readHandle = fs.readFile("folder/file.file").value();
     fs.close(readHandle);
-    try
-    {
-        fs.close(readHandle);
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&)
-    {}
+    ASSERT_THROW(fs.close(handle), std::exception);
 }
 
 TEST(FileSystem, subFolder)
@@ -280,13 +268,13 @@ TEST_F(FileSystemTester, writingDataIncreasesCompositSize)
     ASSERT_GT (m_cacheManager->getFileInterface()->currentSize(), compositSize);
 }
 
-//TEST_F(FileSystemTester, rollbackRemovesAllEntries)
-//{
-//    m_fileSystem.rollback();
-//    ASSERT_FALSE(m_fileSystem.getAttribute("test/attribute"));
-//    ASSERT_FALSE(m_fileSystem.readFile("test/file1.txt"));
-//    ASSERT_FALSE(m_fileSystem.readFile("test/file2.txt"));
-//}
+TEST_F(FileSystemTester, rollbackRemovesAllEntries)
+{
+    m_fileSystem.rollback();
+    ASSERT_FALSE(m_fileSystem.getAttribute("test/attribute"));
+    ASSERT_FALSE(m_fileSystem.readFile("test/file1.txt"));
+    ASSERT_FALSE(m_fileSystem.readFile("test/file2.txt"));
+}
 
 TEST_F(FileSystemTester, rollbackReducesCompositSize)
 {

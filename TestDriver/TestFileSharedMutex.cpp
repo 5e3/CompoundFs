@@ -52,30 +52,14 @@ TEST(FileSharedMutex, throwOnInvalidHandle)
 {
     File f = nullptr;
     FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -1 };
-
-    try
-    {
-        bool succ = fsm.try_lock();
-        ASSERT_TRUE(false);
-    }
-    catch (const std::exception& e)
-    {
-        std::string msg = e.what();
-    }
+    ASSERT_THROW(fsm.try_lock(), std::exception);
 }
 
 TEST(FileSharedMutex, throwOnEmptyRange)
 {
     File f = nullptr;
     FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -2 };
-
-    try
-    {
-        bool succ = fsm.try_lock();
-        ASSERT_TRUE(false);
-    }
-    catch (const std::exception&)
-    {}
+    ASSERT_THROW(fsm.try_lock(), std::exception);
 }
 
 TEST(FileSharedMutex, canWriteOnXLockedRange)

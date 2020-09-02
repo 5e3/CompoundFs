@@ -34,21 +34,12 @@ TEST(LockProtocol, readAccessIsSharedLock)
 
 TEST(LockProtocol, commitAccessThrowsOnWrongParam)
 {
-    try
-    {
-        SimpleLockProtocoll slp;
-        auto clock = slp.commitAccess(slp.readAccess());
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&) {}
-    try
-    {
-        SimpleLockProtocoll slp;
-        SimpleLockProtocoll slp2;
-        auto clock = slp.commitAccess(slp2.writeAccess());
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&) {}
+    SimpleLockProtocoll slp;
+    ASSERT_THROW(slp.commitAccess(slp.readAccess()), std::exception);
+
+    SimpleLockProtocoll slp2;
+    SimpleLockProtocoll slp3;
+    ASSERT_THROW(slp2.commitAccess(slp3.writeAccess()), std::exception);
 }
 
 TEST(LockProtocol, canCommitAccessTwice)

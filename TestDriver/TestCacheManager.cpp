@@ -298,14 +298,7 @@ TEST(CacheManager, setPageIntervalAllocator)
     cm.setPageIntervalAllocator([](size_t) { return Interval(5); });
     auto pdef = cm.newPage();
     pdef.m_page.reset();
-
-    try
-    {
-        cm.trim(0);
-        ASSERT_TRUE(false);
-    }
-    catch (std::exception&)
-    {}
+    ASSERT_THROW(cm.trim(0), std::exception);
 }
 
 TEST(CacheManager, NoLogsReturnEmpty)
