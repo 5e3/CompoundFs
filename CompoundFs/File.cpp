@@ -3,6 +3,12 @@
 #include "File.h"
 #include "windows.h"
 
+#include <filesystem>
+#include <cstdio>
+
+#pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
+
+
 using namespace TxFs;
 
 File::File()
@@ -18,7 +24,11 @@ File::File(File&& other)
 File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
-{}
+    , m_lockProtocol { FileSharedMutex { handle, (uint64_t) -2, (uint64_t) -1 },
+                       FileSharedMutex { handle, (uint64_t) 0, (uint64_t) -4 },
+                       FileSharedMutex { handle, (uint64_t) -3, (uint64_t) -2 } }
+{
+}
 
 File& File::operator=(File&& other)
 {
@@ -52,6 +62,14 @@ File File::create(std::filesystem::path path)
     return File(handle, false);
 
 }
+
+
+File TxFs::File::createTemp()
+{
+    auto path = std::filesystem::temp_directory_path() / std::tmpnam(nullptr);
+    return create(path);
+}
+
 
 File File::open(std::filesystem::path path, bool readOnly)
 {

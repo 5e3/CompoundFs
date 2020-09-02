@@ -15,6 +15,9 @@ template <typename TSharedMutex, typename TMutex>
 class LockProtocol final
 {
 public:
+    LockProtocol() = default;
+    LockProtocol(TSharedMutex&& signal, TSharedMutex&& shared, TMutex&& writer);
+
     Lock readAccess();
     std::optional<Lock> tryReadAccess();
 
@@ -31,6 +34,14 @@ private:
 };
 
 ///////////////////////////////////////////////////////////////////////////
+
+template <typename TSMutex, typename TXMutex>
+inline LockProtocol<TSMutex, TXMutex>::LockProtocol(TSMutex&& signal, TSMutex&& shared, TXMutex&& writer)
+    : m_signal(std::move(signal))
+    , m_shared(std::move(shared))
+    , m_writer(std::move(writer))
+{
+}
 
 template <typename TSMutex, typename TXMutex>
 inline Lock LockProtocol<TSMutex, TXMutex>::readAccess()

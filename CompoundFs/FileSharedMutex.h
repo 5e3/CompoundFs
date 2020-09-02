@@ -10,6 +10,7 @@ namespace TxFs
     class FileSharedMutex final
     {
     public:
+        FileSharedMutex() = default;
         FileSharedMutex(void* handle, uint64_t begin, uint64_t end)
             : m_fileHandle(handle)
             , m_lockRange(begin, end)

@@ -11,7 +11,7 @@ using namespace TxFs;
 struct TempFile : File
 {
     TempFile()
-        : File(File::create(std::filesystem::temp_directory_path() / std::tmpnam(nullptr)))
+        : File(File::createTemp())
         , m_path(getFileName())
     {
     }

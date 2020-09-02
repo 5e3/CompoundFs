@@ -1,6 +1,8 @@
 
 
 #include "FileInterface.h"
+#include "LockProtocol.h"
+#include "FileSharedMutex.h"
 #include "Lock.h"
 #include <filesystem>
 
@@ -16,6 +18,7 @@ public:
     ~File();
 
     static File create(std::filesystem::path path);
+    static File createTemp();
     static File open(std::filesystem::path path, bool readOnly = false);
 
     Interval newInterval(size_t maxPages) override;
@@ -41,6 +44,7 @@ private:
 private:
     void* m_handle;
     bool m_readOnly;
+    LockProtocol<FileSharedMutex, FileSharedMutex> m_lockProtocol;
 };
 
 }
