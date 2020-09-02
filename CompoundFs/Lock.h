@@ -18,14 +18,13 @@ public:
     constexpr Lock(TMutex* mutex, ReleaseFunc releaseFunc) noexcept;
     constexpr Lock(Lock&&) noexcept;
     ~Lock();
-    constexpr Lock& operator=(Lock&&) noexcept;
-    constexpr Lock& operator=(nullptr_t) noexcept;
+    constexpr Lock& operator=(Lock&&);
 
     Lock(const Lock&) = delete;
     Lock& operator=(const Lock&) = delete;
 
     void swap(Lock& other) noexcept;
-    constexpr void release() noexcept;
+    constexpr void release();
     template <typename TMutex>
     constexpr bool isSameMutex(const TMutex* other) const noexcept;
 
@@ -82,21 +81,23 @@ constexpr Lock::Lock(Lock&& rhs) noexcept
 
 inline Lock::~Lock()
 {
-    release();
+    try
+    {
+        release();
+    }
+    catch (std::exception& e)
+    {
+        assert(false);
+    }
 }
 
-constexpr Lock& Lock::operator=(Lock&& rhs) noexcept
+constexpr Lock& Lock::operator=(Lock&& rhs)
 {
+    release();
     m_mutex = rhs.m_mutex;
     m_releaseFunc = rhs.m_releaseFunc;
     rhs.m_mutex = nullptr;
     rhs.m_releaseFunc = nullptr;
-    return *this;
-}
-
-constexpr Lock& Lock::operator=(nullptr_t) noexcept
-{
-    release();
     return *this;
 }
 
@@ -107,7 +108,7 @@ inline void Lock::swap(Lock& other) noexcept
     other = std::move(tmp);
 }
 
-constexpr void Lock::release() noexcept
+constexpr void Lock::release()
 {
     if (m_releaseFunc)
         m_releaseFunc(m_mutex);

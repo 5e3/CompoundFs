@@ -25,8 +25,8 @@ File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
     , m_lockProtocol { FileSharedMutex { handle, (uint64_t) -2, (uint64_t) -1 },
-                       FileSharedMutex { handle, (uint64_t) 0, (uint64_t) -4 },
-                       FileSharedMutex { handle, (uint64_t) -3, (uint64_t) -2 } }
+                       FileSharedMutex { handle, (uint64_t) -3, (uint64_t) -2 },
+                       FileSharedMutex { handle, (uint64_t) 0, (uint64_t) -3 } }
 {
 }
 
@@ -75,7 +75,7 @@ File File::open(std::filesystem::path path, bool readOnly)
 {
     auto handle = INVALID_HANDLE_VALUE;
     if (readOnly)
-        handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+        handle = ::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                               OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     else
         handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
@@ -208,22 +208,25 @@ Lock File::defaultAccess()
 
 Lock File::readAccess()
 {
-    throw std::runtime_error("not implmented");
+    return m_lockProtocol.readAccess();
 }
 
 Lock File::writeAccess()
 {
-    throw std::runtime_error("not implmented");
+    return m_lockProtocol.writeAccess();
 }
 
 CommitLock File::commitAccess(Lock&& writeLock)
 {
-    throw std::runtime_error("not implmented");
+    return m_lockProtocol.commitAccess(std::move(writeLock));
 }
 
 std::filesystem::path File::getFileName() const
 {
     std::wstring buffer(1028, 0);
-    ::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
+    auto succ = ::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
+    if (!succ)
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::truncate()");
+
     return buffer;
 }

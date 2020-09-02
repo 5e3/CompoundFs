@@ -1,7 +1,6 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/LockProtocol.h"
 
 #include <mutex>
