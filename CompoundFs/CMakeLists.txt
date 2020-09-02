@@ -8,6 +8,7 @@ set (Sources
 		CommitHandler.cpp
 		Composit.cpp
 		DirectoryStructure.cpp
+		FileIo.cpp
 		FileSharedMutex.cpp
 		FileSystem.cpp
 		MemoryFile.cpp
@@ -25,6 +26,7 @@ set (Headers
 		Composit.h
 		DirectoryStructure.h
 		FileDescriptor.h
+		FileIo.h
 		FileReader.h
 		FileSharedMutex.h
 		FileSystem.h

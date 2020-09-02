@@ -3,9 +3,22 @@
 #include <gtest/gtest.h>
 
 #include "../CompoundFs/MemoryFile.h"
+#include "../CompoundFs/FileIo.h"
 #include "../CompoundFs/ByteString.h"
 
 using namespace TxFs;
+
+struct TempFile : FileIo
+{
+    TempFile()
+        : FileIo(FileIo::create(std::filesystem::temp_directory_path() / std::tmpnam(nullptr)))
+        , m_path(getFileName())
+    {
+    }
+    ~TempFile() { std::filesystem::remove(m_path); }
+
+    std::filesystem::path m_path;
+};
 
 template<typename T>
 struct FileInterfaceTester : ::testing::Test
@@ -20,7 +33,7 @@ struct FileInterfaceTester : ::testing::Test
 
 };
 
-using FileIntefaceTypes = ::testing::Types<MemoryFile>;
+using FileIntefaceTypes = ::testing::Types<MemoryFile, TempFile>;
 TYPED_TEST_SUITE(FileInterfaceTester, FileIntefaceTypes);
 
 TYPED_TEST(FileInterfaceTester, newlyCreatedFileIsEmpty)
@@ -32,6 +45,8 @@ TYPED_TEST(FileInterfaceTester, newIntervalReturnsCorrespondingInterval)
 {
     auto interval = this->m_fileInterface->newInterval(5);
     ASSERT_EQ(interval, Interval(0, 5));
+    interval = this->m_fileInterface->newInterval(5);
+    ASSERT_EQ(interval, Interval(5, 10));
 }
 
 TYPED_TEST(FileInterfaceTester, truncateReducesFileSize)

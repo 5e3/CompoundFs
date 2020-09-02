@@ -77,23 +77,23 @@ TEST(LockProtocol, commitAccessIsBlockedByReadAccess)
     ASSERT_EQ(std::get_if<CommitLock>(&commitLock) , nullptr);
 }
 
-TEST(LockProtocol, readAccessCannotStarveCommitAccess)
-{
-    SimpleLockProtocoll slp;
-    auto rlock = slp.readAccess();
-
-    std::thread t([slp = &slp]() { slp->commitAccess(slp->writeAccess()); });
-
-    // busy wait
-    while (true)
-    {
-        std::this_thread::yield();
-        auto wlock = slp.tryWriteAccess();
-        if (!wlock)
-            break;
-    }
-    ASSERT_TRUE(!slp.tryReadAccess());
-    rlock.release();
-    //rlock = slp.readAccess();
-    t.join();
-}
+//TEST(LockProtocol, readAccessCannotStarveCommitAccess)
+//{
+//    SimpleLockProtocoll slp;
+//    auto rlock = slp.readAccess();
+//
+//    std::thread t([slp = &slp]() { slp->commitAccess(slp->writeAccess()); });
+//
+//    // busy wait
+//    while (true)
+//    {
+//        std::this_thread::yield();
+//        auto wlock = slp.tryWriteAccess();
+//        if (!wlock)
+//            break;
+//    }
+//    ASSERT_TRUE(!slp.tryReadAccess());
+//    rlock.release();
+//    //rlock = slp.readAccess();
+//    t.join();
+//}

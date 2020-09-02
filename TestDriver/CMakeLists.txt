@@ -10,6 +10,7 @@ set (Sources
 		TestByteString.cpp
 		TestDirectoryStructure.cpp
 		TestFile.cpp
+		TestFileIo.cpp
 		TestFileInterface.cpp
 		TestFileSharedMutex.cpp
 		TestFileSystem.cpp
