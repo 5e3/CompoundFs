@@ -9,17 +9,18 @@
 namespace TxFs
 {
 
+enum class OpenMode { Create, Open, ReadOnly };
+
 class File : public FileInterface
 {
 public:
     File();
+    File(std::filesystem::path path, OpenMode mode);
     File(File&&);
     File& operator=(File&&);
     ~File();
 
-    static File create(std::filesystem::path path);
-    static File createTemp();
-    static File open(std::filesystem::path path, bool readOnly = false);
+    void close();
 
     Interval newInterval(size_t maxPages) override;
     const uint8_t* writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end) override;
@@ -39,12 +40,27 @@ public:
 
 private:
     File(void* handle, bool readOnly);
-    void close();
+    static void* open(std::filesystem::path path, OpenMode mode);
 
 private:
     void* m_handle;
     bool m_readOnly;
     LockProtocol<FileSharedMutex, FileSharedMutex> m_lockProtocol;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+class TempFile : public File
+{
+public:
+    TempFile();
+    TempFile(TempFile&&);
+    TempFile& operator=(TempFile&& other);
+    ~TempFile();
+
+private:
+    std::filesystem::path m_path;
+
 };
 
 }

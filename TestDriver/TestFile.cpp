@@ -22,23 +22,23 @@ std::filesystem::path createFileName()
 
 TEST(File, illegalFileNamesThrow)
 {
-    ASSERT_THROW(File::create("*::"), std::system_error);
-    ASSERT_THROW(File::open("*::"), std::system_error);
-    ASSERT_THROW(File::open("*::", true), std::system_error);
+    ASSERT_THROW(File f("*::", OpenMode::Create), std::system_error);
+    ASSERT_THROW(File f("*::", OpenMode::Open), std::system_error);
+    ASSERT_THROW(File f("*::", OpenMode::ReadOnly), std::system_error);
 }
 
 TEST(File, openNonExistantFilesThrows)
 {
     auto path = createFileName();
-    ASSERT_THROW(File::open(path, true), std::system_error);
+    ASSERT_THROW(File f(path, OpenMode::ReadOnly), std::system_error);
 }
 
 TEST(File, createTruncatesFile)
 {
     auto path = createFileName();
-    auto file = File::create(path);
+    File file(path, OpenMode::Create);
     file.newInterval(5);
-    file = File::create(path);
+    file = File(path, OpenMode::Create);
     ASSERT_EQ(file.currentSize(), 0);
     file = File();
     std::filesystem::remove(path);
@@ -47,9 +47,11 @@ TEST(File, createTruncatesFile)
 TEST(File, canOpenSameFileMoreThanOnce)
 {
     auto path = createFileName();
-    auto file = File::create(path);
-    File::open(path);
-    File::open(path, true);
+    File file(path, OpenMode::Create);
+    {
+        File file1(path, OpenMode::Open);
+        File file2(path, OpenMode::ReadOnly);
+    }
     file = File();
     std::filesystem::remove(path);
 }
@@ -68,36 +70,26 @@ TEST(File, uninitializedFileThrows)
 
 TEST(File, readOnlyFileThrowsOnWriteOps)
 {
-    auto wfile = File::createTemp();
+    TempFile wfile;
     wfile.newInterval(5);
 
-    auto file = File::open(wfile.getFileName(), true);
+    auto file = File(wfile.getFileName(), OpenMode::ReadOnly);
     ASSERT_THROW(file.newInterval(2), std::exception);
     ASSERT_THROW(file.truncate(0), std::exception);
     ByteStringView out("0123456789");
     ASSERT_THROW(file.writePage(1, 0, out.data(), out.end()), std::exception);
-    auto path = wfile.getFileName();
-    wfile = File();
-    file = File();
-    std::filesystem::remove(path);
 }
 
 TEST(File, canWriteOnWriteLockedFile)
 {
-    auto wfile = File::createTemp();
-    auto rfile = File::open(wfile.getFileName(), true);
-    {
-        auto rlock = rfile.defaultAccess();
-        auto wlock = wfile.defaultAccess();
-        wfile.newInterval(5);
-        ByteStringView out("0123456789");
-        wfile.writePage(1, 0, out.data(), out.end());
-        ASSERT_NO_THROW(wfile.writePage(1, 0, out.data(), out.end()));
-    }
-    auto path = wfile.getFileName();
-    wfile = File();
-    rfile = File();
-    std::filesystem::remove(path);
+    auto wfile = TempFile();
+    auto rfile = File(wfile.getFileName(), OpenMode::ReadOnly);
+    auto rlock = rfile.defaultAccess();
+    auto wlock = wfile.defaultAccess();
+    wfile.newInterval(5);
+    ByteStringView out("0123456789");
+    wfile.writePage(1, 0, out.data(), out.end());
+    ASSERT_NO_THROW(wfile.writePage(1, 0, out.data(), out.end()));
 }
 
 

@@ -30,6 +30,13 @@ File::File(void* handle, bool readOnly)
 {
 }
 
+File::File(std::filesystem::path path, OpenMode mode)
+    : File(open(path, mode), mode == OpenMode::ReadOnly)
+{
+}
+
+
+
 File& File::operator=(File&& other)
 {
     close();
@@ -51,40 +58,35 @@ void File::close()
     m_handle = INVALID_HANDLE_VALUE;
 }
 
-File File::create(std::filesystem::path path) 
-{ 
-    auto handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
-                 FILE_ATTRIBUTE_NORMAL, nullptr);
 
-    if (handle == INVALID_HANDLE_VALUE)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::create()");
-
-    return File(handle, false);
-
-}
-
-
-File TxFs::File::createTemp()
+void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
 {
-    auto path = std::filesystem::temp_directory_path() / std::tmpnam(nullptr);
-    return create(path);
-}
+    void* handle = nullptr;
+    switch (mode)
+    {
+    case OpenMode::Create:
+        handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                              CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        break;
 
-
-File File::open(std::filesystem::path path, bool readOnly)
-{
-    auto handle = INVALID_HANDLE_VALUE;
-    if (readOnly)
-        handle = ::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-    else
+    case OpenMode::Open:
         handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                               OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        break;
+
+    case OpenMode::ReadOnly:
+        handle = ::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+                              FILE_ATTRIBUTE_NORMAL, nullptr);
+        break;
+
+    default:
+        throw std::runtime_error("File::open(): unknown OpenMode");
+    }
 
     if (handle == INVALID_HANDLE_VALUE)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::open()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::open()");
 
-    return File(handle, readOnly);
+    return handle;
 }
 
 Interval File::newInterval(size_t maxPages)
@@ -92,15 +94,15 @@ Interval File::newInterval(size_t maxPages)
     LARGE_INTEGER size;
     auto succ = ::GetFileSizeEx(m_handle, &size);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::newInterval()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
 
     succ = ::SetFilePointerEx(m_handle, { (4096 * maxPages) }, nullptr, FILE_END);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::newInterval()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
 
     succ = ::SetEndOfFile(m_handle);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::newInterval()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
 
     return Interval(size.QuadPart / 4096, size.QuadPart / 4096 + maxPages);
 }
@@ -108,17 +110,17 @@ Interval File::newInterval(size_t maxPages)
 const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
     if (pageOffset + (end - begin) > 4096)
-        throw std::runtime_error("FileIo::writePage over page boundary");
+        throw std::runtime_error("File::writePage over page boundary");
     if (currentSize() <= id)
-        throw std::runtime_error("FileIo::writePage outside file");
+        throw std::runtime_error("File::writePage outside file");
 
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * id) + pageOffset }, nullptr, FILE_BEGIN);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::writePage()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePage()");
 
     succ = ::WriteFile(m_handle, begin, end - begin, nullptr, nullptr);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::writePage()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePage()");
 
     return end;
 }
@@ -126,15 +128,15 @@ const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* b
 const uint8_t* File::writePages(Interval iv, const uint8_t* page)
 {
     if (currentSize() < iv.end())
-        throw std::runtime_error("FileIo::writePages outside file");
+        throw std::runtime_error("File::writePages outside file");
 
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * iv.begin()) }, nullptr, FILE_BEGIN);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::writePages()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePages()");
     
     succ = ::WriteFile(m_handle, page, 4096 * iv.length(), nullptr, nullptr);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::writePages()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePages()");
 
     return page + (iv.length() * 4096);
 }
@@ -142,17 +144,17 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
     if (pageOffset + (end - begin) > 4096)
-        throw std::runtime_error("FileIo::readPage over page boundary");
+        throw std::runtime_error("File::readPage over page boundary");
     if (currentSize() <= id)
-        throw std::runtime_error("FileIo::readPage outside file");
+        throw std::runtime_error("File::readPage outside file");
 
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * id) + pageOffset }, nullptr, FILE_BEGIN);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::readPage()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPage()");
 
     succ = ::ReadFile(m_handle, begin, end - begin, nullptr, nullptr);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::readPage()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPage()");
 
     return end;
 }
@@ -160,15 +162,15 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
 uint8_t* File::readPages(Interval iv, uint8_t* page) const
 {
     if (currentSize() < iv.end())
-        throw std::runtime_error("FileIo::readPages outside file");
+        throw std::runtime_error("File::readPages outside file");
 
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * iv.begin()) }, nullptr, FILE_BEGIN);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::readPages()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPages()");
 
     succ = ::ReadFile(m_handle, page, 4096 * iv.length(), nullptr, nullptr);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::readPages()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPages()");
 
     return page + (iv.length()*4096);
 }
@@ -178,7 +180,7 @@ size_t File::currentSize() const
     LARGE_INTEGER size;
     auto succ = ::GetFileSizeEx(m_handle, &size);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::currentSize()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::currentSize()");
 
     return size.QuadPart / 4096;
 }
@@ -187,18 +189,18 @@ void File::flushFile()
 {
     auto succ = ::FlushFileBuffers(m_handle);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::flushFile()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::flushFile()");
 }
 
 void File::truncate(size_t numberOfPages)
 {
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * numberOfPages) }, nullptr, FILE_BEGIN);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::truncate()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
 
     succ = ::SetEndOfFile(m_handle);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::truncate()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
 }
 
 Lock File::defaultAccess()
@@ -226,7 +228,40 @@ std::filesystem::path File::getFileName() const
     std::wstring buffer(1028, 0);
     auto succ = ::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::truncate()");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
 
     return buffer;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+TempFile::TempFile()
+    : File(std::filesystem::temp_directory_path() / std::tmpnam(nullptr), OpenMode::Create)
+{
+    m_path = getFileName();
+}
+
+TempFile::TempFile(TempFile&& other)
+    : File(std::move(other))
+    , m_path(std::move(other.m_path))
+{
+    other.m_path = std::filesystem::path();
+}
+
+TempFile::~TempFile()
+{
+    close();
+    if (!m_path.empty())
+        std::filesystem::remove(m_path);
+}
+
+TempFile& TempFile::operator=(TempFile&& other)
+{
+    close();
+    if (!m_path.empty())
+        std::filesystem::remove(m_path);
+    File::operator=(std::move(other));
+    m_path = std::move(other.m_path);
+    other.m_path = std::filesystem::path();
+    return *this;
 }

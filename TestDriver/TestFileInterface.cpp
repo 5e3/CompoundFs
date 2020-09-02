@@ -8,18 +8,6 @@
 
 using namespace TxFs;
 
-struct TempFile : File
-{
-    TempFile()
-        : File(File::createTemp())
-        , m_path(getFileName())
-    {
-    }
-    ~TempFile() { std::filesystem::remove(m_path); }
-
-    std::filesystem::path m_path;
-};
-
 template<typename T>
 struct FileInterfaceTester : ::testing::Test
 {
