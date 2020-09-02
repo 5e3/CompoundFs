@@ -9,8 +9,8 @@ set (Sources
 		TestCommitHandler.cpp
 		TestByteString.cpp
 		TestDirectoryStructure.cpp
+		TestFileReaderWriter.cpp
 		TestFile.cpp
-		TestFileIo.cpp
 		TestFileInterface.cpp
 		TestFileSharedMutex.cpp
 		TestFileSystem.cpp

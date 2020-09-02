@@ -1,26 +1,26 @@
 
 
-#include "FileIo.h"
+#include "File.h"
 #include "windows.h"
 
 using namespace TxFs;
 
-FileIo::FileIo()
-    : FileIo(INVALID_HANDLE_VALUE, false)
+File::File()
+    : File(INVALID_HANDLE_VALUE, false)
 {}
 
-FileIo::FileIo(FileIo&& other)
-    : FileIo(other.m_handle, other.m_readOnly)
+File::File(File&& other)
+    : File(other.m_handle, other.m_readOnly)
 {
     other.m_handle = INVALID_HANDLE_VALUE;
 }
 
-FileIo::FileIo(void* handle, bool readOnly)
+File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
 {}
 
-FileIo& FileIo::operator=(FileIo&& other)
+File& File::operator=(File&& other)
 {
     close();
     m_handle = other.m_handle;
@@ -29,19 +29,19 @@ FileIo& FileIo::operator=(FileIo&& other)
     return *this;
 }
 
-FileIo::~FileIo()
+File::~File()
 {
     close();
 }
 
-void FileIo::close()
+void File::close()
 {
     if (m_handle != INVALID_HANDLE_VALUE)
         ::CloseHandle(m_handle);
     m_handle = INVALID_HANDLE_VALUE;
 }
 
-FileIo FileIo::create(std::filesystem::path path) 
+File File::create(std::filesystem::path path) 
 { 
     auto handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, CREATE_ALWAYS,
                  FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -49,11 +49,11 @@ FileIo FileIo::create(std::filesystem::path path)
     if (handle == INVALID_HANDLE_VALUE)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::create()");
 
-    return FileIo(handle, false);
+    return File(handle, false);
 
 }
 
-FileIo FileIo::open(std::filesystem::path path, bool readOnly)
+File File::open(std::filesystem::path path, bool readOnly)
 {
     auto handle = INVALID_HANDLE_VALUE;
     if (readOnly)
@@ -66,10 +66,10 @@ FileIo FileIo::open(std::filesystem::path path, bool readOnly)
     if (handle == INVALID_HANDLE_VALUE)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::open()");
 
-    return FileIo(handle, readOnly);
+    return File(handle, readOnly);
 }
 
-Interval FileIo::newInterval(size_t maxPages)
+Interval File::newInterval(size_t maxPages)
 {
     LARGE_INTEGER size;
     auto succ = ::GetFileSizeEx(m_handle, &size);
@@ -87,7 +87,7 @@ Interval FileIo::newInterval(size_t maxPages)
     return Interval(size.QuadPart / 4096, size.QuadPart / 4096 + maxPages);
 }
 
-const uint8_t* FileIo::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
+const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
     if (pageOffset + (end - begin) > 4096)
         throw std::runtime_error("FileIo::writePage over page boundary");
@@ -105,7 +105,7 @@ const uint8_t* FileIo::writePage(PageIndex id, size_t pageOffset, const uint8_t*
     return end;
 }
 
-const uint8_t* FileIo::writePages(Interval iv, const uint8_t* page)
+const uint8_t* File::writePages(Interval iv, const uint8_t* page)
 {
     if (currentSize() < iv.end())
         throw std::runtime_error("FileIo::writePages outside file");
@@ -121,7 +121,7 @@ const uint8_t* FileIo::writePages(Interval iv, const uint8_t* page)
     return page + (iv.length() * 4096);
 }
 
-uint8_t* FileIo::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
+uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
     if (pageOffset + (end - begin) > 4096)
         throw std::runtime_error("FileIo::readPage over page boundary");
@@ -139,7 +139,7 @@ uint8_t* FileIo::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8
     return end;
 }
 
-uint8_t* FileIo::readPages(Interval iv, uint8_t* page) const
+uint8_t* File::readPages(Interval iv, uint8_t* page) const
 {
     if (currentSize() < iv.end())
         throw std::runtime_error("FileIo::readPages outside file");
@@ -155,7 +155,7 @@ uint8_t* FileIo::readPages(Interval iv, uint8_t* page) const
     return page + (iv.length()*4096);
 }
 
-size_t FileIo::currentSize() const
+size_t File::currentSize() const
 {
     LARGE_INTEGER size;
     auto succ = ::GetFileSizeEx(m_handle, &size);
@@ -165,14 +165,14 @@ size_t FileIo::currentSize() const
     return size.QuadPart / 4096;
 }
 
-void FileIo::flushFile()
+void File::flushFile()
 {
     auto succ = ::FlushFileBuffers(m_handle);
     if (!succ)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::flushFile()");
 }
 
-void FileIo::truncate(size_t numberOfPages)
+void File::truncate(size_t numberOfPages)
 {
     auto succ = ::SetFilePointerEx(m_handle, { (4096 * numberOfPages) }, nullptr, FILE_BEGIN);
     if (!succ)
@@ -183,27 +183,27 @@ void FileIo::truncate(size_t numberOfPages)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileIo::truncate()");
 }
 
-Lock FileIo::defaultAccess()
+Lock File::defaultAccess()
 {
     return m_readOnly ? readAccess() : writeAccess();
 }
 
-Lock FileIo::readAccess()
+Lock File::readAccess()
 {
     throw std::runtime_error("not implmented");
 }
 
-Lock FileIo::writeAccess()
+Lock File::writeAccess()
 {
     throw std::runtime_error("not implmented");
 }
 
-CommitLock FileIo::commitAccess(Lock&& writeLock)
+CommitLock File::commitAccess(Lock&& writeLock)
 {
     throw std::runtime_error("not implmented");
 }
 
-std::filesystem::path FileIo::getFileName() const
+std::filesystem::path File::getFileName() const
 {
     std::wstring buffer(1028, 0);
     ::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);

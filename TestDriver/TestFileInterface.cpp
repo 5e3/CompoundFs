@@ -3,15 +3,15 @@
 #include <gtest/gtest.h>
 
 #include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/FileIo.h"
+#include "../CompoundFs/File.h"
 #include "../CompoundFs/ByteString.h"
 
 using namespace TxFs;
 
-struct TempFile : FileIo
+struct TempFile : File
 {
     TempFile()
-        : FileIo(FileIo::create(std::filesystem::temp_directory_path() / std::tmpnam(nullptr)))
+        : File(File::create(std::filesystem::temp_directory_path() / std::tmpnam(nullptr)))
         , m_path(getFileName())
     {
     }

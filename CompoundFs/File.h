@@ -7,16 +7,16 @@
 namespace TxFs
 {
 
-class FileIo : public FileInterface
+class File : public FileInterface
 {
 public:
-    FileIo();
-    FileIo(FileIo&&);
-    FileIo& operator=(FileIo&&);
-    ~FileIo();
+    File();
+    File(File&&);
+    File& operator=(File&&);
+    ~File();
 
-    static FileIo create(std::filesystem::path path);
-    static FileIo open(std::filesystem::path path, bool readOnly = false);
+    static File create(std::filesystem::path path);
+    static File open(std::filesystem::path path, bool readOnly = false);
 
     Interval newInterval(size_t maxPages) override;
     const uint8_t* writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end) override;
@@ -35,7 +35,7 @@ public:
     std::filesystem::path getFileName() const;
 
 private:
-    FileIo(void* handle, bool readOnly);
+    File(void* handle, bool readOnly);
     void close();
 
 private:
