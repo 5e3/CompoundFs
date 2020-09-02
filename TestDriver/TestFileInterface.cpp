@@ -17,6 +17,8 @@ struct FileInterfaceTester : ::testing::Test
 
     }
 
+    ~FileInterfaceTester() { delete m_fileInterface; }
+
     FileInterface* m_fileInterface = nullptr;
 
 };
