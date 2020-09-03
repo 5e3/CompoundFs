@@ -15,6 +15,8 @@ set (Sources
 		PageAllocator.cpp
 		TreeValue.cpp
 		Path.cpp
+		WrappedFile.cpp
+
 	)
 	
 set (Headers
@@ -51,6 +53,7 @@ set (Headers
 		TableKeyCompare.h
 		TreeValue.h
 		TypedCacheManager.h
+		WrappedFile.h
 		TxFs.natvis
 		Board.txt
 	)
