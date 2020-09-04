@@ -55,8 +55,8 @@ namespace Win32
 
 namespace
 {
-    constexpr uint64_t PAGE_SIZE = 4096ULL;
-    constexpr int64_t MAX_END_OF_FILE = 0LL;
+    constexpr uint64_t PageSize = 4096ULL;
+    constexpr int64_t MaxEndOfFile = 0LL;
 }
 
 File::File()
@@ -72,9 +72,9 @@ File::File(File&& other)
 File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
-    , m_lockProtocol { FileSharedMutex { handle, MAX_END_OF_FILE - 2, MAX_END_OF_FILE - 1 }, 
-                       FileSharedMutex { handle, MAX_END_OF_FILE - 3, MAX_END_OF_FILE - 2 },
-                       FileSharedMutex { handle, 0, MAX_END_OF_FILE - 3 } }
+    , m_lockProtocol { FileSharedMutex { handle, MaxEndOfFile - 1, MaxEndOfFile}, 
+                       FileSharedMutex { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
+                       FileSharedMutex { handle, 0, MaxEndOfFile - 2 } }
 {
 }
 
@@ -138,20 +138,20 @@ Interval File::newInterval(size_t maxPages)
 {
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
-    Win32::Seek(m_handle, PAGE_SIZE * maxPages + size.QuadPart);
+    Win32::Seek(m_handle, PageSize * maxPages + size.QuadPart);
     Win32::SetEndOfFile(m_handle);
 
-    return Interval(size.QuadPart / PAGE_SIZE, size.QuadPart / PAGE_SIZE + maxPages);
+    return Interval(size.QuadPart / PageSize, size.QuadPart / PageSize + maxPages);
 }
 
 const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
-    if (pageOffset + (end - begin) > PAGE_SIZE)
+    if (pageOffset + (end - begin) > PageSize)
         throw std::runtime_error("File::writePage over page boundary");
     if (currentSize() <= id)
         throw std::runtime_error("File::writePage outside file");
 
-    Win32::Seek(m_handle, PAGE_SIZE * id + pageOffset);
+    Win32::Seek(m_handle, PageSize * id + pageOffset);
     Win32::WriteFile(m_handle, begin, end - begin, nullptr, nullptr);
 
     return end;
@@ -162,20 +162,20 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
     if (currentSize() < iv.end())
         throw std::runtime_error("File::writePages outside file");
 
-    Win32::Seek(m_handle, PAGE_SIZE * iv.begin());
-    Win32::WriteFile(m_handle, page, PAGE_SIZE * iv.length(), nullptr, nullptr);
+    Win32::Seek(m_handle, PageSize * iv.begin());
+    Win32::WriteFile(m_handle, page, PageSize * iv.length(), nullptr, nullptr);
 
-    return page + (iv.length() * PAGE_SIZE);
+    return page + (iv.length() * PageSize);
 }
 
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
-    if (pageOffset + (end - begin) > PAGE_SIZE)
+    if (pageOffset + (end - begin) > PageSize)
         throw std::runtime_error("File::readPage over page boundary");
     if (currentSize() <= id)
         throw std::runtime_error("File::readPage outside file");
 
-    Win32::Seek(m_handle, PAGE_SIZE * id + pageOffset);
+    Win32::Seek(m_handle, PageSize * id + pageOffset);
     Win32::ReadFile(m_handle, begin, end - begin, nullptr, nullptr);
 
     return end;
@@ -186,10 +186,10 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
     if (currentSize() < iv.end())
         throw std::runtime_error("File::readPages outside file");
 
-    Win32::Seek(m_handle, PAGE_SIZE * iv.begin());
-    Win32::ReadFile(m_handle, page, PAGE_SIZE * iv.length(), nullptr, nullptr);
+    Win32::Seek(m_handle, PageSize * iv.begin());
+    Win32::ReadFile(m_handle, page, PageSize * iv.length(), nullptr, nullptr);
 
-    return page + (iv.length() * PAGE_SIZE);
+    return page + (iv.length() * PageSize);
 }
 
 size_t File::currentSize() const
@@ -197,7 +197,7 @@ size_t File::currentSize() const
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
 
-    return size.QuadPart / PAGE_SIZE;
+    return size.QuadPart / PageSize;
 }
 
 void File::flushFile()
@@ -207,7 +207,7 @@ void File::flushFile()
 
 void File::truncate(size_t numberOfPages)
 {
-    Win32::Seek(m_handle, PAGE_SIZE * numberOfPages);
+    Win32::Seek(m_handle, PageSize * numberOfPages);
     Win32::SetEndOfFile(m_handle);
 }
 
