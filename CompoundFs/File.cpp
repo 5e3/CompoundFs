@@ -11,6 +11,55 @@
 
 using namespace TxFs;
 
+namespace Win32
+{
+    void throwOnError(BOOL succ)
+    {
+        if (!succ)
+            throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+    }
+
+    void throwOnError(HANDLE handle)
+    {
+        if (handle == INVALID_HANDLE_VALUE)
+            throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+    }
+
+    template <typename TRet, typename... TArgs>
+    auto wrapOsCall(TRet(func)(TArgs...))
+    {
+        return [func](TArgs args...) -> TRet 
+        { 
+            auto returnValue = func(args...); 
+            throwOnError(returnValue);
+            return returnValue;
+        };
+    }
+
+    auto GetFileSizeEx = wrapOsCall(::GetFileSizeEx);
+    auto CreateFile = wrapOsCall(::CreateFile);
+    auto SetFilePointerEx = wrapOsCall(::SetFilePointerEx);
+    auto SetEndOfFile = wrapOsCall(::SetEndOfFile);
+    auto WriteFile = wrapOsCall(::WriteFile);
+    auto ReadFile = wrapOsCall(::ReadFile);
+    auto FlushFileBuffers = wrapOsCall(::FlushFileBuffers);
+    auto GetFinalPathNameByHandle = wrapOsCall(::GetFinalPathNameByHandle);
+
+    void Seek(HANDLE handle, uint64_t position)
+    {
+        LARGE_INTEGER pos;
+        pos.QuadPart = position;
+        SetFilePointerEx(handle, pos, nullptr, FILE_BEGIN);
+    }
+}
+
+namespace
+{
+    constexpr uint64_t PAGESIZE = 4096ULL;
+}
+
+
+
 File::File()
     : File(INVALID_HANDLE_VALUE, false)
 {}
@@ -34,8 +83,6 @@ File::File(std::filesystem::path path, OpenMode mode)
     : File(open(path, mode), mode == OpenMode::ReadOnly)
 {
 }
-
-
 
 File& File::operator=(File&& other)
 {
@@ -65,17 +112,17 @@ void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
     switch (mode)
     {
     case OpenMode::Create:
-        handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+        handle = Win32::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                               CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         break;
 
     case OpenMode::Open:
-        handle = ::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+        handle = Win32::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                               OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         break;
 
     case OpenMode::ReadOnly:
-        handle = ::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+        handle = Win32::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
                               FILE_ATTRIBUTE_NORMAL, nullptr);
         break;
 
@@ -83,44 +130,28 @@ void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
         throw std::runtime_error("File::open(): unknown OpenMode");
     }
 
-    if (handle == INVALID_HANDLE_VALUE)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::open()");
-
     return handle;
 }
 
 Interval File::newInterval(size_t maxPages)
 {
     LARGE_INTEGER size;
-    auto succ = ::GetFileSizeEx(m_handle, &size);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
+    Win32::GetFileSizeEx(m_handle, &size);
+    Win32::Seek(m_handle, PAGESIZE * maxPages + size.QuadPart);
+    Win32::SetEndOfFile(m_handle);
 
-    succ = ::SetFilePointerEx(m_handle, { (4096 * maxPages) }, nullptr, FILE_END);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
-
-    succ = ::SetEndOfFile(m_handle);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::newInterval()");
-
-    return Interval(size.QuadPart / 4096, size.QuadPart / 4096 + maxPages);
+    return Interval(size.QuadPart / PAGESIZE, size.QuadPart / PAGESIZE + maxPages);
 }
 
 const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
-    if (pageOffset + (end - begin) > 4096)
+    if (pageOffset + (end - begin) > PAGESIZE)
         throw std::runtime_error("File::writePage over page boundary");
     if (currentSize() <= id)
         throw std::runtime_error("File::writePage outside file");
 
-    auto succ = ::SetFilePointerEx(m_handle, { (4096 * id) + pageOffset }, nullptr, FILE_BEGIN);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePage()");
-
-    succ = ::WriteFile(m_handle, begin, end - begin, nullptr, nullptr);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePage()");
+    Win32::Seek(m_handle, PAGESIZE * id + pageOffset);
+    Win32::WriteFile(m_handle, begin, end - begin, nullptr, nullptr);
 
     return end;
 }
@@ -130,15 +161,10 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
     if (currentSize() < iv.end())
         throw std::runtime_error("File::writePages outside file");
 
-    auto succ = ::SetFilePointerEx(m_handle, { (4096 * iv.begin()) }, nullptr, FILE_BEGIN);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePages()");
-    
-    succ = ::WriteFile(m_handle, page, 4096 * iv.length(), nullptr, nullptr);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::writePages()");
+    Win32::Seek(m_handle, PAGESIZE * iv.begin());
+    Win32::WriteFile(m_handle, page, PAGESIZE * iv.length(), nullptr, nullptr);
 
-    return page + (iv.length() * 4096);
+    return page + (iv.length() * PAGESIZE);
 }
 
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
@@ -148,13 +174,8 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
     if (currentSize() <= id)
         throw std::runtime_error("File::readPage outside file");
 
-    auto succ = ::SetFilePointerEx(m_handle, { (4096 * id) + pageOffset }, nullptr, FILE_BEGIN);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPage()");
-
-    succ = ::ReadFile(m_handle, begin, end - begin, nullptr, nullptr);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPage()");
+    Win32::Seek(m_handle, PAGESIZE * id + pageOffset);
+    Win32::ReadFile(m_handle, begin, end - begin, nullptr, nullptr);
 
     return end;
 }
@@ -164,43 +185,29 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
     if (currentSize() < iv.end())
         throw std::runtime_error("File::readPages outside file");
 
-    auto succ = ::SetFilePointerEx(m_handle, { (4096 * iv.begin()) }, nullptr, FILE_BEGIN);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPages()");
+    Win32::Seek(m_handle, PAGESIZE * iv.begin());
+    Win32::ReadFile(m_handle, page, PAGESIZE * iv.length(), nullptr, nullptr);
 
-    succ = ::ReadFile(m_handle, page, 4096 * iv.length(), nullptr, nullptr);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::readPages()");
-
-    return page + (iv.length()*4096);
+    return page + (iv.length()*PAGESIZE);
 }
 
 size_t File::currentSize() const
 {
     LARGE_INTEGER size;
-    auto succ = ::GetFileSizeEx(m_handle, &size);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::currentSize()");
+    Win32::GetFileSizeEx(m_handle, &size);
 
-    return size.QuadPart / 4096;
+    return size.QuadPart / PAGESIZE;
 }
 
 void File::flushFile()
 {
-    auto succ = ::FlushFileBuffers(m_handle);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::flushFile()");
+    Win32::FlushFileBuffers(m_handle);
 }
 
 void File::truncate(size_t numberOfPages)
 {
-    auto succ = ::SetFilePointerEx(m_handle, { (4096 * numberOfPages) }, nullptr, FILE_BEGIN);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
-
-    succ = ::SetEndOfFile(m_handle);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
+    Win32::Seek(m_handle, PAGESIZE * numberOfPages);
+    Win32::SetEndOfFile(m_handle);
 }
 
 Lock File::defaultAccess()
@@ -226,9 +233,7 @@ CommitLock File::commitAccess(Lock&& writeLock)
 std::filesystem::path File::getFileName() const
 {
     std::wstring buffer(1028, 0);
-    auto succ = ::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
-    if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::truncate()");
+    Win32::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
 
     return buffer;
 }
