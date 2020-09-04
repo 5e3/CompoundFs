@@ -101,7 +101,10 @@ File::~File()
 void File::close()
 {
     if (m_handle != INVALID_HANDLE_VALUE)
-        ::CloseHandle(m_handle);
+    {
+        [[maybe_unused]] auto succ = ::CloseHandle(m_handle);
+        assert(succ);
+    }
     m_handle = INVALID_HANDLE_VALUE;
 }
 
