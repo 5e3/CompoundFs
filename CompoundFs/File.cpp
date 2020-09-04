@@ -13,50 +13,49 @@ using namespace TxFs;
 
 namespace Win32
 {
-    void throwOnError(BOOL succ)
-    {
-        if (!succ)
-            throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
-    }
+void throwOnError(BOOL succ)
+{
+    if (!succ)
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+}
 
-    void throwOnError(HANDLE handle)
-    {
-        if (handle == INVALID_HANDLE_VALUE)
-            throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
-    }
+void throwOnError(HANDLE handle)
+{
+    if (handle == INVALID_HANDLE_VALUE)
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+}
 
-    template <typename TRet, typename... TArgs>
-    constexpr auto wrapOsCall(TRet(func)(TArgs...))
-    {
-        return [func](TArgs... args) -> TRet 
-        {
-            auto returnValue = func(args...);
-            throwOnError(returnValue);
-            return returnValue;
-        };
-    }
+template <typename TRet, typename... TArgs>
+constexpr auto wrapOsCall(TRet(func)(TArgs...))
+{
+    return [func](TArgs... args) -> TRet {
+        auto returnValue = func(args...);
+        throwOnError(returnValue);
+        return returnValue;
+    };
+}
 
-    constexpr auto GetFileSizeEx = wrapOsCall(::GetFileSizeEx);
-    constexpr auto CreateFile = wrapOsCall(::CreateFile);
-    constexpr auto SetFilePointerEx = wrapOsCall(::SetFilePointerEx);
-    constexpr auto SetEndOfFile = wrapOsCall(::SetEndOfFile);
-    constexpr auto WriteFile = wrapOsCall(::WriteFile);
-    constexpr auto ReadFile = wrapOsCall(::ReadFile);
-    constexpr auto FlushFileBuffers = wrapOsCall(::FlushFileBuffers);
-    constexpr auto GetFinalPathNameByHandle = wrapOsCall(::GetFinalPathNameByHandle);
+constexpr auto GetFileSizeEx = wrapOsCall(::GetFileSizeEx);
+constexpr auto CreateFile = wrapOsCall(::CreateFile);
+constexpr auto SetFilePointerEx = wrapOsCall(::SetFilePointerEx);
+constexpr auto SetEndOfFile = wrapOsCall(::SetEndOfFile);
+constexpr auto WriteFile = wrapOsCall(::WriteFile);
+constexpr auto ReadFile = wrapOsCall(::ReadFile);
+constexpr auto FlushFileBuffers = wrapOsCall(::FlushFileBuffers);
+constexpr auto GetFinalPathNameByHandle = wrapOsCall(::GetFinalPathNameByHandle);
 
-    void Seek(HANDLE handle, uint64_t position)
-    {
-        LARGE_INTEGER pos;
-        pos.QuadPart = position;
-        SetFilePointerEx(handle, pos, nullptr, FILE_BEGIN);
-    }
+void Seek(HANDLE handle, uint64_t position)
+{
+    LARGE_INTEGER pos;
+    pos.QuadPart = position;
+    SetFilePointerEx(handle, pos, nullptr, FILE_BEGIN);
+}
 }
 
 namespace
 {
-    constexpr uint64_t PageSize = 4096ULL;
-    constexpr int64_t MaxEndOfFile = 0LL;
+constexpr uint64_t PageSize = 4096ULL;
+constexpr int64_t MaxEndOfFile = 0LL;
 }
 
 File::File()
@@ -72,11 +71,10 @@ File::File(File&& other)
 File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
-    , m_lockProtocol { FileSharedMutex { handle, MaxEndOfFile - 1, MaxEndOfFile}, 
+    , m_lockProtocol { FileSharedMutex { handle, MaxEndOfFile - 1, MaxEndOfFile },
                        FileSharedMutex { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
                        FileSharedMutex { handle, 0, MaxEndOfFile - 2 } }
-{
-}
+{}
 
 File::File(std::filesystem::path path, OpenMode mode)
     : File(open(path, mode), mode == OpenMode::ReadOnly)
@@ -152,7 +150,8 @@ const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* b
         throw std::runtime_error("File::writePage outside file");
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
-    Win32::WriteFile(m_handle, begin, end - begin, nullptr, nullptr);
+    DWORD bytesWritten;
+    Win32::WriteFile(m_handle, begin, end - begin, &bytesWritten, nullptr);
 
     return end;
 }
@@ -163,7 +162,8 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
         throw std::runtime_error("File::writePages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
-    Win32::WriteFile(m_handle, page, PageSize * iv.length(), nullptr, nullptr);
+    DWORD bytesWritten;
+    Win32::WriteFile(m_handle, page, PageSize * iv.length(), &bytesWritten, nullptr);
 
     return page + (iv.length() * PageSize);
 }
@@ -176,7 +176,8 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
         throw std::runtime_error("File::readPage outside file");
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
-    Win32::ReadFile(m_handle, begin, end - begin, nullptr, nullptr);
+    DWORD bytesRead;
+    Win32::ReadFile(m_handle, begin, end - begin, &bytesRead, nullptr);
 
     return end;
 }
@@ -187,7 +188,8 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
         throw std::runtime_error("File::readPages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
-    Win32::ReadFile(m_handle, page, PageSize * iv.length(), nullptr, nullptr);
+    DWORD bytesRead;
+    Win32::ReadFile(m_handle, page, PageSize * iv.length(), &bytesRead, nullptr);
 
     return page + (iv.length() * PageSize);
 }
