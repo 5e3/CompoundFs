@@ -27,3 +27,42 @@ TEST(Composit, canReopenFile)
     auto fsys = Composit::open<WrappedFile>(file);
     ASSERT_EQ(fsys.getAttribute("test")->toValue<std::string>(), "test");
 }
+
+TEST(Composit, openDoesRollback)
+{
+    std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
+    {
+        auto fsys = Composit::open<WrappedFile>(file);
+        auto handle = *fsys.createFile("file");
+        std::string data(5000, 'X');
+        fsys.write(handle, data.data(), data.size());
+        // no commit()
+    }
+
+    auto size = file->currentSize();
+    auto fsys = Composit::open<WrappedFile>(file);
+    ASSERT_LT(file->currentSize(), size);
+}
+
+struct CrashCommitFile : WrappedFile
+{
+    CrashCommitFile(std::shared_ptr<FileInterface> file)
+        : WrappedFile(file)
+    {}
+
+    struct Exception : std::runtime_error
+    {
+        Exception()
+            : std::runtime_error("")
+            {}
+    };
+
+    void truncate(size_t numberOfPages) override
+    {
+        if (currentSize() != numberOfPages)
+            throw Exception();
+        WrappedFile::truncate(numberOfPages);
+    }
+};
+
+
