@@ -51,21 +51,21 @@ struct File
 TEST(FileSharedMutex, throwOnInvalidHandle)
 {
     File f = nullptr;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -1 };
+    FileSharedMutex fsm { f.m_handle, -2, -1 };
     ASSERT_THROW(fsm.try_lock(), std::exception);
 }
 
 TEST(FileSharedMutex, throwOnEmptyRange)
 {
     File f = nullptr;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -2 };
+    FileSharedMutex fsm { f.m_handle, -2, -2 };
     ASSERT_THROW(fsm.try_lock(), std::exception);
 }
 
 TEST(FileSharedMutex, canWriteOnXLockedRange)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) 0, (uint64_t) -1 };
+    FileSharedMutex fsm { f.m_handle, 0, -1 };
     fsm.lock();
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
@@ -76,7 +76,7 @@ TEST(FileSharedMutex, canWriteOnXLockedRange)
 TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) 0, (uint64_t) -1 };
+    FileSharedMutex fsm { f.m_handle, 0, -1 };
     fsm.lock_shared();
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
@@ -90,7 +90,7 @@ TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
     do
     {
         File f;
-        FileSharedMutex fsm { f.m_handle, (uint64_t) 0, (uint64_t) -1 };
+        FileSharedMutex fsm { f.m_handle, 0, -1 };
         if (exclusive)
             fsm.lock();
         else
@@ -108,11 +108,11 @@ TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
 TEST(FileSharedMutex, XLockPreventsOtherLocks)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -1 };
+    FileSharedMutex fsm { f.m_handle, -2, -1 };
     std::unique_lock lock(fsm);
 
     File f2 = f;
-    FileSharedMutex fsm2 { f2.m_handle, (uint64_t) -2, (uint64_t) -1 };
+    FileSharedMutex fsm2 { f2.m_handle, -2, -1 };
     ASSERT_TRUE(!fsm2.try_lock_shared());
     ASSERT_TRUE(!fsm2.try_lock());
 }
@@ -120,11 +120,11 @@ TEST(FileSharedMutex, XLockPreventsOtherLocks)
 TEST(FileSharedMutex, SLockPreventsXLock)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, (uint64_t) -2, (uint64_t) -1 };
+    FileSharedMutex fsm { f.m_handle, -2, -1 };
     std::shared_lock lock(fsm);
 
     File f2 = f;
-    FileSharedMutex fsm2 { f2.m_handle, (uint64_t) -2, (uint64_t) -1 };
+    FileSharedMutex fsm2 { f2.m_handle, -2, -1 };
     ASSERT_TRUE(!fsm2.try_lock());
     ASSERT_TRUE(fsm2.try_lock_shared());
 }
