@@ -17,9 +17,15 @@ FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
     return fileSystem;
 }
 
-FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> file)
+FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInterface)
 {
-    auto cacheManager = std::make_shared<CacheManager>(std::move(file));
+    auto cacheManager = std::make_shared<CacheManager>(std::move(fileInterface));
+    auto logs = cacheManager->readLogs();
+    auto* file = cacheManager->getFileInterface();
+    for (auto [orig, cpy]: logs)
+        TxFs::copyPage(file, cpy, orig);
+    file->flushFile();
+
     FileDescriptor freeStoreDescriptor(0);
     auto fileSystem = FileSystem(cacheManager, freeStoreDescriptor, 1);
     fileSystem.rollback();

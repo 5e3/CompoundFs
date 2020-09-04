@@ -4,6 +4,10 @@
 
 using namespace TxFs;
 
+WrappedFile::WrappedFile(std::shared_ptr<FileInterface> wrappedFile)
+    : m_wrappedFile(wrappedFile)
+{
+}
 
 Interval WrappedFile::newInterval(size_t maxPages)
 {
@@ -64,3 +68,4 @@ CommitLock WrappedFile::commitAccess(Lock&& writeLock)
 {
     return m_wrappedFile->commitAccess(std::move(writeLock));
 }
+

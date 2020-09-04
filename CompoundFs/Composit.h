@@ -4,6 +4,8 @@
 
 #include "FileSystem.h"
 #include "ReadOnlyFile.h"
+#include <utility>
+#include <memory>
 
 namespace TxFs
 {
@@ -14,11 +16,11 @@ public:
     template <typename TFile, typename... TArgs>
     static FileSystem open(TArgs&&... args)
     {
-        std::unique_ptr<FileInterface> file = std::make_unique<TFile>(std::forward(args)...);
-        if (fi->currentSize() == 0)
-            return initializeNew(file);
+        std::unique_ptr<FileInterface> file = std::make_unique<TFile>(std::forward<TArgs>(args)...);
+        if (file->currentSize() == 0)
+            return initializeNew(std::move(file));
 
-        return initializeExisting(file);
+        return initializeExisting(std::move(file));
     }
     
     template <typename TFile, typename... TArgs>

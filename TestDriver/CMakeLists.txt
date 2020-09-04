@@ -8,6 +8,7 @@ set (Sources
 		TestCacheManager.cpp
 		TestCommitHandler.cpp
 		TestByteString.cpp
+		TestComposit.cpp
 		TestDirectoryStructure.cpp
 		TestFileReaderWriter.cpp
 		TestFile.cpp
