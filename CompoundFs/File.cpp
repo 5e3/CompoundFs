@@ -169,7 +169,7 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
 
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
-    if (pageOffset + (end - begin) > 4096)
+    if (pageOffset + (end - begin) > PAGESIZE)
         throw std::runtime_error("File::readPage over page boundary");
     if (currentSize() <= id)
         throw std::runtime_error("File::readPage outside file");
