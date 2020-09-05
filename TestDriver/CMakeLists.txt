@@ -33,6 +33,7 @@ set (Sources
 	
 set (Headers
 		MinimalTreeBuilder.h
+		FileSystemHelper.h
 	)
 	
 

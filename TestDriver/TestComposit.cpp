@@ -1,5 +1,6 @@
 
 #include <gtest/gtest.h>
+#include "FileSystemHelper.h"
 
 #include "../CompoundFs/Composit.h"
 #include "../CompoundFs/MemoryFile.h"
@@ -62,6 +63,20 @@ struct CrashCommitFile : WrappedFile
         if (currentSize() != numberOfPages)
             throw Exception();
         WrappedFile::truncate(numberOfPages);
+    }
+};
+
+struct CompositTester : ::testing::Test
+{
+    std::shared_ptr<FileInterface> m_file;
+    FileSystemHelper m_helper;
+
+    CompositTester()
+        : m_file(std::make_shared<MemoryFile>())
+    {
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        m_helper.fillFileSystem(fsys);
+        fsys.commit();
     }
 };
 
