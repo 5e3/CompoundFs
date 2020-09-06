@@ -22,8 +22,11 @@ namespace
     // ------------------------------------------------------------------------
 
     constexpr Folder            SystemFolder { 1 };
-    constexpr std::string_view  CompositeSizeAttributeName { "CompositeSize" };
-}
+    constexpr std::string_view CompositeSizeAttributeName { "CompositeSize" };
+    constexpr std::string_view FreeStoreFirstAttributeName { "FreeStore.first" };
+    constexpr std::string_view FreeStoreLastAttributeName { "FreeStore.last" };
+    constexpr std::string_view FreeStoreSizeAttributeName { "FreeStore.size" };
+    }
 
 DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
                                        PageIndex rootIndex, uint32_t maxFolderId)
@@ -221,13 +224,14 @@ void DirectoryStructure::commit()
     for (auto page: divertedPageIds)
         m_freeStore.deallocate(page);
 
-    m_freeStoreDescriptor = m_freeStore.close();
+    auto freeStoreDesc = m_freeStore.close();
     auto csize = commitHandler.getCompositeSize();
     storeCompositeSize(csize);
+    storeFreeStoreDescriptor(freeStoreDesc);
     commitHandler.commit();
     assert(commitHandler.empty());
 
-    m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
+    m_freeStore = FreeStore(m_cacheManager, freeStoreDesc);
     connectFreeStore();
     assert(csize == commitHandler.getCompositeSize());
 }
@@ -237,7 +241,8 @@ void DirectoryStructure::rollback()
     auto csize = retrieveCompositeSize();
     m_cacheManager->rollback(csize);
 
-    m_freeStore = FreeStore(m_cacheManager, m_freeStoreDescriptor);
+    auto freeStoreDesc = retrieveFreeStoreDescriptor();
+    m_freeStore = FreeStore(m_cacheManager, freeStoreDesc);
     connectFreeStore();
 }
 
@@ -247,12 +252,30 @@ void DirectoryStructure::storeCompositeSize(size_t csize)
     addAttribute(key, static_cast<uint64_t>(csize));
 }
 
+void DirectoryStructure::storeFreeStoreDescriptor(FileDescriptor freeStoreDesc)
+{
+    addAttribute(DirectoryKey(SystemFolder, FreeStoreFirstAttributeName), freeStoreDesc.m_first);
+    addAttribute(DirectoryKey(SystemFolder, FreeStoreLastAttributeName), freeStoreDesc.m_last);
+    addAttribute(DirectoryKey(SystemFolder, FreeStoreSizeAttributeName), freeStoreDesc.m_fileSize);
+}
+
 size_t DirectoryStructure::retrieveCompositeSize()
 {
     DirectoryKey key(SystemFolder, CompositeSizeAttributeName);
     auto attribute = getAttribute(key);
     return attribute->toValue<uint64_t>(); // throws if not there
 }
+
+TxFs::FileDescriptor TxFs::DirectoryStructure::retrieveFreeStoreDescriptor()
+{
+    FileDescriptor freeStoreDesc;
+    freeStoreDesc.m_first = getAttribute(DirectoryKey(SystemFolder, FreeStoreFirstAttributeName))->toValue<uint32_t>();
+    freeStoreDesc.m_last = getAttribute(DirectoryKey(SystemFolder, FreeStoreLastAttributeName))->toValue<uint32_t>();
+    freeStoreDesc.m_fileSize = getAttribute(DirectoryKey(SystemFolder, FreeStoreSizeAttributeName))->toValue<uint64_t>();
+
+    return freeStoreDesc;
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////

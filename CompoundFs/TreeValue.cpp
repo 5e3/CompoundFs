@@ -23,7 +23,7 @@ void defaultCreate(size_t index, std::variant<Ts...>& var)
 std::string_view TreeValue::getTypeName() const
 {
     constexpr std::array<std::string_view, std::variant_size_v<Variant>> ar = 
-    { "File", "Folder", "Version", "Double", "Int", "String", "Unknown" };
+    { "File", "Folder", "Version", "Double", "Int64", "Int32", "String", "Unknown" };
 
     static_assert(!ar.at(std::variant_size_v<Variant> - 1).empty(), "Missing type name?");
     return ar.at(m_variant.index());

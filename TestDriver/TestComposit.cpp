@@ -80,4 +80,35 @@ struct CompositTester : ::testing::Test
     }
 };
 
+TEST_F(CompositTester, selfTest)
+{
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    m_helper.checkFileSystem(fsys);
+}
 
+TEST_F(CompositTester, openDoesRollback)
+{
+    {
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto out = makeFile(fsys, "testFile", 'x');
+        auto in = readFile(fsys, "testFile");
+        ASSERT_EQ(out, in);
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    ASSERT_FALSE(fsys.readFile("testFile"));
+}
+
+TEST_F(CompositTester, commitedDeletedSpaceGetsReused)
+{
+    {
+	    auto fsys = Composit::open<WrappedFile>(m_file);
+	    fsys.remove("test");
+	    fsys.commit();
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto size = m_file->currentSize();
+    makeFile(fsys, "testFile");
+    ASSERT_EQ(size, m_file->currentSize());
+}

@@ -76,7 +76,9 @@ public:
     void rollback();
 
     void storeCompositeSize(size_t csize);
+    void storeFreeStoreDescriptor(FileDescriptor freeStoreDesc);
     size_t retrieveCompositeSize();
+    FileDescriptor retrieveFreeStoreDescriptor();
 
 private:
     void connectFreeStore();

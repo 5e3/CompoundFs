@@ -42,13 +42,13 @@ class TreeValue final
 {
     struct Unknown
     {};
-    using Variant = std::variant<FileDescriptor, Folder, Version, double, uint64_t, std::string, Unknown>;
+    using Variant = std::variant<FileDescriptor, Folder, Version, double, uint64_t, uint32_t, std::string, Unknown>;
 
     template <typename T>
     using EnableVariantTypes = std::enable_if_t<std::is_convertible_v<T, Variant>>;
 
 public:
-    enum class Type { File, Folder, Version, Double, Int, String, Unknown };
+    enum class Type { File, Folder, Version, Double, Int64, Int32, String, Unknown };
 
 public:
     TreeValue()
@@ -59,9 +59,6 @@ public:
     TreeValue(T&& val)
         : m_variant(val)
     {}
-
-    template<typename T, typename = EnableVariantTypes>
-    bool operator==(T&& rhs) { return m_variant == m_variant; }
 
     std::string_view getTypeName() const;
     Type getType() const { return static_cast<Type>(m_variant.index()); }
