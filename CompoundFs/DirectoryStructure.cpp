@@ -28,21 +28,19 @@ namespace
     constexpr std::string_view FreeStoreSizeAttributeName { "FreeStore.size" };
     }
 
-DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
+DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
                                        PageIndex rootIndex, uint32_t maxFolderId)
-    : m_freeStoreDescriptor(freeStore)
-    , m_cacheManager(cacheManager)
+    : m_cacheManager(cacheManager)
     , m_btree(cacheManager, rootIndex)
     , m_maxFolderId(maxFolderId)
-    , m_freeStore(cacheManager, m_freeStoreDescriptor)
+    , m_freeStore(cacheManager, FileDescriptor(freeStoreIndex))
 {
     assert(static_cast<Folder>(m_maxFolderId) > SystemFolder);
     connectFreeStore();
 }
 
 DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
-    : m_freeStoreDescriptor(std::move(ds.m_freeStoreDescriptor))
-    , m_cacheManager(std::move(ds.m_cacheManager))
+    : m_cacheManager(std::move(ds.m_cacheManager))
     , m_btree(std::move(ds.m_btree))
     , m_maxFolderId(std::move(ds.m_maxFolderId))
     , m_freeStore(std::move(ds.m_freeStore))

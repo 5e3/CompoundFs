@@ -49,7 +49,7 @@ public:
     class Cursor;
 
 public:
-    DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
+    DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
                        PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
     DirectoryStructure(DirectoryStructure&&);
     DirectoryStructure& operator=(DirectoryStructure&&);
@@ -84,7 +84,6 @@ private:
     void connectFreeStore();
 
 private:
-    FileDescriptor m_freeStoreDescriptor;
     std::shared_ptr<CacheManager> m_cacheManager;
     BTree m_btree;
     uint32_t m_maxFolderId;

@@ -11,8 +11,7 @@ FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
     auto cacheManager = std::make_shared<CacheManager>(std::move(file));
     TypedCacheManager tcm(cacheManager);
     auto freeStorePage = tcm.newPage<FileTable>();
-    FileDescriptor freeStoreDescriptor(freeStorePage.m_index);
-    auto fileSystem = FileSystem(cacheManager, freeStoreDescriptor);
+    auto fileSystem = FileSystem(cacheManager, freeStorePage.m_index);
     fileSystem.commit();
     return fileSystem;
 }
@@ -26,8 +25,7 @@ FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInter
         TxFs::copyPage(file, cpy, orig);
     file->flushFile();
 
-    FileDescriptor freeStoreDescriptor(0);
-    auto fileSystem = FileSystem(cacheManager, freeStoreDescriptor, 1);
+    auto fileSystem = FileSystem(cacheManager, 0, 1);
     fileSystem.rollback();
     return fileSystem;
 }

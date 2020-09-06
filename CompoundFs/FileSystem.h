@@ -18,7 +18,7 @@ public:
     using Cursor = DirectoryStructure::Cursor;
 
 public:
-    FileSystem(const std::shared_ptr<CacheManager>& cacheManager, FileDescriptor freeStore,
+    FileSystem(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
                PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
     FileSystem(FileSystem&&) = default;
     FileSystem& operator=(FileSystem&&) = default;

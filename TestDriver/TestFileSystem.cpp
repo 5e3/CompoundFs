@@ -17,8 +17,7 @@ FileSystem makeFileSystem()
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
     TypedCacheManager tcm(cm);
     auto freeStorePage = tcm.newPage<FileTable>();
-    FileDescriptor fsfd(freeStorePage.m_index);
-    auto fs =  FileSystem(cm, fsfd);
+    auto fs = FileSystem(cm, freeStorePage.m_index);
     fs.commit();
     return fs;
 }
@@ -199,7 +198,7 @@ public:
 
     FileSystemTester()
         : m_cacheManager(std::make_shared<CacheManager>(std::make_unique<MemoryFile>()))
-        , m_fileSystem(m_cacheManager, FileDescriptor(1))
+        , m_fileSystem(m_cacheManager, 1)
     {
         TypedCacheManager tcm(m_cacheManager);
         auto freeStorePage = tcm.newPage<FileTable>();

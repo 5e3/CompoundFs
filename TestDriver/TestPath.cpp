@@ -15,8 +15,7 @@ namespace
         auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
         TypedCacheManager tcm(cm);
         auto freeStorePage = tcm.newPage<FileTable>();
-        FileDescriptor fsfd(freeStorePage.m_index);
-        return DirectoryStructure(cm, fsfd);
+        return DirectoryStructure(cm, freeStorePage.m_index);
     }
 
 }
