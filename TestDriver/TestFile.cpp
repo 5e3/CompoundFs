@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <cstdio>
+#include <numeric>
 
 #include "../CompoundFs/File.h"
 #include "../CompoundFs/ByteString.h"
@@ -90,6 +91,21 @@ TEST(File, canWriteOnWriteLockedFile)
     ByteStringView out("0123456789");
     wfile.writePage(1, 0, out.data(), out.end());
     ASSERT_NO_THROW(wfile.writePage(1, 0, out.data(), out.end()));
+}
+
+TEST(File, canReadWriteBigPages)
+{
+    // File.cpp BlockSize=16MegaByte
+    std::vector<uint64_t> out((16 * 3 * 1024 * 1024 - 4096) / sizeof(uint64_t));
+    std::iota(out.begin(), out.end(), 0);
+
+    TempFile file;
+    auto iv = file.newInterval(out.size() * sizeof(uint64_t) / 4096);
+    file.writePages(iv, (const uint8_t*) out.data());
+
+    std::vector<uint64_t> in(out.size());
+    file.readPages(iv, (uint8_t*) in.data());
+    ASSERT_EQ(out, in);
 }
 
 

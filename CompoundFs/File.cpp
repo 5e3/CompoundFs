@@ -56,6 +56,7 @@ namespace
 {
 constexpr uint64_t PageSize = 4096ULL;
 constexpr int64_t MaxEndOfFile = 0LL;
+constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 }
 
 File::File()
@@ -162,10 +163,19 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
         throw std::runtime_error("File::writePages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
-    DWORD bytesWritten;
-    Win32::WriteFile(m_handle, page, PageSize * iv.length(), &bytesWritten, nullptr);
+    auto end = page + (iv.length() * PageSize);
+    writePages(page, end);
+    
+    return end;
+}
 
-    return page + (iv.length() * PageSize);
+void TxFs::File::writePages(const uint8_t* begin, const uint8_t* end)
+{
+    DWORD bytesWritten;
+    for (; (begin+BlockSize) < end; begin += BlockSize)
+        Win32::WriteFile(m_handle, begin, BlockSize, &bytesWritten, nullptr);
+
+    Win32::WriteFile(m_handle, begin, end - begin, &bytesWritten, nullptr);
 }
 
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
@@ -188,10 +198,19 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
         throw std::runtime_error("File::readPages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
-    DWORD bytesRead;
-    Win32::ReadFile(m_handle, page, PageSize * iv.length(), &bytesRead, nullptr);
+    auto end = page + (iv.length() * PageSize);
+    readPages(page, end);
 
-    return page + (iv.length() * PageSize);
+    return end;
+}
+
+void File::readPages(uint8_t* begin, uint8_t* end) const
+{
+    DWORD bytesRead;
+    for (; (begin+BlockSize)<end; begin+=BlockSize)
+        Win32::ReadFile(m_handle, begin, BlockSize, &bytesRead, nullptr);
+
+    Win32::ReadFile(m_handle, begin, end-begin, &bytesRead, nullptr);
 }
 
 size_t File::currentSize() const

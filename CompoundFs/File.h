@@ -41,6 +41,8 @@ public:
 private:
     File(void* handle, bool readOnly);
     static void* open(std::filesystem::path path, OpenMode mode);
+    void writePages(const uint8_t* begin, const uint8_t* end);
+    void readPages(uint8_t* begin, uint8_t* end) const;
 
 private:
     void* m_handle;

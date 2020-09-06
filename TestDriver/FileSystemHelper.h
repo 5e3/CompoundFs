@@ -15,6 +15,25 @@ inline std::string readFile(FileSystem& fileSystem, ReadHandle handle)
     return data;
 }
 
+inline std::string readFile(FileSystem& fsys, std::string_view path)
+{
+    auto handle = *fsys.readFile(path);
+    auto size = fsys.fileSize(handle);
+    std::string in(size, ' ');
+    fsys.read(handle, in.data(), size);
+    return in;
+}
+
+inline std::string makeFile(FileSystem& fileSystem, std::string_view path, char fillChar = '1')
+{
+    auto handle = *fileSystem.appendFile(path);
+    std::string out(5000, fillChar);
+    fileSystem.write(handle, out.data(), out.size());
+    fileSystem.close(handle);
+    return out;
+}
+
+
 struct FileSystemHelper
 {
     std::string m_fileData;
