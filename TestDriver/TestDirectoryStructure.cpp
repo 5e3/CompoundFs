@@ -190,6 +190,14 @@ TEST(DirectoryStructure, storeCompositeSizeEqualsRetrieveCompositeSize)
     ASSERT_EQ(ds.retrieveCompositeSize(), csize);
 }
 
+TEST(DirectoryStructure, storeFreeStoreDescEqualsRetrieveFreeStoreDesc)
+{
+    auto ds = makeDirectoryStructure();
+    FileDescriptor fsd(1000, 1001, 123456);
+    ds.storeFreeStoreDescriptor(fsd);
+    ASSERT_EQ(ds.retrieveFreeStoreDescriptor(), fsd);
+}
+
 TEST(Cursor, creation)
 {
     DirectoryStructure::Cursor cursor;
