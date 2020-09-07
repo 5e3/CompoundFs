@@ -12,6 +12,7 @@ namespace TxFs
 {
 
 enum class Folder : uint32_t;
+struct CommitBlock;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -75,10 +76,8 @@ public:
     void commit();
     void rollback();
 
-    void storeCompositeSize(size_t csize);
-    void storeFreeStoreDescriptor(FileDescriptor freeStoreDesc);
-    size_t retrieveCompositeSize();
-    FileDescriptor retrieveFreeStoreDescriptor();
+    void StoreCommitBlock(const CommitBlock&);
+    CommitBlock retrieveCommitBlock();
 
 private:
     void connectFreeStore();

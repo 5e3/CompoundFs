@@ -3,6 +3,7 @@
 #include "DirectoryStructure.h"
 #include "ByteString.h"
 #include "TreeValue.h"
+#include "CommitBlock.h"
 #include "CommitHandler.h"
 #include <assert.h>
 
@@ -26,6 +27,7 @@ namespace
     constexpr std::string_view FreeStoreFirstAttributeName { "FreeStore.first" };
     constexpr std::string_view FreeStoreLastAttributeName { "FreeStore.last" };
     constexpr std::string_view FreeStoreSizeAttributeName { "FreeStore.size" };
+    constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
     }
 
 DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
@@ -222,59 +224,41 @@ void DirectoryStructure::commit()
     for (auto page: divertedPageIds)
         m_freeStore.deallocate(page);
 
-    auto freeStoreDesc = m_freeStore.close();
-    auto csize = commitHandler.getCompositeSize();
-    storeCompositeSize(csize);
-    storeFreeStoreDescriptor(freeStoreDesc);
+    CommitBlock cb;
+    cb.m_freeStoreDescriptor = m_freeStore.close();
+    cb.m_compositSize = commitHandler.getCompositeSize();
+    cb.m_maxFolderId = m_maxFolderId;
+    StoreCommitBlock(cb);
     commitHandler.commit();
     assert(commitHandler.empty());
 
-    m_freeStore = FreeStore(m_cacheManager, freeStoreDesc);
+    m_freeStore = FreeStore(m_cacheManager, cb.m_freeStoreDescriptor);
     connectFreeStore();
-    assert(csize == commitHandler.getCompositeSize());
+    assert(cb.m_compositSize == commitHandler.getCompositeSize());
 }
 
 void DirectoryStructure::rollback()
 {
-    auto csize = retrieveCompositeSize();
-    m_cacheManager->rollback(csize);
+    auto commitBlock = retrieveCommitBlock();
+    m_maxFolderId = commitBlock.m_maxFolderId;
+    m_cacheManager->rollback(commitBlock.m_compositSize);
 
-    auto freeStoreDesc = retrieveFreeStoreDescriptor();
-    m_freeStore = FreeStore(m_cacheManager, freeStoreDesc);
+    m_freeStore = FreeStore(m_cacheManager, commitBlock.m_freeStoreDescriptor);
     connectFreeStore();
 }
 
-void DirectoryStructure::storeCompositeSize(size_t csize)
-{ 
-    DirectoryKey key(SystemFolder, CompositeSizeAttributeName);
-    addAttribute(key, static_cast<uint64_t>(csize));
-}
 
-void DirectoryStructure::storeFreeStoreDescriptor(FileDescriptor freeStoreDesc)
+void DirectoryStructure::StoreCommitBlock(const CommitBlock& cb)
 {
-    addAttribute(DirectoryKey(SystemFolder, FreeStoreFirstAttributeName), freeStoreDesc.m_first);
-    addAttribute(DirectoryKey(SystemFolder, FreeStoreLastAttributeName), freeStoreDesc.m_last);
-    addAttribute(DirectoryKey(SystemFolder, FreeStoreSizeAttributeName), freeStoreDesc.m_fileSize);
+    auto str = cb.toString();
+    addAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName), str);
 }
 
-size_t DirectoryStructure::retrieveCompositeSize()
+CommitBlock DirectoryStructure::retrieveCommitBlock()
 {
-    DirectoryKey key(SystemFolder, CompositeSizeAttributeName);
-    auto attribute = getAttribute(key);
-    return attribute->toValue<uint64_t>(); // throws if not there
+    auto str = getAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName))->toValue<std::string>();
+    return CommitBlock::fromString(str);
 }
-
-TxFs::FileDescriptor TxFs::DirectoryStructure::retrieveFreeStoreDescriptor()
-{
-    FileDescriptor freeStoreDesc;
-    freeStoreDesc.m_first = getAttribute(DirectoryKey(SystemFolder, FreeStoreFirstAttributeName))->toValue<uint32_t>();
-    freeStoreDesc.m_last = getAttribute(DirectoryKey(SystemFolder, FreeStoreLastAttributeName))->toValue<uint32_t>();
-    freeStoreDesc.m_fileSize = getAttribute(DirectoryKey(SystemFolder, FreeStoreSizeAttributeName))->toValue<uint64_t>();
-
-    return freeStoreDesc;
-}
-
-
 
 //////////////////////////////////////////////////////////////////////////
 

@@ -112,3 +112,11 @@ TEST_F(CompositTester, commitedDeletedSpaceGetsReused)
     makeFile(fsys, "testFile");
     ASSERT_EQ(size, m_file->currentSize());
 }
+
+TEST_F(CompositTester, maxFolderIdGetsWrittenOnCommot)
+{
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    ASSERT_TRUE(fsys.makeSubFolder("test2"));
+    ASSERT_TRUE(fsys.remove("test2")); // might delete contents of "test"
+    m_helper.checkFileSystem(fsys);
+}

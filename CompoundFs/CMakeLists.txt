@@ -5,6 +5,7 @@ project(CompoundFs)
 set (Sources 
 		BTree.cpp
 		CacheManager.cpp
+		CommitBlock.cpp
 		CommitHandler.cpp
 		Composit.cpp
 		DirectoryStructure.cpp
@@ -24,6 +25,7 @@ set (Headers
 		ByteString.h
 		Cache.h
 		CacheManager.h
+		CommitBlock.h
 		CommitHandler.h
 		Composit.h
 		DirectoryStructure.h

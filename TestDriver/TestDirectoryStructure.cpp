@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include "../CompoundFs/MemoryFile.h"
 #include "../CompoundFs/DirectoryStructure.h"
+#include "../CompoundFs/CommitBlock.h"
 
 using namespace TxFs;
 
@@ -182,21 +183,17 @@ TEST(DirectoryStructure, nonFileEntryPreventsCreationOfFile)
     ASSERT_TRUE(!ds.updateFile(dkey, desc));
 }
 
-TEST(DirectoryStructure, storeCompositeSizeEqualsRetrieveCompositeSize)
+TEST(DirectoryStructure, storeCommitBlockEqualsRetrieveCommitBlock)
 {
     auto ds = makeDirectoryStructure();
-    size_t csize = 1000;
-    ds.storeCompositeSize(csize);
-    ASSERT_EQ(ds.retrieveCompositeSize(), csize);
+    CommitBlock out { { 1234567, 123, 234 }, 54321, 23 };
+    ds.StoreCommitBlock(out);
+    auto in = ds.retrieveCommitBlock();
+    ASSERT_EQ(in.m_freeStoreDescriptor, out.m_freeStoreDescriptor);
+    ASSERT_EQ(in.m_compositSize, out.m_compositSize);
+    ASSERT_EQ(in.m_maxFolderId, out.m_maxFolderId);
 }
 
-TEST(DirectoryStructure, storeFreeStoreDescEqualsRetrieveFreeStoreDesc)
-{
-    auto ds = makeDirectoryStructure();
-    FileDescriptor fsd(1000, 1001, 123456);
-    ds.storeFreeStoreDescriptor(fsd);
-    ASSERT_EQ(ds.retrieveFreeStoreDescriptor(), fsd);
-}
 
 TEST(Cursor, creation)
 {
