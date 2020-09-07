@@ -45,27 +45,6 @@ TEST(Composit, openDoesRollback)
     ASSERT_LT(file->currentSize(), size);
 }
 
-struct CrashCommitFile : WrappedFile
-{
-    CrashCommitFile(std::shared_ptr<FileInterface> file)
-        : WrappedFile(file)
-    {}
-
-    struct Exception : std::runtime_error
-    {
-        Exception()
-            : std::runtime_error("")
-            {}
-    };
-
-    void truncate(size_t numberOfPages) override
-    {
-        if (currentSize() != numberOfPages)
-            throw Exception();
-        WrappedFile::truncate(numberOfPages);
-    }
-};
-
 struct CompositTester : ::testing::Test
 {
     std::shared_ptr<FileInterface> m_file;
@@ -102,9 +81,9 @@ TEST_F(CompositTester, openDoesRollback)
 TEST_F(CompositTester, commitedDeletedSpaceGetsReused)
 {
     {
-	    auto fsys = Composit::open<WrappedFile>(m_file);
-	    fsys.remove("test");
-	    fsys.commit();
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        fsys.remove("test");
+        fsys.commit();
     }
 
     auto fsys = Composit::open<WrappedFile>(m_file);
@@ -113,10 +92,45 @@ TEST_F(CompositTester, commitedDeletedSpaceGetsReused)
     ASSERT_EQ(size, m_file->currentSize());
 }
 
-TEST_F(CompositTester, maxFolderIdGetsWrittenOnCommot)
+TEST_F(CompositTester, maxFolderIdGetsWrittenOnCommit)
 {
     auto fsys = Composit::open<WrappedFile>(m_file);
     ASSERT_TRUE(fsys.makeSubFolder("test2"));
     ASSERT_TRUE(fsys.remove("test2")); // might delete contents of "test"
+    m_helper.checkFileSystem(fsys);
+}
+
+struct CrashCommitFile : WrappedFile
+{
+    CrashCommitFile(std::shared_ptr<FileInterface> file)
+        : WrappedFile(file)
+    {}
+
+    struct Exception : std::runtime_error
+    {
+        Exception()
+            : std::runtime_error("")
+        {}
+    };
+
+    void truncate(size_t numberOfPages) override
+    {
+        if (currentSize() != numberOfPages)
+            throw Exception();
+        WrappedFile::truncate(numberOfPages);
+    }
+};
+
+TEST_F(CompositTester, RollbackFromCrashedCommit)
+{
+    {
+	    auto fsys = Composit::open<CrashCommitFile>(m_file);
+	    fsys.remove("test");
+	    ASSERT_FALSE(fsys.getAttribute("test/attribute"));
+	    ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    ASSERT_TRUE(fsys.getAttribute("test/attribute"));
     m_helper.checkFileSystem(fsys);
 }
