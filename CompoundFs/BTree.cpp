@@ -163,16 +163,19 @@ std::optional<ByteString> BTree::remove(ByteStringView key)
     while (!stack.empty())
     {
         auto inner = m_cacheManager.makePageWritable(stack.back());
-        inner.m_page->remove(key);
+        auto innerPage = inner.m_page;
+        innerPage->remove(key);
 
-        if (inner.m_page->nofItems() > 1)
+        if (innerPage->nofItems() > 1)
             return beforeValue;
-        else if (inner.m_page->nofItems() == 0)
+        else if (innerPage->nofItems() == 0)
         {
             // must be the root page
             assert(m_rootIndex == inner.m_index);
-            m_freePages.push_back(m_rootIndex);
-            m_rootIndex = inner.m_page->getLeft(inner.m_page->beginTable());
+
+            auto leaf = m_cacheManager.loadPage<Leaf>(innerPage->getLeft(innerPage->beginTable()));
+            auto root = new (innerPage.get()) Leaf(*leaf.m_page);
+            m_freePages.push_back(leaf.m_index);
             return beforeValue;
         }
         else if (stack.size() == 1)
@@ -205,6 +208,7 @@ ConstPageDef<Leaf> BTree::findLeaf(ByteStringView key, InnerNodeStack& stack) co
 void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageIndex left, PageIndex right)
 {
     ByteString key = keyToInsert;
+    bool leftRightIsLeaf = stack.empty();
     while (!stack.empty())
     {
         auto inner = m_cacheManager.makePageWritable(stack.back());
@@ -221,7 +225,31 @@ void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageInd
         stack.pop_back();
     }
 
-    m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
+    growTree(key, leftRightIsLeaf, left, right);
+    //m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
+}
+
+void TxFs::BTree::growTree(ByteStringView key, bool leftRightIsLeaf, PageIndex left, PageIndex right)
+{
+    assert(m_rootIndex == left);
+    if (leftRightIsLeaf)
+    {
+        auto pageDef = m_cacheManager.newPage<Leaf>();
+        auto leftDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<Leaf>(left));
+        auto rightDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<Leaf>(right));
+        *pageDef.m_page = *leftDef.m_page; 
+        rightDef.m_page->setPrev(pageDef.m_index);
+        auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
+        return;
+    }
+
+    auto pageDef = m_cacheManager.newPage<InnerNode>();
+    auto leftDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(left));
+    *pageDef.m_page = *leftDef.m_page;
+    auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
+
+
+
 }
 
 BTree::Cursor BTree::find(ByteStringView key) const
@@ -277,3 +305,4 @@ std::pair<ByteStringView, ByteStringView> BTree::Cursor::current() const
     auto it = leaf->beginTable() + index;
     return std::make_pair(leaf->getKey(it), leaf->getValue(it));
 }
+

@@ -104,15 +104,15 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
 {
     uint64_t i = 0;
     {
-	    auto fsys = Composit::open<WrappedFile>(m_file);
-	
-	    auto csize = m_file->currentSize();
-	    while (csize == m_file->currentSize())
-	    {
-	        auto data = std::to_string(i++);
-	        fsys.addAttribute(Path(data), i);
-	    }
-	    fsys.commit();
+        auto fsys = Composit::open<WrappedFile>(m_file);
+
+        auto csize = m_file->currentSize();
+        while (csize == m_file->currentSize())
+        {
+            auto data = std::to_string(i++);
+            fsys.addAttribute(Path(data), i);
+        }
+        fsys.commit();
     }
 
     auto fsys = Composit::open<WrappedFile>(m_file);
@@ -121,6 +121,38 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
         auto data = std::to_string(j);
         ASSERT_TRUE(fsys.getAttribute(Path(data)));
     }
+}
+
+TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
+{
+    uint64_t i = 0;
+    {
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        fsys.remove("test");
+        fsys.commit();
+
+        auto csize = m_file->currentSize();
+        while (csize == m_file->currentSize())
+        {
+            auto data = std::to_string(i++);
+            fsys.addAttribute(Path(data), i);
+        }
+        fsys.commit();
+    }
+    {    
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        for (uint64_t j = 0; j < i; j++)
+        {
+            auto data = std::to_string(j);
+            ASSERT_EQ(fsys.remove(Path(data)), 1);
+        }
+        fsys.commit();
+        m_helper.fillFileSystem(fsys);
+        fsys.commit();
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    m_helper.checkFileSystem(fsys);
 }
 
 struct CrashCommitFile : WrappedFile

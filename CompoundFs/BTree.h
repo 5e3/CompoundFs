@@ -54,6 +54,7 @@ private:
     std::shared_ptr<const InnerNode> handleUnderflow(PageDef<InnerNode>& inner, ByteStringView key,
                                                      const InnerNodeStack& stack);
     void unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf);
+    void growTree(ByteStringView keyToInsert, bool leftRightIsLeaf, PageIndex left, PageIndex right);
 
 private:
     mutable TypedCacheManager m_cacheManager;
