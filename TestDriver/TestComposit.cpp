@@ -100,6 +100,29 @@ TEST_F(CompositTester, maxFolderIdGetsWrittenOnCommit)
     m_helper.checkFileSystem(fsys);
 }
 
+TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
+{
+    uint64_t i = 0;
+    {
+	    auto fsys = Composit::open<WrappedFile>(m_file);
+	
+	    auto csize = m_file->currentSize();
+	    while (csize == m_file->currentSize())
+	    {
+	        auto data = std::to_string(i++);
+	        fsys.addAttribute(Path(data), i);
+	    }
+	    fsys.commit();
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    for (uint64_t j = 0; j < i; j++)
+    {
+        auto data = std::to_string(j);
+        ASSERT_TRUE(fsys.getAttribute(Path(data)));
+    }
+}
+
 struct CrashCommitFile : WrappedFile
 {
     CrashCommitFile(std::shared_ptr<FileInterface> file)
@@ -124,10 +147,10 @@ struct CrashCommitFile : WrappedFile
 TEST_F(CompositTester, RollbackFromCrashedCommit)
 {
     {
-	    auto fsys = Composit::open<CrashCommitFile>(m_file);
-	    fsys.remove("test");
-	    ASSERT_FALSE(fsys.getAttribute("test/attribute"));
-	    ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
+        auto fsys = Composit::open<CrashCommitFile>(m_file);
+        fsys.remove("test");
+        ASSERT_FALSE(fsys.getAttribute("test/attribute"));
+        ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
     }
 
     auto fsys = Composit::open<WrappedFile>(m_file);
