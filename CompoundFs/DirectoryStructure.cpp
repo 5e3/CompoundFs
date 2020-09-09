@@ -28,27 +28,38 @@ namespace
     constexpr std::string_view FreeStoreLastAttributeName { "FreeStore.last" };
     constexpr std::string_view FreeStoreSizeAttributeName { "FreeStore.size" };
     constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
-    }
-
-DirectoryStructure::DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
-                                       PageIndex rootIndex, uint32_t maxFolderId)
-    : m_cacheManager(cacheManager)
-    , m_btree(cacheManager, rootIndex)
-    , m_maxFolderId(maxFolderId)
-    , m_freeStore(cacheManager, FileDescriptor(freeStoreIndex))
-{
-    assert(static_cast<Folder>(m_maxFolderId) > SystemFolder);
-    connectFreeStore();
 }
+
 
 DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
     : m_cacheManager(std::move(ds.m_cacheManager))
     , m_btree(std::move(ds.m_btree))
     , m_maxFolderId(std::move(ds.m_maxFolderId))
     , m_freeStore(std::move(ds.m_freeStore))
+    , m_rootIndex(std::move(m_rootIndex))
 {
     connectFreeStore();
 }
+
+DirectoryStructure::DirectoryStructure(const Startup& startup)
+    : m_cacheManager(startup.m_cacheManager)
+    , m_btree(startup.m_cacheManager, startup.m_rootIndex)
+    , m_maxFolderId(2)
+    , m_freeStore(startup.m_cacheManager, FileDescriptor(startup.m_freeStoreIndex))
+    , m_rootIndex(startup.m_rootIndex)
+{
+    assert(static_cast<Folder>(m_maxFolderId) > SystemFolder);
+    connectFreeStore();
+}
+
+DirectoryStructure::Startup DirectoryStructure::initialize(const std::shared_ptr<CacheManager>& cacheManager)
+{
+    BTree btree(cacheManager);
+    TypedCacheManager tcm(cacheManager);
+    auto freeStore = tcm.newPage<FileTable>();
+    return Startup { cacheManager, freeStore.m_index, freeStore.m_index - 1 };
+}
+
 
 void DirectoryStructure::connectFreeStore()
 {
@@ -217,6 +228,7 @@ void DirectoryStructure::commit()
     const auto& freePages = m_btree.getFreePages();
     for (auto page : freePages)
         m_freeStore.deallocate(page);
+    m_btree = BTree(m_cacheManager, m_rootIndex);
 
     auto commitHandler = m_cacheManager->getCommitHandler();
 
@@ -235,6 +247,7 @@ void DirectoryStructure::commit()
     m_freeStore = FreeStore(m_cacheManager, cb.m_freeStoreDescriptor);
     connectFreeStore();
     assert(cb.m_compositSize == commitHandler.getCompositeSize());
+    assert(m_btree.getFreePages().empty());
 }
 
 void DirectoryStructure::rollback()
@@ -243,10 +256,10 @@ void DirectoryStructure::rollback()
     m_maxFolderId = commitBlock.m_maxFolderId;
     m_cacheManager->rollback(commitBlock.m_compositSize);
 
+    m_btree = BTree(m_cacheManager, m_rootIndex);
     m_freeStore = FreeStore(m_cacheManager, commitBlock.m_freeStoreDescriptor);
     connectFreeStore();
 }
-
 
 void DirectoryStructure::StoreCommitBlock(const CommitBlock& cb)
 {
@@ -270,4 +283,5 @@ std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const
     std::string_view nameView ( reinterpret_cast<const char*> (name.data()), name.size() );
     return std::pair(folder, nameView);
 }
+
 

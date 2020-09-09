@@ -14,9 +14,8 @@ namespace
 DirectoryStructure makeDirectoryStructure()
 {
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
-    TypedCacheManager tcm(cm);
-    auto freeStorePage = tcm.newPage<FileTable>();
-    return DirectoryStructure(cm, freeStorePage.m_index);
+    auto startup = DirectoryStructure::initialize(cm);
+    return DirectoryStructure(startup);
 }
 
 }

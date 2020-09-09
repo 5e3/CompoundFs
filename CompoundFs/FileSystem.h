@@ -16,12 +16,14 @@ class FileSystem final
 {
 public:
     using Cursor = DirectoryStructure::Cursor;
+    using Startup = DirectoryStructure::Startup;
 
 public:
-    FileSystem(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
-               PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
+    FileSystem(const Startup& startup);
     FileSystem(FileSystem&&) = default;
     FileSystem& operator=(FileSystem&&) = default;
+
+    static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
 
     std::optional<WriteHandle> createFile(Path path);
     std::optional<WriteHandle> appendFile(Path path);
@@ -69,9 +71,16 @@ private:
     uint32_t m_nextHandle = 1;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
 inline FileSystem::Cursor FileSystem::next(Cursor cursor) const
 {
     return m_directoryStructure.next(cursor);
+}
+
+inline FileSystem::Startup FileSystem::initialize(const std::shared_ptr<CacheManager>& cacheManager)
+{
+    return DirectoryStructure::initialize(cacheManager);
 }
 
 }

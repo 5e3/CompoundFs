@@ -9,10 +9,10 @@ using namespace TxFs;
 FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
 {
     auto cacheManager = std::make_shared<CacheManager>(std::move(file));
-    TypedCacheManager tcm(cacheManager);
-    auto freeStorePage = tcm.newPage<FileTable>();
-    auto fileSystem = FileSystem(cacheManager, freeStorePage.m_index);
+    auto startup = FileSystem::initialize(cacheManager);
+    auto fileSystem = FileSystem(startup);
     fileSystem.commit();
+    assert(startup.m_freeStoreIndex == 1 && startup.m_rootIndex == 0);
     return fileSystem;
 }
 
@@ -25,7 +25,8 @@ FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInter
         TxFs::copyPage(file, cpy, orig);
     file->flushFile();
 
-    auto fileSystem = FileSystem(cacheManager, 0, 1);
+    FileSystem::Startup startup { cacheManager, 1, 0 };
+    auto fileSystem = FileSystem(startup);
     fileSystem.rollback();
     return fileSystem;
 }

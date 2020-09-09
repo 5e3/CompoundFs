@@ -15,9 +15,7 @@ namespace
 FileSystem makeFileSystem()
 {
     auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
-    TypedCacheManager tcm(cm);
-    auto freeStorePage = tcm.newPage<FileTable>();
-    auto fs = FileSystem(cm, freeStorePage.m_index);
+    auto fs = FileSystem(FileSystem::initialize(cm));
     fs.commit();
     return fs;
 }
@@ -198,13 +196,9 @@ public:
 
     FileSystemTester()
         : m_cacheManager(std::make_shared<CacheManager>(std::make_unique<MemoryFile>()))
-        , m_fileSystem(m_cacheManager, 1)
+        , m_fileSystem(FileSystem::initialize(m_cacheManager))
     {
-        TypedCacheManager tcm(m_cacheManager);
-        auto freeStorePage = tcm.newPage<FileTable>();
-        assert(freeStorePage.m_index == 1);
         m_fileSystem.commit();
-
         m_helper.fillFileSystem(m_fileSystem);
     }
 

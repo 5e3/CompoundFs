@@ -4,10 +4,9 @@
 
 using namespace TxFs;
 
-FileSystem::FileSystem(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex, PageIndex rootIndex,
-                       uint32_t maxFolderId)
-    : m_cacheManager(cacheManager)
-    , m_directoryStructure(cacheManager, freeStoreIndex, rootIndex, maxFolderId)
+FileSystem::FileSystem(const Startup& startup)
+    : m_cacheManager(startup.m_cacheManager)
+    , m_directoryStructure(startup)
 {}
 
 std::optional<WriteHandle> FileSystem::createFile(Path path)

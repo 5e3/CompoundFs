@@ -48,12 +48,19 @@ class DirectoryStructure final
 {
 public:
     class Cursor;
+    struct Startup
+    {
+        std::shared_ptr<CacheManager> m_cacheManager;
+        PageIndex m_freeStoreIndex;
+        PageIndex m_rootIndex;
+    };
 
 public:
-    DirectoryStructure(const std::shared_ptr<CacheManager>& cacheManager, PageIndex freeStoreIndex,
-                       PageIndex rootIndex = PageIdx::INVALID, uint32_t maxFolderId = 2);
+    DirectoryStructure(const Startup& startup);
     DirectoryStructure(DirectoryStructure&&);
     DirectoryStructure& operator=(DirectoryStructure&&);
+
+    static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
 
     std::optional<Folder> makeSubFolder(const DirectoryKey& dkey);
     std::optional<Folder> subFolder(const DirectoryKey& dkey) const;
@@ -87,6 +94,7 @@ private:
     BTree m_btree;
     uint32_t m_maxFolderId;
     FreeStore m_freeStore;
+    PageIndex m_rootIndex;
 };
 
 //////////////////////////////////////////////////////////////////////////
