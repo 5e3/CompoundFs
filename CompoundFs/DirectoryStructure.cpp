@@ -36,7 +36,7 @@ DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
     , m_btree(std::move(ds.m_btree))
     , m_maxFolderId(std::move(ds.m_maxFolderId))
     , m_freeStore(std::move(ds.m_freeStore))
-    , m_rootIndex(std::move(m_rootIndex))
+    , m_rootIndex(std::move(ds.m_rootIndex))
 {
     connectFreeStore();
 }
@@ -50,6 +50,17 @@ DirectoryStructure::DirectoryStructure(const Startup& startup)
 {
     assert(static_cast<Folder>(m_maxFolderId) > SystemFolder);
     connectFreeStore();
+}
+
+DirectoryStructure& DirectoryStructure::operator=(DirectoryStructure&& ds)
+{
+    m_cacheManager = std::move(ds.m_cacheManager);
+    m_btree = std::move(ds.m_btree);
+    m_maxFolderId = std::move(ds.m_maxFolderId);
+    m_freeStore = std::move(ds.m_freeStore);
+    m_rootIndex = std::move(ds.m_rootIndex);
+    connectFreeStore();
+    return *this;
 }
 
 DirectoryStructure::Startup DirectoryStructure::initialize(const std::shared_ptr<CacheManager>& cacheManager)
@@ -267,7 +278,7 @@ void DirectoryStructure::StoreCommitBlock(const CommitBlock& cb)
     addAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName), str);
 }
 
-CommitBlock DirectoryStructure::retrieveCommitBlock()
+CommitBlock DirectoryStructure::retrieveCommitBlock() const
 {
     auto str = getAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName))->toValue<std::string>();
     return CommitBlock::fromString(str);
@@ -283,5 +294,4 @@ std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const
     std::string_view nameView ( reinterpret_cast<const char*> (name.data()), name.size() );
     return std::pair(folder, nameView);
 }
-
 

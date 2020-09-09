@@ -84,7 +84,7 @@ public:
     void rollback();
 
     void StoreCommitBlock(const CommitBlock&);
-    CommitBlock retrieveCommitBlock();
+    CommitBlock retrieveCommitBlock() const;
 
 private:
     void connectFreeStore();
