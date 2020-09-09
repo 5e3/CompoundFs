@@ -26,7 +26,7 @@ void throwOnError(HANDLE handle)
 }
 
 template <typename TRet, typename... TArgs>
-constexpr auto wrapOsCall(TRet(func)(TArgs...))
+constexpr auto wrapOsCall(TRet(__stdcall func)(TArgs...))
 {
     return [func](TArgs... args) -> TRet {
         auto returnValue = func(args...);
