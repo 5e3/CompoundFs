@@ -51,14 +51,14 @@ TEST(FileSystem, readAfterWrite)
     auto handle = fs.appendFile("folder/file.file").value();
     ByteStringView data("test");
     auto size = data.size();
-    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
+    ASSERT_EQ(size, fs.write(handle, data.data(), data.size()));
     fs.close(handle);
 
     uint8_t buf[10];
     auto readHandle = fs.readFile("folder/file.file");
     ASSERT_TRUE(readHandle);
-    ASSERT_EQ(size , fs.read(*readHandle, buf, sizeof(buf)));
-    ASSERT_EQ(data , ByteStringView(buf,size));
+    ASSERT_EQ(size, fs.read(*readHandle, buf, sizeof(buf)));
+    ASSERT_EQ(data, ByteStringView(buf, size));
 }
 
 TEST(FileSystem, readAfterAppendAfterWrite)
@@ -67,16 +67,16 @@ TEST(FileSystem, readAfterAppendAfterWrite)
     auto handle = fs.createFile("folder/file.file").value();
     ByteStringView data("test");
     auto size = data.size();
-    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
+    ASSERT_EQ(size, fs.write(handle, data.data(), data.size()));
     fs.close(handle);
     handle = fs.appendFile("folder/file.file").value();
-    ASSERT_EQ(size , fs.write(handle, data.data(), data.size()));
+    ASSERT_EQ(size, fs.write(handle, data.data(), data.size()));
     fs.close(handle);
 
     uint8_t buf[20];
     auto readHandle = fs.readFile("folder/file.file");
     ASSERT_TRUE(readHandle);
-    ASSERT_EQ(2 * size , fs.read(*readHandle, buf, sizeof(buf)));
+    ASSERT_EQ(2 * size, fs.read(*readHandle, buf, sizeof(buf)));
 }
 
 TEST(FileSystem, doubleCloseWriteHandleThrows)
@@ -106,7 +106,7 @@ TEST(FileSystem, subFolder)
 
     auto folder2 = fs.subFolder("test/folder");
     ASSERT_TRUE(folder2);
-    ASSERT_EQ(folder , folder2);
+    ASSERT_EQ(folder, folder2);
 }
 
 TEST(FileSystem, attribute)
@@ -119,7 +119,7 @@ TEST(FileSystem, attribute)
 
     auto attribute = fs.getAttribute("folder/attribute");
     ASSERT_TRUE(attribute);
-    ASSERT_EQ(attribute->toValue<double>() , 42.42);
+    ASSERT_EQ(attribute->toValue<double>(), 42.42);
 }
 
 TEST(FileSystem, remove)
@@ -128,7 +128,7 @@ TEST(FileSystem, remove)
     auto success = fs.addAttribute("folder/attribute", 42.42);
     ASSERT_TRUE(success);
 
-    ASSERT_EQ(fs.remove("folder/attribute") , 1);
+    ASSERT_EQ(fs.remove("folder/attribute"), 1);
     auto attribute = fs.getAttribute("folder/attribute");
     ASSERT_TRUE(!attribute);
 }
@@ -140,7 +140,7 @@ TEST(FileSystem, Cursor)
     auto cur = fs.find("folder/folder/attrib");
     ASSERT_TRUE(cur);
     auto attrib = cur.value();
-    ASSERT_EQ(attrib.toValue<double>() , 5.5);
+    ASSERT_EQ(attrib.toValue<double>(), 5.5);
 }
 
 TEST(FileSystem, commitClosesAllFileHandles)
@@ -179,12 +179,12 @@ TEST(FileSystem, fileSizeReturnsCurrentFileSize)
     ASSERT_EQ(fs.fileSize(handle), data.size());
 
     fs.write(handle, data.data(), data.size());
-    ASSERT_EQ(fs.fileSize(handle),2* data.size());
+    ASSERT_EQ(fs.fileSize(handle), 2 * data.size());
     fs.close(handle);
 
-    ASSERT_EQ(*fs.fileSize("folder/file.file"), 2*data.size());
+    ASSERT_EQ(*fs.fileSize("folder/file.file"), 2 * data.size());
     auto handle2 = *fs.readFile("folder/file.file");
-    ASSERT_EQ(fs.fileSize(handle2), 2*data.size());
+    ASSERT_EQ(fs.fileSize(handle2), 2 * data.size());
 }
 
 class FileSystemTester : public ::testing::Test
@@ -201,7 +201,6 @@ public:
         m_fileSystem.commit();
         m_helper.fillFileSystem(m_fileSystem);
     }
-
 };
 
 TEST_F(FileSystemTester, selfTest)
@@ -221,7 +220,7 @@ TEST_F(FileSystemTester, writingDataIncreasesCompositSize)
     auto handle = *m_fileSystem.createFile("test3.txt");
     m_fileSystem.write(handle, m_helper.m_fileData.data(), m_helper.m_fileData.size());
     m_fileSystem.close(handle);
-    ASSERT_GT (m_cacheManager->getFileInterface()->currentSize(), compositSize);
+    ASSERT_GT(m_cacheManager->getFileInterface()->currentSize(), compositSize);
 }
 
 TEST_F(FileSystemTester, rollbackRemovesAllEntries)
@@ -262,3 +261,26 @@ TEST_F(FileSystemTester, commitedDeletedSpaceGetsReused)
     ASSERT_EQ(m_cacheManager->getFileInterface()->currentSize(), compositSize);
 }
 
+TEST_F(FileSystemTester, treeSpaceGetsReused)
+{
+    m_fileSystem.rollback();
+    auto file = m_cacheManager->getFileInterface();
+    uint64_t i = 0;
+    auto csize = file->currentSize();
+    while (csize == file->currentSize())
+    {
+        auto data = std::to_string(i++);
+        m_fileSystem.addAttribute(Path(data), data);
+    }
+    m_fileSystem.commit();
+    csize = file->currentSize();
+    for (uint64_t j = 0; j < i; j++)
+        ASSERT_EQ(m_fileSystem.remove(Path(std::to_string(j))), 1);
+    m_fileSystem.commit();
+    for (uint64_t j = 0; j < i; j++)
+    {
+        auto data = std::to_string(j);
+        m_fileSystem.addAttribute(Path(data), data);
+    }
+    ASSERT_EQ(file->currentSize(), csize);
+}

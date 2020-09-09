@@ -156,6 +156,37 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
     m_helper.checkFileSystem(fsys);
 }
 
+TEST_F(CompositTester, treeSpaceGetsReused)
+{
+    uint64_t i = 0;
+    size_t csize = 0;
+    {
+        auto fsys = Composit::open<WrappedFile>(m_file);
+        fsys.remove("test");
+        fsys.commit();
+
+        csize = m_file->currentSize();
+        while (csize == m_file->currentSize())
+        {
+            auto data = std::to_string(i++);
+            fsys.addAttribute(Path(data), data);
+        }
+        fsys.commit();
+        csize = m_file->currentSize();
+        for (uint64_t j = 0; j < i; j++)
+            ASSERT_EQ(fsys.remove(Path(std::to_string(j))), 1);
+        fsys.commit();
+    }
+
+    auto fsys = Composit::open<WrappedFile>(m_file);
+    for (uint64_t j = 0; j < i; j++)
+    {
+        auto data = std::to_string(j++);
+        fsys.addAttribute(Path(data), data);
+    }
+    ASSERT_EQ(m_file->currentSize(), csize);
+}
+
 struct CrashCommitFile : WrappedFile
 {
     CrashCommitFile(std::shared_ptr<FileInterface> file)
