@@ -131,6 +131,7 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
         fsys.remove("test");
         fsys.commit();
 
+        // overflow btree
         auto csize = m_file->currentSize();
         while (csize == m_file->currentSize())
         {
