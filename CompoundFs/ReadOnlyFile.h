@@ -48,7 +48,7 @@ ReadOnlyFile<TFile>::ReadOnlyFile(TFile&& file)
 template <typename TFile>
 template <typename... Ts>
 ReadOnlyFile<TFile>::ReadOnlyFile(Ts&&... args)
-    : TFile(std::forward<Ts...>(args))
+    : TFile(std::forward<Ts>(args)...)
 {}
 
 template <typename TFile>
