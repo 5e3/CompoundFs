@@ -58,21 +58,21 @@ public:
         return size <= bytesLeft();
     }
 
-    constexpr uint16_t* beginTable() const noexcept
+    uint16_t* beginTable() const noexcept
     {
         assert(m_end <= sizeof(m_data));
         return (uint16_t*) &m_data[m_end];
     }
 
-    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
+    uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    constexpr ByteStringView getKey(const uint16_t* it) const noexcept
+    ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return ByteStringView::fromStream(m_data + *it);
     }
 
-    constexpr PageIndex getLeft(const uint16_t* it) const noexcept
+    PageIndex getLeft(const uint16_t* it) const noexcept
     {
         if (it == beginTable())
             return m_leftMost;

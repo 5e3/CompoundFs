@@ -53,7 +53,7 @@ public:
     ByteString& operator=(ByteStringView bsv) noexcept;
     template <typename TStr, typename = EnableWithString<TStr>>
     ByteString& operator=(TStr&& str);
-    constexpr operator ByteStringView() const noexcept;
+    operator ByteStringView() const noexcept;
     size_t size() const noexcept; 
 
 private:
@@ -182,7 +182,7 @@ inline ByteString& ByteString::operator=(TStr&& str)
     return *this;
 }
 
-constexpr ByteString::operator ByteStringView() const noexcept
+inline ByteString::operator ByteStringView() const noexcept
 {
     return ByteStringView(&m_buffer[0], m_buffer.size());
 }

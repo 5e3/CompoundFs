@@ -2,6 +2,7 @@
 
 #include "Interval.h"
 #include <vector>
+#include <string.h>
 
 namespace TxFs
 {

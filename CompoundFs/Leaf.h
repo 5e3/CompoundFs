@@ -53,27 +53,27 @@ public:
 
     uint16_t toIndex(const uint8_t* pos) const { return static_cast<uint16_t>(pos - m_data);}
 
-    constexpr uint16_t* beginTable() const noexcept
+    uint16_t* beginTable() const noexcept
     {
         assert(m_end <= sizeof(m_data));
         return (uint16_t*) &m_data[m_end];
     }
 
-    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
+    uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
 
-    constexpr ByteStringView getKey(const uint16_t* it) const noexcept
+    ByteStringView getKey(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         return ByteStringView::fromStream(m_data + *it);
     }
 
-    constexpr ByteStringView getLowestKey() const noexcept
+    ByteStringView getLowestKey() const noexcept
     {
         assert(beginTable() != endTable());
         return ByteStringView::fromStream(m_data + *beginTable());
     }
 
-    constexpr ByteStringView getValue(const uint16_t* it) const noexcept
+    ByteStringView getValue(const uint16_t* it) const noexcept
     {
         assert(it != endTable());
         auto key = getKey(it);
@@ -154,7 +154,7 @@ public:
     }
 
 private:
-    constexpr const uint16_t* findSplitPoint() const noexcept
+    const uint16_t* findSplitPoint() const noexcept
     {
         size_t size = 0;
         for (uint16_t* it = beginTable(); it < endTable(); ++it)
@@ -167,7 +167,7 @@ private:
         return endTable();
     }
 
-    constexpr void fill(const Leaf& leaf, const uint16_t* begin, const uint16_t* end) noexcept
+    void fill(const Leaf& leaf, const uint16_t* begin, const uint16_t* end) noexcept
     {
         m_begin = 0;
         m_end = uint16_t(sizeof(m_data) - sizeof(uint16_t) * (end - begin));
