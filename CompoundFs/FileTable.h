@@ -86,10 +86,10 @@ public:
     constexpr bool empty() const noexcept { return m_begin == 0 && m_end == sizeof(m_data); }
 
 private:
-    constexpr uint16_t* beginTable() const noexcept { return (uint16_t*) (m_data + m_end); }
-    constexpr uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
-    constexpr PageIndex* beginIds() const noexcept { return (PageIndex*) m_data; }
-    constexpr PageIndex* endIds() const noexcept { return (PageIndex*) (m_data + m_begin); }
+    uint16_t* beginTable() const noexcept { return (uint16_t*) (m_data + m_end); }
+    uint16_t* endTable() const noexcept { return (uint16_t*) (m_data + sizeof(m_data)); }
+    PageIndex* beginIds() const noexcept { return (PageIndex*) m_data; }
+    PageIndex* endIds() const noexcept { return (PageIndex*) (m_data + m_begin); }
     constexpr bool hasSpace(Interval iv) const noexcept
     {
         assert(iv.begin() < iv.end());
