@@ -218,7 +218,7 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
 
 bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
 {
-    ValueStream value = desc;
+    ValueStream value = TreeValue{desc};
     auto res = m_btree.insert(dkey, value, [](ByteStringView bsv) {
         return TreeValue::fromStream(bsv).getType() == TreeValue::Type::File;
     });
