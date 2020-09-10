@@ -8,6 +8,8 @@ namespace TxFs
 class Lock;
 class CommitLock;
 
+enum class OpenMode { Create, Open, ReadOnly };
+
 class FileInterface
 {
 public:

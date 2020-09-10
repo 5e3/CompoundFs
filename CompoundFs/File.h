@@ -9,8 +9,6 @@
 namespace TxFs
 {
 
-enum class OpenMode { Create, Open, ReadOnly };
-
 class File : public FileInterface
 {
 public:

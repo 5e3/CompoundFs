@@ -16,6 +16,7 @@ set (Sources
 		PageAllocator.cpp
 		TreeValue.cpp
 		Path.cpp
+		PosixFile.cpp
 		WrappedFile.cpp
 
 	)
@@ -29,8 +30,9 @@ set (Headers
 		CommitHandler.h
 		Composit.h
 		DirectoryStructure.h
-		FileDescriptor.h
 		File.h
+		FileDescriptor.h
+		FileInterface.h
 		FileReader.h
 		FileSharedMutex.h
 		FileSystem.h
@@ -50,7 +52,7 @@ set (Headers
 		PageDef.h
 		PageMetaData.h
 		Path.h
-		FileInterface.h
+		PosixFile.h
 		ReadOnlyFile.h
 		TableKeyCompare.h
 		TreeValue.h
