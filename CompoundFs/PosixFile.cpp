@@ -26,14 +26,16 @@ void PosixFile::close()
 }
 
 PosixFile& PosixFile::operator=(PosixFile&&)
-{}
+{
+    throw std::logic_error("The method or operation is not implemented.");
+}
 
 PosixFile::PosixFile(PosixFile&&)
 {}
 
 PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
 { 
-    m_file = ::open(path.c_str(),  
+    //m_file = ::open(path.c_str(),  
 }
 
 
