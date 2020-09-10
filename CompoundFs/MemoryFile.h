@@ -33,10 +33,10 @@ public:
     CommitLock commitAccess(Lock&& writeLock) override;
 
 private:
-    using LockProtocol = LockProtocol<std::shared_mutex, std::mutex>;
+    using MemLockProtocol = LockProtocol<std::shared_mutex, std::mutex>;
     PageAllocator m_allocator;
     std::vector<std::shared_ptr<uint8_t>> m_file;
-    std::unique_ptr<LockProtocol> m_lockProtocol;
+    std::unique_ptr<MemLockProtocol> m_lockProtocol;
 };
 
 }

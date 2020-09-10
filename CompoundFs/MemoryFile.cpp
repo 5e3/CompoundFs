@@ -7,7 +7,7 @@ using namespace TxFs;
 
 MemoryFile::MemoryFile()
     : m_allocator(1024)
-    , m_lockProtocol(std::make_unique<LockProtocol>())
+    , m_lockProtocol(std::make_unique<MemLockProtocol>())
 {
     m_file.reserve(1024);
 }
