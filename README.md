@@ -1,4 +1,5 @@
 # CompoundFs
+![buil64](https://github.com/5e3/CompoundFs/workflows/Win64/badge.svg) ![win32](https://github.com/5e3/CompoundFs/workflows/Win32/badge.svg)
 
 ### Several Files in One 
 CompoundFs is a fully fledged file-system organized in a single Operating-System file. It consists of a user defined 
