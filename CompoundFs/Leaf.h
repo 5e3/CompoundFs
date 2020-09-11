@@ -174,11 +174,11 @@ private:
         uint16_t* destTable = beginTable();
         for (const uint16_t* it = begin; it < end; ++it)
         {
-            auto end = toStream(leaf.getKey(it), &m_data[m_begin]);
-            end = toStream(leaf.getValue(it), end);
+            auto xend = toStream(leaf.getKey(it), &m_data[m_begin]);
+            xend = toStream(leaf.getValue(it), xend);
             *destTable = m_begin;
             destTable++;
-            m_begin = toIndex(end);
+            m_begin = toIndex(xend);
         }
     }
 };

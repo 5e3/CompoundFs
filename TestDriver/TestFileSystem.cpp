@@ -58,7 +58,7 @@ TEST(FileSystem, readAfterWrite)
     auto readHandle = fs.readFile("folder/file.file");
     ASSERT_TRUE(readHandle);
     ASSERT_EQ(size, fs.read(*readHandle, buf, sizeof(buf)));
-    ASSERT_EQ(data, ByteStringView(buf, size));
+    ASSERT_EQ(data, ByteStringView(buf, static_cast<uint8_t>(size)));
 }
 
 TEST(FileSystem, readAfterAppendAfterWrite)

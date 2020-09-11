@@ -231,8 +231,8 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            auto end = from.getKey(it).end() + sizeof(PageIndex);
-            data = std::copy(from.m_data + *it, end, data);
+            auto xend = from.getKey(it).end() + sizeof(PageIndex);
+            data = std::copy(from.m_data + *it, xend, data);
             idx++;
         }
         assert(idx == beginTable());
@@ -250,8 +250,8 @@ public:
         for (auto it = begin; it < end; ++it)
         {
             *idx = static_cast<uint16_t>(data - m_data);
-            auto end = from.getKey(it).end() + sizeof(PageIndex);
-            data = std::copy(from.m_data + *it, end, data);
+            auto xend = from.getKey(it).end() + sizeof(PageIndex);
+            data = std::copy(from.m_data + *it, xend, data);
             idx++;
         }
         assert(idx == endTable());

@@ -138,7 +138,7 @@ constexpr ByteStringView ByteStringView::fromStream(const uint8_t* stream) noexc
 
 inline uint8_t* toStream(ByteStringView bsv, uint8_t* dest)
 {
-    *dest = bsv.size();
+    *dest = static_cast<uint8_t>(bsv.size());
     return std::copy(bsv.data(), bsv.data() + bsv.size(), ++dest);
 }
 
@@ -184,7 +184,7 @@ inline ByteString& ByteString::operator=(TStr&& str)
 
 inline ByteString::operator ByteStringView() const noexcept
 {
-    return ByteStringView(&m_buffer[0], m_buffer.size());
+    return ByteStringView(&m_buffer[0], static_cast<uint8_t>(m_buffer.size()));
 }
 
 inline size_t ByteString::size() const noexcept
@@ -206,7 +206,7 @@ inline bool ByteStringStream::isPrefix(ByteStringView rhs) const noexcept
 
 inline ByteStringStream::operator ByteStringView() const noexcept
 {
-    return ByteStringView(m_buffer, m_pos - m_buffer);
+    return ByteStringView(m_buffer, static_cast<uint8_t>(m_pos - m_buffer));
 }
 
 inline void ByteStringStream::push(ByteStringView bsv)
@@ -236,7 +236,7 @@ inline ByteStringView ByteStringStream::pop(T& val, ByteStringView bsv)
     auto beginDst = reinterpret_cast<uint8_t*>(&val);
     auto end = bsv.data() + sizeof(T);
     std::copy(bsv.data(), end, beginDst);
-    return ByteStringView(end, bsv.size() - sizeof(T));
+    return ByteStringView(end, static_cast<uint8_t> (bsv.size() - sizeof(T)));
 }
 
 }

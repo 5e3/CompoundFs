@@ -74,7 +74,7 @@ DirectoryStructure::Startup DirectoryStructure::initialize(const std::shared_ptr
 
 void DirectoryStructure::connectFreeStore()
 {
-    m_cacheManager->setPageIntervalAllocator([fs = &m_freeStore](size_t maxPages) { return fs->allocate(maxPages); });
+    m_cacheManager->setPageIntervalAllocator([fs = &m_freeStore](size_t maxPages) { return fs->allocate(static_cast<uint32_t> (maxPages)); });
 }
 
 std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey)
@@ -203,7 +203,7 @@ bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey& dkey)
 {
     ValueStream value(FileDescriptor {});
-    auto res = m_btree.insert(dkey, value, [](ByteStringView bsv) { return false; });
+    auto res = m_btree.insert(dkey, value, [](ByteStringView) { return false; });
 
     if (std::holds_alternative<BTree::Inserted>(res))
         return FileDescriptor{};
