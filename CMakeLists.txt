@@ -1,9 +1,12 @@
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.11)
 
 project(CompoundFs)
+enable_testing()
 
 set(CMAKE_CXX_STANDARD 17)
+set(gtest_force_shared_crt ON CACHE BOOL "Override option" FORCE)
+set(INSTALL_GTEST OFF CACHE BOOL "Override option" FORCE)
 add_definitions ( -D_UNICODE )
 add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
 
@@ -22,13 +25,17 @@ FetchContent_Declare(
 )
 
 
-set(gtest_force_shared_crt ON)
-set(INSTALL_GTEST OFF)
-cmake_policy(SET CMP0077 OLD)
 
-FetchContent_MakeAvailable(googletest)
+
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif()
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)
 add_subdirectory(Sandbox)
+
+add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
 
