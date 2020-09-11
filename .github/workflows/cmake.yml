@@ -1,4 +1,4 @@
-name: CMake
+name: Win64
 
 on: [push]
 
