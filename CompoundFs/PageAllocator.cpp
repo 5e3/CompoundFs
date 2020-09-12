@@ -1,11 +1,8 @@
 
-#define NOMINMAX 1
-
 #include "PageAllocator.h"
 #include <algorithm>
 #include <unordered_map>
 #include <system_error>
-#include <windows.h>
 
 using namespace TxFs;
 
@@ -75,6 +72,11 @@ std::pair<size_t, size_t> PageAllocator::trim()
     return std::make_pair(m_blocksAllocated, m_freePages->size());
 }
 
+#ifdef _WINDOWS
+
+#define NOMINMAX 1
+#include <windows.h>
+
 std::shared_ptr<uint8_t> PageAllocator::allocBlock()
 {
     uint8_t* block = (uint8_t*) ::VirtualAlloc(nullptr, m_pagesPerBlock * 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -84,6 +86,17 @@ std::shared_ptr<uint8_t> PageAllocator::allocBlock()
     m_blocksAllocated++;
     return std::shared_ptr<uint8_t>(block, [](uint8_t* b) { ::VirtualFree(b, 0, MEM_RELEASE); });
 }
+
+#else
+
+std::shared_ptr<uint8_t> PageAllocator::allocBlock()
+{
+    std::shared_ptr<uint8_t> block(new uint8_t[m_pagesPerBlock * 4096], [](uint8_t* b) { delete[] b; });
+    m_blocksAllocated++;
+    return block;
+}
+
+#endif
 
 std::shared_ptr<uint8_t> PageAllocator::makePage(std::shared_ptr<uint8_t> block, uint8_t* page)
 {

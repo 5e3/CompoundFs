@@ -11,9 +11,6 @@ set (Sources
 		TestComposit.cpp
 		TestDirectoryStructure.cpp
 		TestFileReaderWriter.cpp
-		TestFile.cpp
-		TestFileInterface.cpp
-		TestFileSharedMutex.cpp
 		TestFileSystem.cpp
 		TestFileTable.cpp
 		TestFreeStore.cpp
@@ -31,13 +28,24 @@ set (Sources
 		TestTypedCacheManager.cpp
 	)
 	
+if(WIN32)
+set (PlatformSources
+		TestFile.cpp
+		TestFileInterface.cpp
+		TestFileSharedMutex.cpp
+)
+elseif(LINUX)
+set (PlatformSources
+)
+endif()
+
 set (Headers
 		MinimalTreeBuilder.h
 		FileSystemHelper.h
 	)
 	
 
-source_group("" FILES ${Sources} ${Headers})
+source_group("" FILES ${Sources} ${PlatformSources} ${Headers})
 
-add_executable(${PROJECT_NAME} ${Sources} ${Headers})
+add_executable(${PROJECT_NAME} ${Sources} ${PlatformSources} ${Headers})
 target_link_libraries(${PROJECT_NAME} PUBLIC CompoundFs gtest)

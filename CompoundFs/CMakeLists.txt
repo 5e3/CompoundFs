@@ -9,17 +9,25 @@ set (Sources
 		CommitHandler.cpp
 		Composit.cpp
 		DirectoryStructure.cpp
-		File.cpp
-		FileSharedMutex.cpp
 		FileSystem.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp
 		TreeValue.cpp
 		Path.cpp
-		PosixFile.cpp
 		WrappedFile.cpp
-
 	)
+
+if(WIN32)
+set (PlatformSources
+		File.cpp
+		FileSharedMutex.cpp
+		PosixFile.cpp
+)
+elseif(LINUX)
+set (PlatformSources
+)
+endif()
+
 	
 set (Headers
 		BTree.h
@@ -30,11 +38,9 @@ set (Headers
 		CommitHandler.h
 		Composit.h
 		DirectoryStructure.h
-		File.h
 		FileDescriptor.h
 		FileInterface.h
 		FileReader.h
-		FileSharedMutex.h
 		FileSystem.h
 		FileTable.h
 		FileWriter.h
@@ -52,7 +58,6 @@ set (Headers
 		PageDef.h
 		PageMetaData.h
 		Path.h
-		PosixFile.h
 		ReadOnlyFile.h
 		TableKeyCompare.h
 		TreeValue.h
@@ -62,8 +67,20 @@ set (Headers
 		Board.txt
 	)
 	
+if(WIN32)
+set (PlatformHeaders
+		File.h
+		FileSharedMutex.h
+		PosixFile.h
+)
+elseif(LINUX)
+set (PlatformHeaders
+)
+endif()
 
-add_library(${PROJECT_NAME} ${Sources} ${Headers})
+
+add_library(${PROJECT_NAME} ${Sources} ${PlatformSources} ${Headers} ${PlatformHeaders})
+
 target_include_directories(${PROJECT_NAME} INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/..)
 target_compile_options(${PROJECT_NAME} PRIVATE
      $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:

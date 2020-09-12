@@ -65,7 +65,7 @@ struct MinimalTreeBuilder
     ByteString makeKey(int i)
     {
         char buf[10];
-        sprintf_s(buf, "%04d", i);
+        snprintf(buf, sizeof(buf)-1, "%04d", i);
         return ByteString(buf);
     }
 };
