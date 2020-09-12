@@ -7,7 +7,7 @@
 #include <unordered_set>
 #include <random>
 #include <gtest/gtest.h>
-#include "../CompoundFs/PageAllocator.h"
+#include "CompoundFs/PageAllocator.h"
 
 using namespace TxFs;
 

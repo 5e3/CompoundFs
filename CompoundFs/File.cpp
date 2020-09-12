@@ -140,7 +140,7 @@ Interval File::newInterval(size_t maxPages)
     Win32::Seek(m_handle, PageSize * maxPages + size.QuadPart);
     Win32::SetEndOfFile(m_handle);
 
-    return Interval(size.QuadPart / PageSize, size.QuadPart / PageSize + maxPages);
+    return Interval(static_cast<PageIndex>(size.QuadPart / PageSize), static_cast<PageIndex>(size.QuadPart / PageSize + maxPages));
 }
 
 const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
@@ -152,7 +152,7 @@ const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* b
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
     DWORD bytesWritten;
-    Win32::WriteFile(m_handle, begin, end - begin, &bytesWritten, nullptr);
+    Win32::WriteFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesWritten, nullptr);
 
     return end;
 }
@@ -175,7 +175,7 @@ void TxFs::File::writePages(const uint8_t* begin, const uint8_t* end)
     for (; (begin+BlockSize) < end; begin += BlockSize)
         Win32::WriteFile(m_handle, begin, BlockSize, &bytesWritten, nullptr);
 
-    Win32::WriteFile(m_handle, begin, end - begin, &bytesWritten, nullptr);
+    Win32::WriteFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesWritten, nullptr);
 }
 
 uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
@@ -187,7 +187,7 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
     DWORD bytesRead;
-    Win32::ReadFile(m_handle, begin, end - begin, &bytesRead, nullptr);
+    Win32::ReadFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesRead, nullptr);
 
     return end;
 }
@@ -210,7 +210,7 @@ void File::readPages(uint8_t* begin, uint8_t* end) const
     for (; (begin+BlockSize)<end; begin+=BlockSize)
         Win32::ReadFile(m_handle, begin, BlockSize, &bytesRead, nullptr);
 
-    Win32::ReadFile(m_handle, begin, end-begin, &bytesRead, nullptr);
+    Win32::ReadFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesRead, nullptr);
 }
 
 size_t File::currentSize() const
@@ -218,7 +218,7 @@ size_t File::currentSize() const
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
 
-    return size.QuadPart / PageSize;
+    return static_cast<size_t>(size.QuadPart / PageSize);
 }
 
 void File::flushFile()
@@ -255,7 +255,7 @@ CommitLock File::commitAccess(Lock&& writeLock)
 std::filesystem::path File::getFileName() const
 {
     std::wstring buffer(1028, 0);
-    Win32::GetFinalPathNameByHandle(m_handle, buffer.data(), buffer.size(), VOLUME_NAME_DOS);
+    Win32::GetFinalPathNameByHandle(m_handle, buffer.data(), static_cast<DWORD>(buffer.size()), VOLUME_NAME_DOS);
 
     return buffer;
 }

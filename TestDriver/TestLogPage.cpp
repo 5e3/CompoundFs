@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/LogPage.h"
+#include "CompoundFs/LogPage.h"
 
 using namespace TxFs;
 

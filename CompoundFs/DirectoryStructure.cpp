@@ -15,7 +15,7 @@ namespace
     {
         ValueStream(const TreeValue& value) { value.toStream(m_byteStringStream); }
 
-        operator ByteStringView() const { return static_cast<ByteStringView>(m_byteStringStream); }
+        operator ByteStringView() const { return m_byteStringStream; }
 
         ByteStringStream m_byteStringStream;
     };
@@ -265,7 +265,7 @@ void DirectoryStructure::rollback()
 {
     auto commitBlock = retrieveCommitBlock();
     m_maxFolderId = commitBlock.m_maxFolderId;
-    m_cacheManager->rollback(commitBlock.m_compositSize);
+    m_cacheManager->rollback(static_cast<size_t>(commitBlock.m_compositSize));
 
     m_btree = BTree(m_cacheManager, m_rootIndex);
     m_freeStore = FreeStore(m_cacheManager, commitBlock.m_freeStoreDescriptor);

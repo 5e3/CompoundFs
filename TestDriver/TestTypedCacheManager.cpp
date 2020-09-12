@@ -2,10 +2,10 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/TypedCacheManager.h"
-#include "../CompoundFs/FileTable.h"
-#include "../CompoundFs/Leaf.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/TypedCacheManager.h"
+#include "CompoundFs/FileTable.h"
+#include "CompoundFs/Leaf.h"
 
 using namespace TxFs;
 

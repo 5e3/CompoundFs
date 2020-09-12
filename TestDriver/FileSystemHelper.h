@@ -1,15 +1,15 @@
 
 #include <gtest/gtest.h>
 #include <string>
-#include "../CompoundFs/FileSystem.h"
-#include "../CompoundFs/Path.h"
+#include "CompoundFs/FileSystem.h"
+#include "CompoundFs/Path.h"
 
 namespace TxFs
 {
 
 inline std::string readFile(FileSystem& fileSystem, ReadHandle handle)
 {
-    auto size = fileSystem.fileSize(handle);
+    size_t size = (size_t) fileSystem.fileSize(handle);
     std::string data(size, ' ');
     fileSystem.read(handle, data.data(), size);
     return data;
@@ -18,7 +18,7 @@ inline std::string readFile(FileSystem& fileSystem, ReadHandle handle)
 inline std::string readFile(FileSystem& fsys, std::string_view path)
 {
     auto handle = *fsys.readFile(path);
-    auto size = fsys.fileSize(handle);
+    size_t size = (size_t) fsys.fileSize(handle);
     std::string in(size, ' ');
     fsys.read(handle, in.data(), size);
     return in;

@@ -1,9 +1,9 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/CacheManager.h"
-#include "../CompoundFs/CommitHandler.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/CacheManager.h"
+#include "CompoundFs/CommitHandler.h"
 #include <random>
 #include <numeric>
 

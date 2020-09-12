@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/TreeValue.h"
+#include "CompoundFs/TreeValue.h"
 
 using namespace TxFs;
 

@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/File.h"
-#include "../CompoundFs/ByteString.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/File.h"
+#include "CompoundFs/ByteString.h"
 
 using namespace TxFs;
 

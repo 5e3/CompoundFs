@@ -3,10 +3,10 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/ReadOnlyFile.h"
-#include "../CompoundFs/CacheManager.h"
-#include "../CompoundFs/CommitHandler.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/ReadOnlyFile.h"
+#include "CompoundFs/CacheManager.h"
+#include "CompoundFs/CommitHandler.h"
 
 
 using namespace TxFs;

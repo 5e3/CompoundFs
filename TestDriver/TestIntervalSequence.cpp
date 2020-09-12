@@ -2,7 +2,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/IntervalSequence.h"
+#include "CompoundFs/IntervalSequence.h"
 #include <algorithm>
 #include <random>
 

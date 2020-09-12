@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/Lock.h"
+#include "CompoundFs/Lock.h"
 
 using namespace TxFs;
 

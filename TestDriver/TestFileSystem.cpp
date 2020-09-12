@@ -2,10 +2,10 @@
 
 #include <gtest/gtest.h>
 #include "FileSystemHelper.h"
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/DirectoryStructure.h"
-#include "../CompoundFs/Path.h"
-#include "../CompoundFs/FileSystem.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/DirectoryStructure.h"
+#include "CompoundFs/Path.h"
+#include "CompoundFs/FileSystem.h"
 
 using namespace TxFs;
 

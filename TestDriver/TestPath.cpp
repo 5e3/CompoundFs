@@ -1,9 +1,9 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/Path.h"
-#include "../CompoundFs/DirectoryStructure.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/Path.h"
+#include "CompoundFs/DirectoryStructure.h"
 
 using namespace TxFs;
 

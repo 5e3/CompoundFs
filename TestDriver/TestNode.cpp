@@ -1,8 +1,8 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/Leaf.h"
-#include "../CompoundFs/InnerNode.h"
+#include "CompoundFs/Leaf.h"
+#include "CompoundFs/InnerNode.h"
 #include <algorithm>
 #include <random>
 

@@ -2,9 +2,9 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/DirectoryStructure.h"
-#include "../CompoundFs/CommitBlock.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/DirectoryStructure.h"
+#include "CompoundFs/CommitBlock.h"
 
 using namespace TxFs;
 

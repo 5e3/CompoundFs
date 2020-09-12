@@ -1,10 +1,10 @@
 
 #include <gtest/gtest.h>
 
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/FileReader.h"
-#include "../CompoundFs/FileWriter.h"
-#include "../CompoundFs/ByteString.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/FileReader.h"
+#include "CompoundFs/FileWriter.h"
+#include "CompoundFs/ByteString.h"
 #include <string>
 #include <algorithm>
 #include <random>

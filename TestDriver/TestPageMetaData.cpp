@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/PageMetaData.h"
+#include "CompoundFs/PageMetaData.h"
 
 #include <algorithm>
 #include <random>

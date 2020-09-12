@@ -1,11 +1,11 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/FreeStore.h"
-#include "../CompoundFs/FileWriter.h"
-#include "../CompoundFs/ByteString.h"
-#include "../CompoundFs/TypedCacheManager.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/FreeStore.h"
+#include "CompoundFs/FileWriter.h"
+#include "CompoundFs/ByteString.h"
+#include "CompoundFs/TypedCacheManager.h"
 
 #include <random>
 

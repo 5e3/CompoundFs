@@ -173,9 +173,9 @@ std::optional<ByteString> BTree::remove(ByteStringView key)
             // must be the root page
             assert(m_rootIndex == inner.m_index);
 
-            auto leaf = m_cacheManager.loadPage<Leaf>(innerPage->getLeft(innerPage->beginTable()));
-            auto root = new (innerPage.get()) Leaf(*leaf.m_page);
-            m_freePages.push_back(leaf.m_index);
+            auto xleaf = m_cacheManager.loadPage<Leaf>(innerPage->getLeft(innerPage->beginTable()));
+            [[maybe_unused]] auto root = new (innerPage.get()) Leaf(*xleaf.m_page);
+            m_freePages.push_back(xleaf.m_index);
             return beforeValue;
         }
         else if (stack.size() == 1)
@@ -239,14 +239,14 @@ void TxFs::BTree::growTree(ByteStringView key, bool leftRightIsLeaf, PageIndex l
         auto rightDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<Leaf>(right));
         *pageDef.m_page = *leftDef.m_page; 
         rightDef.m_page->setPrev(pageDef.m_index);
-        auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
+        [[maybe_unused]] auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
         return;
     }
 
     auto pageDef = m_cacheManager.newPage<InnerNode>();
     auto leftDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(left));
     *pageDef.m_page = *leftDef.m_page;
-    auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
+    [[maybe_unused]] auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
 
 
 

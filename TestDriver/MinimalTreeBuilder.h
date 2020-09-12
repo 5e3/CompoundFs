@@ -1,11 +1,11 @@
 
 #pragma once
 
-#include "../CompoundFs/FileInterface.h"
-#include "../CompoundFs/CacheManager.h"
-#include "../CompoundFs/TypedCacheManager.h"
-#include "../CompoundFs/InnerNode.h"
-#include "../CompoundFs/Leaf.h"
+#include "CompoundFs/FileInterface.h"
+#include "CompoundFs/CacheManager.h"
+#include "CompoundFs/TypedCacheManager.h"
+#include "CompoundFs/InnerNode.h"
+#include "CompoundFs/Leaf.h"
 #include <memory>
 
 namespace TxFs

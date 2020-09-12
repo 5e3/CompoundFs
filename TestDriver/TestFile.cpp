@@ -5,8 +5,8 @@
 #include <cstdio>
 #include <numeric>
 
-#include "../CompoundFs/File.h"
-#include "../CompoundFs/ByteString.h"
+#include "CompoundFs/File.h"
+#include "CompoundFs/ByteString.h"
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
 

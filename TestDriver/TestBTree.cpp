@@ -2,10 +2,10 @@
 
 #include <gtest/gtest.h>
 #include "MinimalTreeBuilder.h"
-#include "../CompoundFs/MemoryFile.h"
-#include "../CompoundFs/CacheManager.h"
-#include "../CompoundFs/BTree.h"
-#include "../CompoundFs/ByteString.h"
+#include "CompoundFs/MemoryFile.h"
+#include "CompoundFs/CacheManager.h"
+#include "CompoundFs/BTree.h"
+#include "CompoundFs/ByteString.h"
 #include <algorithm>
 #include <random>
 

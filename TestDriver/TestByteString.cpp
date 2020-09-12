@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <string>
 #include <tuple>
-#include "../CompoundFs/ByteString.h"
+#include "CompoundFs/ByteString.h"
 
 using namespace TxFs;
 

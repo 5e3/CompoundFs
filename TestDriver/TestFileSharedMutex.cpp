@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/FileSharedMutex.h"
+#include "CompoundFs/FileSharedMutex.h"
 
 #include <filesystem>
 #include <cstdio>

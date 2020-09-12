@@ -2,7 +2,7 @@
 
 
 #include <gtest/gtest.h>
-#include "../CompoundFs/FileTable.h"
+#include "CompoundFs/FileTable.h"
 #include <list>
 #include <algorithm>
 #include <random>
