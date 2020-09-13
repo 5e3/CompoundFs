@@ -10,14 +10,14 @@ using namespace TxFs;
 
 namespace
 {
-    uint8_t readByte(const FileInterface* fi, PageIndex idx)
+    uint8_t readFirstByteFromPage(const FileInterface* fi, PageIndex idx)
     {
         uint8_t res;
         fi->readPage(idx, 0, &res, &res + 1);
         return res;
     }
 
-    void writeByte(FileInterface* fi, PageIndex idx, uint8_t val)
+    void writeFirstByteFromPage(FileInterface* fi, PageIndex idx, uint8_t val)
     {
         fi->writePage(idx, 0, &val, &val + 1);
     }
@@ -42,14 +42,14 @@ TEST(CacheManager, newPageIsCachedButNotWritten)
     }
     auto p2 = cm.loadPage(idx);
     ASSERT_EQ(*p2.m_page , 0xaa);
-    ASSERT_NE(readByte(cm.getFileInterface(), idx) , *p2.m_page);
+    ASSERT_NE(readFirstByteFromPage(cm.getFileInterface(), idx) , *p2.m_page);
 }
 
 TEST(CacheManager, loadPageIsCachedButNotWritten)
 {
     auto memFile = std::make_unique<MemoryFile>();
     auto id = memFile->newInterval(1).begin();
-    writeByte(memFile.get(), id, 42);
+    writeFirstByteFromPage(memFile.get(), id, 42);
 
     CacheManager cm(std::move(memFile));
     auto p = cm.loadPage(id);
@@ -57,7 +57,7 @@ TEST(CacheManager, loadPageIsCachedButNotWritten)
     ASSERT_EQ(p , p2);
 
     *std::const_pointer_cast<uint8_t>(p.m_page) = 99;
-    ASSERT_EQ(readByte(cm.getFileInterface(), id) , 42);
+    ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), id) , 42);
 }
 
 TEST(CacheManager, trimReducesSizeOfCache)
@@ -85,7 +85,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOnTrim)
 
     cm.trim(0);
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), i) , i + 1);
 }
 
 TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
@@ -95,7 +95,7 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     for (int i = 0; i < 10; i++)
     {
         auto p = cm.newPage().m_page;
-        *p = i + 1;
+        *p = i + 10;
     }
     auto p1 = cm.loadPage(0);
     auto p2 = cm.loadPage(9);
@@ -103,10 +103,10 @@ TEST(CacheManager, pinnedPageDoNotGetWrittenToFileOnTrim)
     ASSERT_EQ(cm.trim(0) , 2);
 
     for (int i = 1; i < 9; i++)
-        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), i) , i + 10);
 
-    ASSERT_NE(readByte(cm.getFileInterface(), 0) , *p1.m_page);
-    ASSERT_NE(readByte(cm.getFileInterface(), 9) , *p2.m_page);
+    ASSERT_NE(readFirstByteFromPage(cm.getFileInterface(), 0) , *p1.m_page);
+    ASSERT_NE(readFirstByteFromPage(cm.getFileInterface(), 9) , *p2.m_page);
 }
 
 TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
@@ -130,7 +130,7 @@ TEST(CacheManager, newPageGetsWrittenToFileOn2TrimOps)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 10);
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), i) , i + 10);
 }
 
 TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
@@ -154,7 +154,7 @@ TEST(CacheManager, newPageDontGetWrittenToFileOn2TrimOpsWithoutSettingDirty)
     cm.trim(0);
 
     for (int i = 0; i < 10; i++)
-        ASSERT_EQ(readByte(cm.getFileInterface(), i) , i + 1);
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), i) , i + 1);
 }
 
 TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)

@@ -133,7 +133,7 @@ TEST(IntervalSequence, Sort2)
     std::shuffle(v.begin(), v.end(), std::mt19937(std::random_device()()));
 
     IntervalSequence is;
-    for (auto& id: v)
+    for (const auto& id: v)
         is.pushBack(Interval(id, id + 1));
 
     size_t totalLen = is.totalLength();

@@ -45,7 +45,7 @@ std::pair<size_t, size_t> PageAllocator::trim()
 
     std::unordered_map<std::shared_ptr<uint8_t>, std::vector<uint8_t*>> blockToPage;
     blockToPage.reserve(m_blocksAllocated);
-    for (auto& bp: *m_freePages)
+    for (const auto& bp: *m_freePages)
     {
         auto it = blockToPage.find(bp.first);
         if (it == blockToPage.end())

@@ -93,7 +93,7 @@ TEST(FreeStore, forEveryDeletedFileThereIsAtLeastAFreePage)
     for (int i = 0; i < 50; i++)
         fileDescriptors.push_back(createFile(cm));
 
-    for (auto& fd: fileDescriptors)
+    for (const auto& fd: fileDescriptors)
         fs.deleteFile(fd);
 
     fsfd = fs.close();
@@ -116,7 +116,7 @@ TEST(FreeStore, smallFilesAreConsolidatedInOnePageTable)
 
     std::shuffle(fileDescriptors.begin(), fileDescriptors.end(), std::mt19937(std::random_device()()));
 
-    for (auto& fd: fileDescriptors)
+    for (const auto& fd: fileDescriptors)
         fs.deleteFile(fd);
 
     fsfd = fs.close();
@@ -143,7 +143,7 @@ TEST(FreeStore, deleteBigAndSmallFiles)
 
     std::shuffle(fileDescriptors.begin(), fileDescriptors.end(), std::mt19937(std::random_device()()));
 
-    for (auto& fd: fileDescriptors)
+    for (const auto& fd: fileDescriptors)
         fs.deleteFile(fd);
 
     fsfd = fs.close();
@@ -267,7 +267,7 @@ TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
 
         std::shuffle(fileDescriptors.begin(), fileDescriptors.end(), std::mt19937(std::random_device()()));
 
-        for (auto& fd: fileDescriptors)
+        for (const auto& fd: fileDescriptors)
             fs.deleteFile(fd);
 
         fsfd = fs.close();

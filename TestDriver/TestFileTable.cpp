@@ -81,7 +81,7 @@ TEST(FileTable, transferNotEnoughSpace3)
 
     std::shuffle(ivect.begin(), ivect.end(), std::mt19937(std::random_device()()));
     IntervalSequence is;
-    for (auto& iv: is)
+    for (const auto& iv: is)
         is.pushBack(iv);
 
     IntervalSequence is2 = is;

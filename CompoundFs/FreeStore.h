@@ -202,14 +202,14 @@ private:
 
     void finalize()
     {
-        for (auto& fd: m_filesToDelete)
+        for (const auto& fd: m_filesToDelete)
             m_fileDescriptor.m_fileSize += fd.m_fileSize;
 
         auto is = onePageOptimization();
         m_fileDescriptor.m_fileSize += m_freeMetaDataPages.size() * 4096ULL;
 
         FileDescriptor cur = pushFileTables(is);
-        for (auto& fd: m_filesToDelete)
+        for (const auto& fd: m_filesToDelete)
             cur = chainFiles(cur, fd);
         m_filesToDelete.clear();
         m_fileDescriptor = cur;

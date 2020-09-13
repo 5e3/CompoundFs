@@ -140,7 +140,7 @@ std::vector<PrioritizedPage> CacheManager::getUnpinnedPages() const
 {
     std::vector<PrioritizedPage> pageSortItems;
     pageSortItems.reserve(m_cache.m_pageCache.size());
-    for (auto& cp: m_cache.m_pageCache)
+    for (const auto& cp: m_cache.m_pageCache)
         if (cp.second.m_page.use_count() == 1) // we don't use weak_ptr => this is save
             pageSortItems.emplace_back(cp.second, cp.first);
     return pageSortItems;

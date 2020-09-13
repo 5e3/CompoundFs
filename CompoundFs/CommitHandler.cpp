@@ -74,7 +74,7 @@ std::vector<PageIndex> CommitHandler::getDirtyPageIds() const
     for (const auto& [originalPageIdx, divertedPageIdx]: m_cache.m_divertedPageIds)
         dirtyPageIds.push_back(originalPageIdx);
 
-    for (auto& p: m_cache.m_pageCache)
+    for (const auto& p: m_cache.m_pageCache)
         if (p.second.m_pageClass == PageClass::Dirty)
             dirtyPageIds.push_back(p.first);
 
