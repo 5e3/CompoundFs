@@ -14,6 +14,7 @@ set (Sources
 		PageAllocator.cpp
 		TreeValue.cpp
 		Path.cpp
+		RollbackHandler.cpp
 		WrappedFile.cpp
 	)
 
@@ -59,6 +60,7 @@ set (Headers
 		PageMetaData.h
 		Path.h
 		ReadOnlyFile.h
+		RollbackHandler.h
 		TableKeyCompare.h
 		TreeValue.h
 		TypedCacheManager.h

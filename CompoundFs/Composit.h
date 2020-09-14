@@ -26,8 +26,8 @@ public:
     template <typename TFile, typename... TArgs>
     static FileSystem openReadOnly(TArgs&&... args)
     {
-        std::unique_ptr<FileInterface> file = std::make_unique<ReadOnlyFile<TFile>>(std::forward(args)...);
-        return initializeReadOnly(file);
+        std::unique_ptr<FileInterface> file = std::make_unique<ReadOnlyFile<TFile>>(std::forward<TArgs>(args)...);
+        return initializeReadOnly(std::move(file));
     }
 
 private:

@@ -19,6 +19,7 @@ namespace TxFs
 {
 
 class CommitHandler;
+class RollbackHandler;
 
 ///////////////////////////////////////////////////////////////////////////
 /// All meta-data pages involve the CacheManager. It caches pages implementing
@@ -45,10 +46,9 @@ public:
     size_t trim(uint32_t maxPages);
 
     CommitHandler getCommitHandler();
-    std::vector<std::pair<PageIndex, PageIndex>> readLogs() const;
+    RollbackHandler getRollbackHandler();
     FileInterface* getFileInterface() { return m_cache.file(); }
     std::unique_ptr<FileInterface> handOverFile();
-    void rollback(size_t compositSize);
 
 private:
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }

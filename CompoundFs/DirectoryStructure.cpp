@@ -5,6 +5,7 @@
 #include "TreeValue.h"
 #include "CommitBlock.h"
 #include "CommitHandler.h"
+#include "RollbackHandler.h"
 #include <assert.h>
 
 using namespace TxFs;
@@ -265,7 +266,8 @@ void DirectoryStructure::rollback()
 {
     auto commitBlock = retrieveCommitBlock();
     m_maxFolderId = commitBlock.m_maxFolderId;
-    m_cacheManager->rollback(static_cast<size_t>(commitBlock.m_compositSize));
+    auto compositeSize = static_cast<size_t>(commitBlock.m_compositSize);
+    m_cacheManager->getRollbackHandler().rollback(compositeSize);
 
     m_btree = BTree(m_cacheManager, m_rootIndex);
     m_freeStore = FreeStore(m_cacheManager, commitBlock.m_freeStoreDescriptor);

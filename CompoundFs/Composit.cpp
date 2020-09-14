@@ -1,5 +1,6 @@
 
 #include "Composit.h"
+#include "RollbackHandler.h"
 
 using namespace TxFs;
 
@@ -19,11 +20,8 @@ FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
 FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInterface)
 {
     auto cacheManager = std::make_shared<CacheManager>(std::move(fileInterface));
-    auto logs = cacheManager->readLogs();
-    auto* file = cacheManager->getFileInterface();
-    for (auto [orig, cpy]: logs)
-        TxFs::copyPage(file, cpy, orig);
-    file->flushFile();
+    auto rollbackHandler = cacheManager->getRollbackHandler();
+    rollbackHandler.revertPartialCommit();
 
     FileSystem::Startup startup { cacheManager, 1, 0 };
     auto fileSystem = FileSystem(startup);
@@ -31,8 +29,14 @@ FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInter
     return fileSystem;
 }
 
-FileSystem Composit::initializeReadOnly(std::unique_ptr<FileInterface> file)
+FileSystem Composit::initializeReadOnly(std::unique_ptr<FileInterface> fileInterface)
 {
-    throw std::runtime_error("not implemented");
+    auto cacheManager = std::make_shared<CacheManager>(std::move(fileInterface));
+    auto rollbackHandler = cacheManager->getRollbackHandler();
+    rollbackHandler.virtualRevertPartialCommit();
+
+    FileSystem::Startup startup { cacheManager, 1, 0 };
+    auto fileSystem = FileSystem(startup);
+    return fileSystem;
 }
 

@@ -221,3 +221,17 @@ TEST_F(CompositTester, RollbackFromCrashedCommit)
     ASSERT_TRUE(fsys.getAttribute("test/attribute"));
     m_helper.checkFileSystem(fsys);
 }
+
+TEST_F(CompositTester, ReadOnlyRollbackFromCrashedCommit)
+{
+    {
+        auto fsys = Composit::open<CrashCommitFile>(m_file);
+        fsys.remove("test");
+        ASSERT_FALSE(fsys.getAttribute("test/attribute"));
+        ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
+    }
+
+    auto fsys = Composit::openReadOnly<WrappedFile>(m_file);
+    ASSERT_TRUE(fsys.getAttribute("test/attribute"));
+    m_helper.checkFileSystem(fsys);
+}

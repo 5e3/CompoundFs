@@ -4,6 +4,8 @@
 #include "TypedCacheManager.h"
 #include "LogPage.h"
 #include "CommitHandler.h"
+#include "RollbackHandler.h"
+
 
 #include <assert.h>
 #include <algorithm>
@@ -177,34 +179,16 @@ void CacheManager::removeFromCache(std::vector<PrioritizedPage>::iterator begin,
         m_cache.m_pageCache.erase(it->m_id);
 }
 
-std::vector<std::pair<PageIndex, PageIndex>> CacheManager::readLogs() const
-{
-    std::vector<std::pair<PageIndex, PageIndex>> res;
-    auto size = m_cache.m_fileInterface->currentSize();
-    if (!size)
-        return res;
-
-    PageIndex idx = static_cast<PageIndex>(size);
-    LogPage logPage{};
-
-    do 
-    {
-        TxFs::readPage(m_cache.file(), --idx, &logPage);
-        if (!logPage.checkSignature(idx))
-            return res;
-
-        res.reserve(res.size() + logPage.size());
-        for (auto [orig, cpy]: logPage)
-            res.emplace_back(orig, cpy);
-    } while (idx != 0);
-
-    return res;
-}
-
 CommitHandler CacheManager::getCommitHandler()
 {
     return CommitHandler(m_cache);
 }
+
+RollbackHandler CacheManager::getRollbackHandler()
+{
+    return RollbackHandler(m_cache);
+}
+
 
 // TODO: Needed for testing. Unclear what we do with this?
 std::unique_ptr<FileInterface> CacheManager::handOverFile()
@@ -213,11 +197,4 @@ std::unique_ptr<FileInterface> CacheManager::handOverFile()
     return std::move(m_cache.m_fileInterface);
 }
 
-void CacheManager::rollback(size_t compositeSize)
-{
-    m_cache.m_pageCache.clear();
-    m_cache.m_newPageIds.clear();
-    m_cache.m_divertedPageIds.clear();
-    assert(compositeSize <= m_cache.file()->currentSize());
-    m_cache.m_fileInterface->truncate(compositeSize);
-}
+

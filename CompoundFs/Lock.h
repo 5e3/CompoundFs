@@ -3,6 +3,7 @@
 #pragma once
 
 #include <algorithm>
+#include <assert.h>
 
 namespace TxFs
 {

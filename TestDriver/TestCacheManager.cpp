@@ -4,6 +4,7 @@
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/CacheManager.h"
 #include "CompoundFs/CommitHandler.h"
+#include "CompoundFs/RollbackHandler.h"
 #include <algorithm>
 
 using namespace TxFs;
@@ -304,10 +305,11 @@ TEST(CacheManager, setPageIntervalAllocator)
 TEST(CacheManager, NoLogsReturnEmpty)
 {
     CacheManager cm(std::make_unique<MemoryFile>());
-    ASSERT_TRUE(cm.readLogs().empty());
+    auto rollbackHandler = cm.getRollbackHandler();
+    ASSERT_TRUE(rollbackHandler.readLogs().empty());
 
     cm.newPage();
-    ASSERT_TRUE(cm.readLogs().empty());
+    ASSERT_TRUE(rollbackHandler.readLogs().empty());
 }
 
 TEST(CacheManager, ReadLogsReturnTheLogs)
@@ -318,7 +320,7 @@ TEST(CacheManager, ReadLogsReturnTheLogs)
     std::generate(logs.begin(), logs.end(), [n = 0]() mutable { return std::make_pair(n++, n); });
     auto ch = cm.getCommitHandler();
     ch.writeLogs(logs);
-    auto logs2 = cm.readLogs();
+    auto logs2 = cm.getRollbackHandler().readLogs();
     std::sort(logs2.begin(), logs2.end());
     ASSERT_EQ(logs , logs2);
 }
