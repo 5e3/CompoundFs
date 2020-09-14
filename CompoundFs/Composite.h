@@ -10,7 +10,7 @@
 namespace TxFs
 {
 
-class Composit
+class Composite
 {
 public:
     template <typename TFile, typename... TArgs>

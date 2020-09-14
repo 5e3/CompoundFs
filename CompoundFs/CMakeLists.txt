@@ -7,7 +7,7 @@ set (Sources
 		CacheManager.cpp
 		CommitBlock.cpp
 		CommitHandler.cpp
-		Composit.cpp
+		Composite.cpp
 		DirectoryStructure.cpp
 		FileSystem.cpp
 		MemoryFile.cpp
@@ -37,7 +37,7 @@ set (Headers
 		CacheManager.h
 		CommitBlock.h
 		CommitHandler.h
-		Composit.h
+		Composite.h
 		DirectoryStructure.h
 		FileDescriptor.h
 		FileInterface.h

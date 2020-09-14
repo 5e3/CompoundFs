@@ -1,5 +1,5 @@
 
-#include "Composit.h"
+#include "Composite.h"
 #include "RollbackHandler.h"
 
 using namespace TxFs;
@@ -7,7 +7,7 @@ using namespace TxFs;
 
 
 
-FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
+FileSystem Composite::initializeNew(std::unique_ptr<FileInterface> file)
 {
     auto cacheManager = std::make_shared<CacheManager>(std::move(file));
     auto startup = FileSystem::initialize(cacheManager);
@@ -17,7 +17,7 @@ FileSystem Composit::initializeNew(std::unique_ptr<FileInterface> file)
     return fileSystem;
 }
 
-FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInterface)
+FileSystem Composite::initializeExisting(std::unique_ptr<FileInterface> fileInterface)
 {
     auto cacheManager = std::make_shared<CacheManager>(std::move(fileInterface));
     auto rollbackHandler = cacheManager->getRollbackHandler();
@@ -29,7 +29,7 @@ FileSystem Composit::initializeExisting(std::unique_ptr<FileInterface> fileInter
     return fileSystem;
 }
 
-FileSystem Composit::initializeReadOnly(std::unique_ptr<FileInterface> fileInterface)
+FileSystem Composite::initializeReadOnly(std::unique_ptr<FileInterface> fileInterface)
 {
     auto cacheManager = std::make_shared<CacheManager>(std::move(fileInterface));
     auto rollbackHandler = cacheManager->getRollbackHandler();

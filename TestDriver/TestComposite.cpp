@@ -2,38 +2,39 @@
 #include <gtest/gtest.h>
 #include "FileSystemHelper.h"
 
-#include "CompoundFs/Composit.h"
+#include "CompoundFs/Composite.h"
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/WrappedFile.h"
 #include "CompoundFs/Path.h"
+#include "CompoundFs/RollbackHandler.h"
 
 using namespace TxFs;
 
-TEST(Composit, EmptyFileGetsInitialzed)
+TEST(Composite, EmptyFileGetsInitialzed)
 {
     std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
-    Composit::open<WrappedFile>(file);
+    Composite::open<WrappedFile>(file);
     ASSERT_GT(file->currentSize(), 0U);
 }
 
-TEST(Composit, canReopenFile)
+TEST(Composite, canReopenFile)
 {
     std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
     {
-        auto fsys = Composit::open<WrappedFile>(file);
+        auto fsys = Composite::open<WrappedFile>(file);
         fsys.addAttribute("test", "test");
         fsys.commit();
     }
 
-    auto fsys = Composit::open<WrappedFile>(file);
+    auto fsys = Composite::open<WrappedFile>(file);
     ASSERT_EQ(fsys.getAttribute("test")->toValue<std::string>(), "test");
 }
 
-TEST(Composit, openDoesRollback)
+TEST(Composite, openDoesRollback)
 {
     std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
     {
-        auto fsys = Composit::open<WrappedFile>(file);
+        auto fsys = Composite::open<WrappedFile>(file);
         auto handle = *fsys.createFile("file");
         std::string data(5000, 'X');
         fsys.write(handle, data.data(), data.size());
@@ -41,70 +42,70 @@ TEST(Composit, openDoesRollback)
     }
 
     auto size = file->currentSize();
-    auto fsys = Composit::open<WrappedFile>(file);
+    auto fsys = Composite::open<WrappedFile>(file);
     ASSERT_LT(file->currentSize(), size);
 }
 
-struct CompositTester : ::testing::Test
+struct CompositeTester : ::testing::Test
 {
     std::shared_ptr<FileInterface> m_file;
     FileSystemHelper m_helper;
 
-    CompositTester()
+    CompositeTester()
         : m_file(std::make_shared<MemoryFile>())
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         m_helper.fillFileSystem(fsys);
         fsys.commit();
     }
 };
 
-TEST_F(CompositTester, selfTest)
+TEST_F(CompositeTester, selfTest)
 {
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     m_helper.checkFileSystem(fsys);
 }
 
-TEST_F(CompositTester, openDoesRollback)
+TEST_F(CompositeTester, openDoesRollback)
 {
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         auto out = makeFile(fsys, "testFile", 'x');
         auto in = readFile(fsys, "testFile");
         ASSERT_EQ(out, in);
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     ASSERT_FALSE(fsys.readFile("testFile"));
 }
 
-TEST_F(CompositTester, commitedDeletedSpaceGetsReused)
+TEST_F(CompositeTester, commitedDeletedSpaceGetsReused)
 {
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         fsys.remove("test");
         fsys.commit();
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     auto size = m_file->currentSize();
     makeFile(fsys, "testFile");
     ASSERT_EQ(size, m_file->currentSize());
 }
 
-TEST_F(CompositTester, maxFolderIdGetsWrittenOnCommit)
+TEST_F(CompositeTester, maxFolderIdGetsWrittenOnCommit)
 {
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     ASSERT_TRUE(fsys.makeSubFolder("test2"));
     ASSERT_TRUE(fsys.remove("test2")); // might delete contents of "test"
     m_helper.checkFileSystem(fsys);
 }
 
-TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
+TEST_F(CompositeTester, findAllEntriesAfterRootPageOverflow)
 {
     uint64_t i = 0;
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
 
         auto csize = m_file->currentSize();
         while (csize == m_file->currentSize())
@@ -115,7 +116,7 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
         fsys.commit();
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     for (uint64_t j = 0; j < i; j++)
     {
         auto data = std::to_string(j);
@@ -123,11 +124,11 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageOverflow)
     }
 }
 
-TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
+TEST_F(CompositeTester, findAllEntriesAfterRootPageUnderflow)
 {
     uint64_t i = 0;
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         fsys.remove("test");
         fsys.commit();
 
@@ -141,7 +142,7 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
         fsys.commit();
     }
     {    
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         for (uint64_t j = 0; j < i; j++)
         {
             auto data = std::to_string(j);
@@ -152,16 +153,16 @@ TEST_F(CompositTester, findAllEntriesAfterRootPageUnderflow)
         fsys.commit();
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     m_helper.checkFileSystem(fsys);
 }
 
-TEST_F(CompositTester, treeSpaceGetsReused)
+TEST_F(CompositeTester, treeSpaceGetsReused)
 {
     uint64_t i = 0;
     size_t csize = 0;
     {
-        auto fsys = Composit::open<WrappedFile>(m_file);
+        auto fsys = Composite::open<WrappedFile>(m_file);
         fsys.remove("test");
         fsys.commit();
 
@@ -178,7 +179,7 @@ TEST_F(CompositTester, treeSpaceGetsReused)
         fsys.commit();
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     for (uint64_t j = 0; j < i; j++)
     {
         auto data = std::to_string(j++);
@@ -208,30 +209,47 @@ struct CrashCommitFile : WrappedFile
     }
 };
 
-TEST_F(CompositTester, RollbackFromCrashedCommit)
+TEST_F(CompositeTester, CrashCommitFileProvidesReplacedDirtyPages)
 {
     {
-        auto fsys = Composit::open<CrashCommitFile>(m_file);
+        auto fsys = Composite::open<CrashCommitFile>(m_file);
+        fsys.remove("test");
+        ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
+    }
+
+    CacheManager cm{std::make_unique<WrappedFile>(m_file)};
+    auto rollbackHandler = cm.getRollbackHandler();
+    auto logs = rollbackHandler.readLogs();
+    ASSERT_FALSE(logs.empty());
+    for (auto [orig, cpy]: logs)
+        ASSERT_FALSE(TxFs::isEqualPage(m_file.get(), orig, cpy));
+    //m_file.
+}
+
+TEST_F(CompositeTester, RollbackFromCrashedCommit)
+{
+    {
+        auto fsys = Composite::open<CrashCommitFile>(m_file);
         fsys.remove("test");
         ASSERT_FALSE(fsys.getAttribute("test/attribute"));
         ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
     }
 
-    auto fsys = Composit::open<WrappedFile>(m_file);
+    auto fsys = Composite::open<WrappedFile>(m_file);
     ASSERT_TRUE(fsys.getAttribute("test/attribute"));
     m_helper.checkFileSystem(fsys);
 }
 
-TEST_F(CompositTester, ReadOnlyRollbackFromCrashedCommit)
+TEST_F(CompositeTester, ReadOnlyRollbackFromCrashedCommit)
 {
     {
-        auto fsys = Composit::open<CrashCommitFile>(m_file);
+        auto fsys = Composite::open<CrashCommitFile>(m_file);
         fsys.remove("test");
         ASSERT_FALSE(fsys.getAttribute("test/attribute"));
         ASSERT_THROW(fsys.commit(), CrashCommitFile::Exception);
     }
 
-    auto fsys = Composit::openReadOnly<WrappedFile>(m_file);
+    auto fsys = Composite::openReadOnly<WrappedFile>(m_file);
     ASSERT_TRUE(fsys.getAttribute("test/attribute"));
     m_helper.checkFileSystem(fsys);
 }
