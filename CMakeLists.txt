@@ -24,13 +24,22 @@ FetchContent_Declare(
   GIT_TAG        release-1.10.0
 )
 
-
-
-
 FetchContent_GetProperties(googletest)
 if(NOT googletest_POPULATED)
   FetchContent_Populate(googletest)
   add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif()
+
+FetchContent_Declare(
+  lz4
+  GIT_REPOSITORY https://github.com/lz4/lz4.git
+  GIT_TAG        v1.9.2
+)
+
+FetchContent_GetProperties(lz4)
+if(NOT lz4_POPULATED)
+  FetchContent_Populate(lz4)
+  add_subdirectory(${lz4_SOURCE_DIR}/contrib/cmake_unofficial ${lz4_BINARY_DIR})
 endif()
 
 add_subdirectory(CompoundFs)
