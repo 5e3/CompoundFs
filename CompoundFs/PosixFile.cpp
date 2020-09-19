@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include "PosixFile.h"
 #include "Lock.h"
+#include <fcntl.h>
 
 #ifndef _WINDOWS
 #include <unistd.h>
@@ -11,6 +12,42 @@
 
 
 using namespace TxFs;
+
+namespace posix
+{
+
+template <typename TInt>
+void throwOnError(TInt ret)
+{
+    if (ret < 0)
+        throw std::system_error(EDOM, std::system_category());
+}
+
+int open(const char* fname, int mode)
+{
+    int handle = ::open(fname, mode, 0666);
+    throwOnError(handle);
+    return handle;
+}
+
+template <typename TRet, typename... TArgs>
+constexpr auto wrapOsCall(TRet (func)(TArgs...))
+{
+    return [func](TArgs... args) -> TRet {
+        auto returnValue = func(args...);
+        throwOnError(returnValue);
+        return returnValue;
+    };
+}
+
+//constexpr auto open = wrapOsCall(::open);
+constexpr auto close = wrapOsCall(::close);
+constexpr auto lseek = wrapOsCall(::lseek);
+
+
+
+
+}
 
 PosixFile::PosixFile()
 {}
@@ -22,7 +59,7 @@ PosixFile::~PosixFile()
 
 void PosixFile::close()
 {
-    ::close(m_file);
+    posix::close(m_file);
 }
 
 PosixFile& PosixFile::operator=(PosixFile&&)
@@ -34,13 +71,30 @@ PosixFile::PosixFile(PosixFile&&)
 {}
 
 PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
-{ 
-    //m_file = ::open(path.c_str(),  
+{
+    switch (mode)
+    {
+    case OpenMode::Create:
+        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC);
+        break;
+
+    case OpenMode::Open:
+        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR);
+        break;
+
+    case OpenMode::ReadOnly:
+        m_file = posix::open(path.string().c_str(), O_RDONLY);
+        break;
+
+    default:
+        throw std::runtime_error("File::open(): unknown OpenMode");
+    }
 }
 
 
 Interval PosixFile::newInterval(size_t maxPages)
 {
+    auto length = posix::lseek(m_file, 0, SEEK_END);
     throw std::logic_error("The method or operation is not implemented.");
 }
 

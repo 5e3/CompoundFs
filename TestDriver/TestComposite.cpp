@@ -223,7 +223,6 @@ TEST_F(CompositeTester, CrashCommitFileProvidesReplacedDirtyPages)
     ASSERT_FALSE(logs.empty());
     for (auto [orig, cpy]: logs)
         ASSERT_FALSE(TxFs::isEqualPage(m_file.get(), orig, cpy));
-    //m_file.
 }
 
 TEST_F(CompositeTester, RollbackFromCrashedCommit)
