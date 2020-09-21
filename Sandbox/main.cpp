@@ -44,10 +44,11 @@
 //    f(1, 2);
 //}
 
-#include <xxhash.h>
+#include "CompoundFs/Hasher.h"
 
 int main()
 {
-    auto dig = XXH3_64bits("Senta&Nils", 10);
+    auto dig = TxFs::hash32("Senta&Nils", 10);
+    auto dig64 = TxFs::hash64("Senta&Nils", 10);
     return 0;
 }

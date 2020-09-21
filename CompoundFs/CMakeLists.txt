@@ -10,6 +10,7 @@ set (Sources
 		Composite.cpp
 		DirectoryStructure.cpp
 		FileSystem.cpp
+		Hasher.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp
 		TreeValue.cpp
@@ -46,6 +47,7 @@ set (Headers
 		FileTable.h
 		FileWriter.h
 		FreeStore.h
+		Hasher.h
 		InnerNode.h
 		Interval.h
 		IntervalSequence.h
@@ -89,3 +91,5 @@ target_compile_options(${PROJECT_NAME} PRIVATE
           -Wall>
      $<$<CXX_COMPILER_ID:MSVC>:
           /W4>)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE xxhash)
