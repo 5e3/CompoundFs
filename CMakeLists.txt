@@ -58,7 +58,6 @@ FetchContent_Declare(
 
 FetchContent_GetProperties(xxhash)
 if(NOT xxhash_POPULATED)
-  project (xxhash)
   FetchContent_Populate(xxhash)
   add_library(xxhash ${xxhash_SOURCE_DIR}/xxhash.c ${xxhash_SOURCE_DIR}/xxhash.h)
   target_include_directories(xxhash INTERFACE ${xxhash_SOURCE_DIR})
