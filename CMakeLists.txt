@@ -7,8 +7,16 @@ enable_testing()
 set(CMAKE_CXX_STANDARD 17)
 set(gtest_force_shared_crt ON CACHE BOOL "Override option" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Override option" FORCE)
+set(BUILD_GMOCK OFF CACHE BOOL "Override option" FORCE)
+set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "Override option" FORCE)
 add_definitions ( -D_UNICODE )
 add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
+
+add_subdirectory(CompoundFs)
+add_subdirectory(TestDriver)
+add_subdirectory(Sandbox)
+
+
 
 source_group("" FILES 
 	.clang-format
@@ -42,9 +50,20 @@ if(NOT lz4_POPULATED)
   add_subdirectory(${lz4_SOURCE_DIR}/contrib/cmake_unofficial ${lz4_BINARY_DIR})
 endif()
 
-add_subdirectory(CompoundFs)
-add_subdirectory(TestDriver)
-add_subdirectory(Sandbox)
+FetchContent_Declare(
+  xxhash
+  GIT_REPOSITORY https://github.com/Cyan4973/xxHash.git
+  GIT_TAG        v0.8.0
+)
+
+FetchContent_GetProperties(xxhash)
+if(NOT xxhash_POPULATED)
+  project (xxhash)
+  FetchContent_Populate(xxhash)
+  add_library(xxhash ${xxhash_SOURCE_DIR}/xxhash.c ${xxhash_SOURCE_DIR}/xxhash.h)
+  target_include_directories(xxhash INTERFACE ${xxhash_SOURCE_DIR})
+endif()
+
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
 

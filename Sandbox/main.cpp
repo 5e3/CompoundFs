@@ -44,7 +44,10 @@
 //    f(1, 2);
 //}
 
+#include <xxhash.h>
+
 int main()
 {
+    auto dig = XXH3_64bits("Senta&Nils", 10);
     return 0;
 }
