@@ -20,6 +20,8 @@ class InnerNode final : public Node
 {
     uint8_t m_data[4083];
     PageIndex m_leftMost;
+
+public:
     uint32_t m_checkSum;
 
 public:

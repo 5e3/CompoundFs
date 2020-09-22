@@ -23,6 +23,8 @@ private:
     uint32_t m_signature[4];
     uint32_t m_size;
     PageCopies m_pageCopies[MAX_ENTRIES];
+
+public:
     uint32_t m_checkSum;
 
 public:

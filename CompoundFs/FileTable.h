@@ -17,6 +17,8 @@ class FileTable final
     uint16_t m_end;
     PageIndex m_next;
     uint8_t m_data[4084];
+
+public:
     uint32_t m_checkSum;
 
 public:

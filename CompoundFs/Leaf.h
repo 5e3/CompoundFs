@@ -21,6 +21,8 @@ class Leaf final : public Node
     uint8_t m_data[4079];
     PageIndex m_prev;
     PageIndex m_next;
+
+public:
     uint32_t m_checkSum;
 
 public:
