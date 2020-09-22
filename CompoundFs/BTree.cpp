@@ -114,10 +114,9 @@ void BTree::unlinkLeaveNode(const std::shared_ptr<Leaf>& leaf)
     }
 }
 
-std::shared_ptr<const InnerNode> BTree::handleUnderflow(PageDef<InnerNode>& inner, ByteStringView key,
+std::shared_ptr<const InnerNode> BTree::handleUnderflow([[maybe_unused]] PageDef<InnerNode>& inner, ByteStringView key,
                                                         const InnerNodeStack& stack)
 {
-    inner;
     assert(inner.m_page->nofItems() == 1);
     assert(stack.size() >= 2);
 

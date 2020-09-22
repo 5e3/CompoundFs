@@ -2,6 +2,7 @@
 #pragma once
 
 #include "Interval.h"
+#include <stddef.h>
 
 
 
