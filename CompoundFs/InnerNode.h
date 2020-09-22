@@ -18,8 +18,9 @@ namespace TxFs
 
 class InnerNode final : public Node
 {
-    uint8_t m_data[4087];
+    uint8_t m_data[4083];
     PageIndex m_leftMost;
+    uint32_t m_checkSum;
 
 public:
     InnerNode() noexcept
@@ -27,6 +28,7 @@ public:
         , m_leftMost(PageIdx::INVALID)
     {
         m_data[0] = 0;
+        static_assert(sizeof(InnerNode) == 4096);
     }
 
     InnerNode(ByteStringView key, PageIndex left, PageIndex right) noexcept

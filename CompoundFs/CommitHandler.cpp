@@ -1,6 +1,7 @@
 
 #include "CommitHandler.h"
 #include "LogPage.h"
+#include "FileIo.h"
 
 using namespace TxFs;
 
@@ -120,7 +121,7 @@ void CommitHandler::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
         else
         {
             // we have to use the cached page or else we lose updates (if the page is not PageClass::Read)!
-            TxFs::writePage(m_cache.file(), origIdx, it->second.m_page.get());
+            TxFs::writeSignedPage(m_cache.file(), origIdx, it->second.m_page.get());
             m_cache.m_pageCache.erase(it);
         }
     }
@@ -133,7 +134,7 @@ void CommitHandler::writeCachedPages()
     {
         assert(page.second.m_pageClass != PageClass::Undefined);
         if (page.second.m_pageClass != PageClass::Read)
-            TxFs::writePage(m_cache.file(), page.first, page.second.m_page.get());
+            TxFs::writeSignedPage(m_cache.file(), page.first, page.second.m_page.get());
     }
     m_cache.m_pageCache.clear();
     m_cache.m_newPageIds.clear();
@@ -148,7 +149,7 @@ void CommitHandler::writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>
         auto pageIndex = m_cache.file()->newInterval(1).begin();
         LogPage logPage(pageIndex);
         begin = logPage.pushBack(begin, origToCopyPages.end());
-        TxFs::writePage(m_cache.file(), pageIndex, &logPage);
+        TxFs::writeSignedPage(m_cache.file(), pageIndex, &logPage);
     }
 }
 

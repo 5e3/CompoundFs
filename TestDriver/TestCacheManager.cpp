@@ -1,6 +1,7 @@
 
 
 #include <gtest/gtest.h>
+#include "CompoundFs/FileIo.h"
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/CacheManager.h"
 #include "CompoundFs/CommitHandler.h"
@@ -20,7 +21,9 @@ namespace
 
     void writeFirstByteFromPage(FileInterface* fi, PageIndex idx, uint8_t val)
     {
-        fi->writePage(idx, 0, &val, &val + 1);
+        uint8_t page[4096];
+        page[0] = val;
+        writeSignedPage(fi, idx, page);
     }
     }
 

@@ -1,6 +1,7 @@
 
 #include "RollbackHandler.h"
 #include "LogPage.h"
+#include "FileIo.h"
 #include <assert.h>
 
 using namespace TxFs;
@@ -45,7 +46,10 @@ std::vector<std::pair<PageIndex, PageIndex>> RollbackHandler::readLogs() const
 
     do
     {
-        TxFs::readPage(m_cache.file(), --idx, &logPage);
+        bool check = TxFs::testReadSignedPage(m_cache.file(), --idx, &logPage);
+        if (!check)
+            return res;
+
         if (!logPage.checkSignature(idx))
             return res;
 

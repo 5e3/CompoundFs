@@ -5,6 +5,7 @@
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/File.h"
 #include "CompoundFs/ByteString.h"
+#include "CompoundFs/FileIo.h"
 
 using namespace TxFs;
 
@@ -107,6 +108,19 @@ TYPED_TEST(FileInterfaceTester, readPageReturnsDataOfWritePage)
     ASSERT_EQ(this->m_fileInterface->writePage(3, 4096-10, out.data(), out.end()), out.end());
     ASSERT_EQ(this->m_fileInterface->readPage(3, 4096 - 11, in, in + sizeof(in)), in + sizeof(in));
     ASSERT_EQ("X0123456789", ByteStringView(in, sizeof(in)));
+}
+
+TEST(FileIo, modifiedSignedPagesGetDetected)
+{
+    uint8_t page[4096];
+    MemoryFile mf;
+    mf.newInterval(1);
+    writeSignedPage(&mf, 0, page);
+    readSignedPage(&mf, 0, page);
+    page[0]++;
+    mf.writePage(0, 0, page, page + sizeof(page));
+    ASSERT_FALSE(testReadSignedPage(&mf, 0, page));
+    ASSERT_THROW(readSignedPage(&mf, 0, page), std::exception);
 }
 
 

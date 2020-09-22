@@ -16,7 +16,8 @@ class FileTable final
     uint16_t m_begin;
     uint16_t m_end;
     PageIndex m_next;
-    uint8_t m_data[4088];
+    uint8_t m_data[4084];
+    uint32_t m_checkSum;
 
 public:
     FileTable() noexcept
@@ -25,6 +26,7 @@ public:
         , m_next(PageIdx::INVALID)
     {
         // m_data[0] = 0;
+        static_assert(sizeof(FileTable) == 4096);
     }
 
     constexpr void setNext(PageIndex next) noexcept { m_next = next; }

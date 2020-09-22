@@ -52,7 +52,8 @@ TEST(LogPage, pushBackIterator)
 
     auto pageCopies = lp.getPageCopies();
     ASSERT_EQ(lp.pushBack(pageCopies.begin(), pageCopies.end()) , pageCopies.end());
-    ASSERT_EQ(lp.size() , LogPage::MAX_ENTRIES);
+    ASSERT_EQ(lp.size() , 2 * (LogPage::MAX_ENTRIES / 2) );
+    ASSERT_TRUE(lp.pushBack({ 1, 1 }));
     ASSERT_TRUE(!lp.pushBack({ 1, 1 }));
 }
 

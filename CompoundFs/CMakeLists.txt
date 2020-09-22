@@ -42,6 +42,7 @@ set (Headers
 		DirectoryStructure.h
 		FileDescriptor.h
 		FileInterface.h
+		FileIo.h
 		FileReader.h
 		FileSystem.h
 		FileTable.h

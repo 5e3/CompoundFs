@@ -1,6 +1,7 @@
 
 #include "CacheManager.h"
 #include "FileInterface.h"
+#include "FileIo.h"
 #include "TypedCacheManager.h"
 #include "LogPage.h"
 #include "CommitHandler.h"
@@ -45,7 +46,7 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
     if (it == m_cache.m_pageCache.end())
     {
         auto page = m_pageMemoryAllocator.allocate();
-        TxFs::readPage(m_cache.file(), id, page.get());
+        TxFs::readSignedPage(m_cache.file(), id, page.get());
         m_cache.m_pageCache.emplace(id, CachedPage(page, PageClass::Read));
         trimCheck();
         return ConstPageDef<uint8_t>(page, origId);
@@ -156,7 +157,7 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
         auto p = m_cache.m_pageCache.find(it->m_id);
         assert(p != m_cache.m_pageCache.end());
         auto id = newPageIndex();
-        TxFs::writePage(m_cache.file(), id, p->second.m_page.get());
+        TxFs::writeSignedPage(m_cache.file(), id, p->second.m_page.get());
         m_cache.m_divertedPageIds[it->m_id] = id;
         m_cache.m_newPageIds.insert(id);
     }
@@ -169,7 +170,7 @@ void CacheManager::evictNewPages(std::vector<PrioritizedPage>::iterator begin, s
         assert(it->m_pageClass == PageClass::New);
         auto p = m_cache.m_pageCache.find(it->m_id);
         assert(p != m_cache.m_pageCache.end());
-        TxFs::writePage(m_cache.file(), p->first, p->second.m_page.get());
+        TxFs::writeSignedPage(m_cache.file(), p->first, p->second.m_page.get());
     }
 }
 

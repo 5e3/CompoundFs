@@ -17,12 +17,13 @@ public:
         uint32_t m_copy;
     };
 
-    constexpr static size_t MAX_ENTRIES = 510;
+    constexpr static size_t MAX_ENTRIES = 509;
 
 private:
-    uint32_t m_signature[3];
+    uint32_t m_signature[4];
     uint32_t m_size;
     PageCopies m_pageCopies[MAX_ENTRIES];
+    uint32_t m_checkSum;
 
 public:
     explicit LogPage() noexcept = default;
@@ -31,16 +32,17 @@ public:
         : m_size(0)
     {
         std::minstd_rand mt(pageIndex);
-        m_signature[0] = mt();
-        m_signature[1] = mt();
-        m_signature[2] = mt();
+        m_signature[0] = (uint32_t) mt();
+        m_signature[1] = (uint32_t) mt();
+        m_signature[2] = (uint32_t) mt();
+        m_signature[3] = (uint32_t) mt();
     }
 
     bool checkSignature(PageIndex pageIndex) const noexcept
     {
         std::minstd_rand mt(pageIndex);
-        uint32_t sig[3] = { mt(), mt(), mt() };
-        return std::equal(sig, sig + 3, m_signature, m_signature + 3);
+        uint32_t sig[4] = { (uint32_t) mt(), (uint32_t) mt(), (uint32_t) mt(), (uint32_t) mt() };
+        return std::equal(sig, sig + 4, m_signature, m_signature + 4);
     }
 
     std::vector<PageCopies> getPageCopies() const

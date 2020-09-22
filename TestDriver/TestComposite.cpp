@@ -7,6 +7,7 @@
 #include "CompoundFs/WrappedFile.h"
 #include "CompoundFs/Path.h"
 #include "CompoundFs/RollbackHandler.h"
+#include "CompoundFs/FileIo.h"
 
 using namespace TxFs;
 

@@ -6,6 +6,7 @@
 #include "CompoundFs/CommitHandler.h"
 #include <random>
 #include <numeric>
+#include "CompoundFs/FileIo.h"
 
 using namespace TxFs;
 
@@ -89,7 +90,7 @@ TEST(CommitHandler, copyDirtyPagesMakesACopyOfTheOriginalPage)
         ASSERT_NE(orig , cpy);
         ASSERT_TRUE(TxFs::isEqualPage(cm.getFileInterface(), orig, cpy));
         uint8_t buffer[4096];
-        TxFs::readPage(cm.getFileInterface(), orig, buffer);
+        TxFs::readSignedPage(cm.getFileInterface(), orig, buffer);
         ASSERT_TRUE(*buffer < 100);
     }
 }
@@ -133,7 +134,7 @@ TEST(CommitHandler, updateDirtyPagesChangesOriginalPages)
     for (auto orig: dirtyPageIds)
     {
         uint8_t buffer[4096];
-        TxFs::readPage(cm.getFileInterface(), orig, buffer);
+        TxFs::readSignedPage(cm.getFileInterface(), orig, buffer);
         ASSERT_TRUE(*buffer > 100);
     }
 }

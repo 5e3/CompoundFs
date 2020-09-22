@@ -8,6 +8,7 @@
 #include "CompoundFs/ByteString.h"
 #include <algorithm>
 #include <random>
+#include "CompoundFs/FileIo.h"
 
 using namespace TxFs;
 
@@ -270,7 +271,7 @@ TEST(BTree, removeOfSomeValuesLeavesTheOthersIntact)
         auto res = bt.remove(keys[i].c_str());
         ASSERT_TRUE(res);
     }
-    clearPages(cm->getFileInterface(), bt.getFreePages());
+    TxFs::clearPages(cm->getFileInterface(), bt.getFreePages());
 
     for (size_t i = 0; i < 1000; i++)
     {

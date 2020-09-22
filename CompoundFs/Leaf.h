@@ -18,9 +18,10 @@ namespace TxFs
 
 class Leaf final : public Node
 {
-    uint8_t m_data[4083];
+    uint8_t m_data[4079];
     PageIndex m_prev;
     PageIndex m_next;
+    uint32_t m_checkSum;
 
 public:
     Leaf(PageIndex prev = PageIdx::INVALID, PageIndex next = PageIdx::INVALID) noexcept
@@ -29,6 +30,7 @@ public:
         , m_next(next)
     {
         m_data[0] = 0; // make the compiler happy
+        static_assert(sizeof(Leaf) == 4096);
     }
 
     constexpr PageIndex getNext() const noexcept { return m_next; }
