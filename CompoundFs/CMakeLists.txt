@@ -13,6 +13,7 @@ set (Sources
 		Hasher.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp
+		PosixFile.cpp
 		TreeValue.cpp
 		Path.cpp
 		RollbackHandler.cpp
@@ -23,7 +24,6 @@ if(WIN32)
 set (PlatformSources
 		File.cpp
 		FileSharedMutex.cpp
-		PosixFile.cpp
 )
 elseif(LINUX)
 set (PlatformSources
