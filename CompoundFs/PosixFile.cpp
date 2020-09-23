@@ -45,6 +45,7 @@ constexpr auto write = wrapOsCall(::write);
 constexpr auto read = wrapOsCall(::read);
 
 #ifndef _WINDOWS
+constexpr int O_BINARY = 0;
 constexpr auto lseek = wrapOsCall(::lseek);
 constexpr auto ftruncate = wrapOsCall(::ftruncate);
 constexpr auto fsync = wrapOsCall(::fsync);
