@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         BuildType: [Debug, Release]
-        Target: [Win32, Win64]
+        Target: [Win32, x64]
 
     steps:
     - uses: actions/checkout@v2
