@@ -1,4 +1,4 @@
-name: Win64
+name: macOS gcc
 
 on: [push]
 

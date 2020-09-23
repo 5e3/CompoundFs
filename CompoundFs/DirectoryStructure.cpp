@@ -24,10 +24,6 @@ namespace
     // ------------------------------------------------------------------------
 
     constexpr Folder            SystemFolder { 1 };
-    constexpr std::string_view CompositeSizeAttributeName { "CompositeSize" };
-    constexpr std::string_view FreeStoreFirstAttributeName { "FreeStore.first" };
-    constexpr std::string_view FreeStoreLastAttributeName { "FreeStore.last" };
-    constexpr std::string_view FreeStoreSizeAttributeName { "FreeStore.size" };
     constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
 }
 
@@ -277,12 +273,12 @@ void DirectoryStructure::rollback()
 void DirectoryStructure::StoreCommitBlock(const CommitBlock& cb)
 {
     auto str = cb.toString();
-    addAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName), str);
+    addAttribute(DirectoryKey(SystemFolder, CommitBlockAttributeName), str);
 }
 
 CommitBlock DirectoryStructure::retrieveCommitBlock() const
 {
-    auto str = getAttribute(DirectoryKey(SystemFolder, CompositeSizeAttributeName))->toValue<std::string>();
+    auto str = getAttribute(DirectoryKey(SystemFolder, CommitBlockAttributeName))->toValue<std::string>();
     return CommitBlock::fromString(str);
 }
 
