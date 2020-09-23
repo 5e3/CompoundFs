@@ -40,6 +40,7 @@ set (PlatformSources
 endif()
 
 set (Headers
+		DiskFileTester.h
 		MinimalTreeBuilder.h
 		FileSystemHelper.h
 	)
