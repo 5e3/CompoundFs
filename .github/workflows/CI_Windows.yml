@@ -1,4 +1,4 @@
-name: CI Windows Win32/x64
+name: MSVC Win32/x64
 
 on: [push]
 
@@ -44,4 +44,4 @@ jobs:
       shell: bash
       # Execute tests defined by the CMake configuration.  
       # See  for more detail
-      run: ctest -C ${{matrix.BuildType}}
+      run: ctest -C ${{matrix.BuildType}} -V
