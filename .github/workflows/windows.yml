@@ -2,10 +2,6 @@ name: Windows
 
 on: [push]
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Debug
-
 jobs:
   build:
     # The CMake configure and build commands are platform agnostic and should work equally
@@ -41,11 +37,11 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config ${{matrix.Target}}
+      run: cmake --build . --config ${{matrix.BuildType}}
 
     - name: Test
       working-directory: ${{runner.workspace}}/build
       shell: bash
       # Execute tests defined by the CMake configuration.  
       # See  for more detail
-      run: ctest -C ${{matrix.Target}}
+      run: ctest -C ${{matrix.BuildType}}
