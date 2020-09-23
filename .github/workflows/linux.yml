@@ -14,6 +14,7 @@ jobs:
       fail-fast: false
       matrix:
         BuildType: [Debug, Release]
+        Compiler: [gcc, clang]
 
 
     steps:
@@ -24,7 +25,7 @@ jobs:
       # We'll use this as our working directory for all subsequent commands
       run: cmake -E make_directory ${{runner.workspace}}/build
 
-    - name: Configure CMake
+    - name: Configure CMake clang
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
       shell: bash
@@ -36,6 +37,21 @@ jobs:
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.BuildType}}
+      if: ${{ matrix.Compiler == 'clang' }}
+
+    - name: Configure CMake gcc
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CC: gcc
+        CXX: g++
+      # Note the current convention is to use the -S and -B options here to specify source 
+      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=${{matrix.BuildType}}
+      if: ${{ matrix.Compiler == 'gcc' }}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
