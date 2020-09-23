@@ -10,7 +10,6 @@
 #include <io.h>
 #endif
 
-
 using namespace TxFs;
 
 namespace posix
@@ -42,12 +41,21 @@ constexpr auto wrapOsCall(TRet (func)(TArgs...))
 
 //constexpr auto open = wrapOsCall(::open);
 constexpr auto close = wrapOsCall(::close);
+constexpr auto write = wrapOsCall(::write);
+constexpr auto read = wrapOsCall(::read);
+
+#ifndef _WINDOWS
 constexpr auto lseek = wrapOsCall(::lseek);
-
-
-
-
+constexpr auto ftruncate = wrapOsCall(::ftruncate);
+constexpr auto fsync = wrapOsCall(::fsync);
+#else
+constexpr auto lseek = wrapOsCall(::_lseeki64);
+constexpr auto ftruncate = wrapOsCall(::_chsize_s);
+constexpr auto fsync = wrapOsCall(::_commit);
+#endif
 }
+
+
 
 PosixFile::PosixFile()
 {}
@@ -75,15 +83,15 @@ PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
     switch (mode)
     {
     case OpenMode::Create:
-        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC);
+        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC | O_BINARY);
         break;
 
     case OpenMode::Open:
-        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR);
+        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_BINARY);
         break;
 
     case OpenMode::ReadOnly:
-        m_file = posix::open(path.string().c_str(), O_RDONLY);
+        m_file = posix::open(path.string().c_str(), O_RDONLY | O_BINARY);
         break;
 
     default:
@@ -95,47 +103,56 @@ PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
 Interval PosixFile::newInterval(size_t maxPages)
 {
     auto length = posix::lseek(m_file, 0, SEEK_END);
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::ftruncate(m_file, length + maxPages * 4096);
+    return Interval(length / 4096, length / 4096 + maxPages);
 }
 
 const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
+    posix::write(m_file, begin, end - begin);
+    return end;
 }
 
 const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
+    posix::write(m_file, page, iv.length()*4096);
+    return page + iv.length() * 4096;
 }
 
 uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
+    posix::read(m_file, begin, end - begin);
+    return end;
 }
 
 uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
+    posix::read(m_file, page, iv.length() * 4096);
+    return page + iv.length() * 4096;
 }
 
 size_t PosixFile::currentSize() const
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    return posix::lseek(m_file, 0, SEEK_END) / 4096;
 }
 
 void PosixFile::flushFile()
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    posix::fsync(m_file);
 }
 
 void PosixFile::truncate(size_t numberOfPages)
-{
-    throw std::logic_error("The method or operation is not implemented.");
+{ 
+    posix::ftruncate(m_file, numberOfPages * 4096);
 }
 
 Lock PosixFile::defaultAccess()
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    return writeAccess();
 }
 
 Lock PosixFile::readAccess()
