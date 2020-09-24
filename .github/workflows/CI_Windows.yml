@@ -1,6 +1,6 @@
 name: MSVC Win32/x64
 
-on: [push]
+on: [workflow_dispatch] #[push]
 
 jobs:
   build:
