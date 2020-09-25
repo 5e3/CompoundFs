@@ -41,26 +41,26 @@ TYPED_TEST_P(DiskFileTester, illegalFileNamesThrow)
 
 TYPED_TEST_P(DiskFileTester, openNonExistantFilesThrows)
 {
-    ASSERT_THROW(TypeParam f(m_tempFile, OpenMode::ReadOnly), std::system_error);
+    ASSERT_THROW(TypeParam f(this->m_tempFile, OpenMode::ReadOnly), std::system_error);
 }
 
 
 
 TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 {
-    TypeParam file(m_tempFile, OpenMode::Create);
+    TypeParam file(this->m_tempFile, OpenMode::Create);
     file.newInterval(5);
-    file = TypeParam(m_tempFile, OpenMode::Create);
+    file = TypeParam(this->m_tempFile, OpenMode::Create);
     ASSERT_EQ(file.currentSize(), 0);
     file = TypeParam();
 }
 
 TYPED_TEST_P(DiskFileTester, canOpenSameFileMoreThanOnce)
 {
-    TypeParam file(m_tempFile, OpenMode::Create);
+    TypeParam file(this->m_tempFile, OpenMode::Create);
     {
-        TypeParam file1(m_tempFile, OpenMode::Open);
-        TypeParam file2(m_tempFile, OpenMode::ReadOnly);
+        TypeParam file1(this->m_tempFile, OpenMode::Open);
+        TypeParam file2(this->m_tempFile, OpenMode::ReadOnly);
     }
     file = TypeParam();
 }
@@ -80,11 +80,11 @@ TYPED_TEST_P(DiskFileTester, uninitializedFileThrows)
 TYPED_TEST_P(DiskFileTester, readOnlyFileThrowsOnWriteOps)
 {
     {
-        TypeParam wfile(m_tempFile, OpenMode::Create);
+        TypeParam wfile(this->m_tempFile, OpenMode::Create);
         wfile.newInterval(5);
     }
 
-    auto file = TypeParam(m_tempFile, OpenMode::ReadOnly);
+    auto file = TypeParam(this->m_tempFile, OpenMode::ReadOnly);
     ASSERT_THROW(file.newInterval(2), std::exception);
     ASSERT_THROW(file.truncate(0), std::exception);
     ByteStringView out("0123456789");
@@ -97,7 +97,7 @@ TYPED_TEST_P(DiskFileTester, canReadWriteBigPages)
     std::vector<uint64_t> out((16 * 3 * 1024 * 1024 - 4096) / sizeof(uint64_t));
     std::iota(out.begin(), out.end(), 0);
 
-    TypeParam file(m_tempFile, OpenMode::Create);
+    TypeParam file(this->m_tempFile, OpenMode::Create);
     auto iv = file.newInterval(out.size() * sizeof(uint64_t) / 4096);
     file.writePages(iv, (const uint8_t*) out.data());
 
