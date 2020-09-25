@@ -23,6 +23,7 @@ set (Sources
 		TestPageAllocator.cpp
 		TestPageMetaData.cpp
 		TestPath.cpp
+		TestPosixFile.cpp
 		TestReadOnlyFile.cpp
 		TestTreeValue.cpp
 		TestTypedCacheManager.cpp

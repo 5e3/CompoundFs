@@ -6,6 +6,7 @@
 #include <numeric>
 
 #include "CompoundFs/ByteString.h"
+#include "CompoundFs/Lock.h"
 
 
 namespace TxFs
@@ -50,7 +51,7 @@ TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 {
     TFile file(m_tempFile, OpenMode::Create);
     file.newInterval(5);
-    file = File(m_tempFile, OpenMode::Create);
+    file = TFile(m_tempFile, OpenMode::Create);
     ASSERT_EQ(file.currentSize(), 0);
     file = TFile();
 }
@@ -75,18 +76,16 @@ TYPED_TEST_P(DiskFileTester, uninitializedFileThrows)
     ASSERT_THROW(file.truncate(0), std::exception);
     ASSERT_THROW(file.readAccess(), std::exception);
     ASSERT_THROW(file.writeAccess(), std::exception);
-    ASSERT_THROW(file.getFileName(), std::exception);
 }
 
 TYPED_TEST_P(DiskFileTester, readOnlyFileThrowsOnWriteOps)
 {
     {
-        TFile wf(m_tempFile, OpenMode::Create);
-        TempFile wfile;
+        TFile wfile(m_tempFile, OpenMode::Create);
         wfile.newInterval(5);
     }
 
-    auto file = File(m_tempFile, OpenMode::ReadOnly);
+    auto file = TFile(m_tempFile, OpenMode::ReadOnly);
     ASSERT_THROW(file.newInterval(2), std::exception);
     ASSERT_THROW(file.truncate(0), std::exception);
     ByteStringView out("0123456789");

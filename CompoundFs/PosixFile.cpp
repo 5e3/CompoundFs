@@ -18,29 +18,31 @@ namespace posix
 template <typename TInt>
 void throwOnError(TInt ret)
 {
-    if (ret < 0)
+    if (ret == -1)
         throw std::system_error(EDOM, std::system_category());
 }
 
 int open(const char* fname, int mode)
 {
     int handle = ::open(fname, mode, 0666);
-    throwOnError(handle);
+    if (handle == -1)
+        throw std::system_error(EDOM, std::system_category());
     return handle;
 }
 
 template <typename TRet, typename... TArgs>
-constexpr auto wrapOsCall(TRet (func)(TArgs...))
+constexpr auto wrapOsCall(TRet (func)(int, TArgs...))
 {
-    return [func](TArgs... args) -> TRet {
-        auto returnValue = func(args...);
+    return [func](int file, TArgs... args) -> TRet {
+        if (file < 0)
+            throw std::invalid_argument("PosixFile: invalid file handle");
+
+        auto returnValue = func(file, args...);
         throwOnError(returnValue);
         return returnValue;
     };
 }
 
-//constexpr auto open = wrapOsCall(::open);
-constexpr auto close = wrapOsCall(::close);
 constexpr auto write = wrapOsCall(::write);
 constexpr auto read = wrapOsCall(::read);
 
@@ -51,14 +53,24 @@ constexpr auto ftruncate = wrapOsCall(::ftruncate);
 constexpr auto fsync = wrapOsCall(::fsync);
 #else
 constexpr auto lseek = wrapOsCall(::_lseeki64);
-constexpr auto ftruncate = wrapOsCall(::_chsize_s);
+//constexpr auto ftruncate = wrapOsCall(::_chsize_s);
 constexpr auto fsync = wrapOsCall(::_commit);
+
+int ftruncate(int fd, int64_t size)
+{
+    if (fd < 0)
+        throw std::invalid_argument("PosixFile: invalid file handle");
+    auto ret = ::_chsize_s(fd, size);
+    if (ret != 0)
+        throw std::system_error(EDOM, std::system_category());
+}
 #endif
 }
 
 
 
 PosixFile::PosixFile()
+    : PosixFile(-1, false)
 {}
 
 PosixFile::~PosixFile()
@@ -68,38 +80,60 @@ PosixFile::~PosixFile()
 
 void PosixFile::close()
 {
-    posix::close(m_file);
+    if (m_file != -1)
+        ::close(m_file); // no error handling
+    m_file = -1;
 }
 
-PosixFile& PosixFile::operator=(PosixFile&&)
+PosixFile& PosixFile::operator=(PosixFile&& other)
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    close();
+    m_file = other.m_file;
+    m_readOnly = other.m_readOnly;
+    other.m_file = -1;
+    return *this;
 }
 
-PosixFile::PosixFile(PosixFile&&)
-{}
+PosixFile::PosixFile(PosixFile&& other)
+    : PosixFile(other.m_file, other.m_readOnly)
+{
+    other.m_file = -1;
+}
 
 PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
+    : PosixFile(open(path, mode), mode == OpenMode::ReadOnly)
 {
+}
+
+int PosixFile::open(std::filesystem::path path, OpenMode mode)
+{
+    int file = -1;
     switch (mode)
     {
     case OpenMode::Create:
-        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC | O_BINARY);
+        file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC | O_BINARY);
         break;
 
     case OpenMode::Open:
-        m_file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_BINARY);
+        file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_BINARY);
         break;
 
     case OpenMode::ReadOnly:
-        m_file = posix::open(path.string().c_str(), O_RDONLY | O_BINARY);
+        file = posix::open(path.string().c_str(), O_RDONLY | O_BINARY);
         break;
 
     default:
         throw std::runtime_error("File::open(): unknown OpenMode");
     }
+
+    return file;
 }
 
+PosixFile::PosixFile(int file, bool readOnly)
+    : m_file(file)
+    , m_readOnly(readOnly)
+{
+}
 
 Interval PosixFile::newInterval(size_t maxPages)
 {

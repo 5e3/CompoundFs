@@ -29,8 +29,14 @@ public:
     Lock readAccess() override;
     Lock writeAccess() override;
     CommitLock commitAccess(Lock&& writeLock) override;
+    
+private:
+    PosixFile(int file, bool readOnly);
+    static int open(std::filesystem::path path, OpenMode mode);
+
 
 private:
     int m_file;
+    bool m_readOnly;
 };
 }
