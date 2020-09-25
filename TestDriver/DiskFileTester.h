@@ -34,9 +34,9 @@ TYPED_TEST_SUITE_P(DiskFileTester);
 
 TYPED_TEST_P(DiskFileTester, illegalFileNamesThrow)
 {
-    ASSERT_THROW(TypeParam f("\\*::", OpenMode::Create), std::system_error);
-    ASSERT_THROW(TypeParam f("\\*::", OpenMode::Open), std::system_error);
-    ASSERT_THROW(TypeParam f("\\*::", OpenMode::ReadOnly), std::system_error);
+    ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::Create), std::system_error);
+    ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::Open), std::system_error);
+    ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::ReadOnly), std::system_error);
 }
 
 TYPED_TEST_P(DiskFileTester, openNonExistantFilesThrows)
