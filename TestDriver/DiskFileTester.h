@@ -5,6 +5,7 @@
 #include <system_error>
 #include <numeric>
 
+#include "CompoundFs/FileInterface.h"
 #include "CompoundFs/ByteString.h"
 #include "CompoundFs/Lock.h"
 
