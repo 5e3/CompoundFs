@@ -1,6 +1,6 @@
 name: min-Linux gcc/clang
 
-on: [workflow_dispatch] #[push]
+on: [push]
 
 jobs:
   build:
