@@ -7,4 +7,5 @@
 
 using namespace TxFs;
 
-INSTANTIATE_TYPED_TEST_SUITE_P(My, DiskFileTester, PosixFile);
+INSTANTIATE_TYPED_TEST_SUITE_P(Posix, DiskFileTester, PosixFile);
+

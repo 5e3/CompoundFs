@@ -9,9 +9,6 @@
 #include "CompoundFs/Lock.h"
 
 
-namespace TxFs
-{
-
 template <typename TDiskFile>
 struct DiskFileTester : ::testing::Test
 {
@@ -111,4 +108,3 @@ REGISTER_TYPED_TEST_SUITE_P(DiskFileTester, illegalFileNamesThrow, openNonExista
                             canOpenSameFileMoreThanOnce, uninitializedFileThrows, readOnlyFileThrowsOnWriteOps,
                             canReadWriteBigPages);
 
-}

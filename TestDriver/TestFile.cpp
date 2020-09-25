@@ -24,5 +24,5 @@ TEST(File, canWriteOnWriteLockedFile)
 }
 
 
-INSTANTIATE_TYPED_TEST_SUITE_P(_, DiskFileTester, File);
+INSTANTIATE_TYPED_TEST_SUITE_P(Windows, DiskFileTester, File);
 
