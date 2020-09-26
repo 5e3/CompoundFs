@@ -10,6 +10,7 @@ set (Sources
 		TestByteString.cpp
 		TestComposite.cpp
 		TestDirectoryStructure.cpp
+		TestFileInterface.cpp
 		TestFileReaderWriter.cpp
 		TestFileSystem.cpp
 		TestFileTable.cpp
@@ -32,7 +33,6 @@ set (Sources
 if(WIN32)
 set (PlatformSources
 		TestFile.cpp
-		TestFileInterface.cpp
 		TestFileSharedMutex.cpp
 )
 elseif(LINUX)
@@ -43,6 +43,7 @@ endif()
 set (Headers
 		DiskFileTester.h
 		MinimalTreeBuilder.h
+		FileInterfaceTester.h
 		FileSystemHelper.h
 	)
 	

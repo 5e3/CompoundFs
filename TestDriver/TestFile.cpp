@@ -2,6 +2,7 @@
 
 #include <gtest/gtest.h>
 #include "DiskFileTester.h"
+#include "FileInterfaceTester.h"
 
 #include "CompoundFs/File.h"
 #include "CompoundFs/ByteString.h"
@@ -24,5 +25,6 @@ TEST(File, canWriteOnWriteLockedFile)
 }
 
 
-INSTANTIATE_TYPED_TEST_SUITE_P(Windows, DiskFileTester, File);
+INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, DiskFileTester, File);
 
+INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, FileInterfaceTester, TempFile);
