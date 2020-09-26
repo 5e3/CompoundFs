@@ -1,5 +1,9 @@
 
+#pragma once
+
 #include <filesystem>
+#include "FileInterface.h"
+#include "FileIo.h"
 
 namespace TxFs
 {
@@ -40,7 +44,7 @@ TempFile<TFile>::TempFile(const std::filesystem::path& tmpFileName)
 
 template <typename TFile>
 TempFile<TFile>::TempFile(TempFile&& other)
-    : File(std::move(other))
+    : TFile(std::move(other))
     , m_path(std::move(other.m_path))
 {
     other.m_path = std::filesystem::path();
@@ -60,7 +64,7 @@ TempFile<TFile>& TempFile<TFile>::operator=(TempFile&& other)
     TFile::close();
     if (!m_path.empty())
         std::filesystem::remove(m_path);
-    File::operator=(std::move(other));
+    TFile::operator=(std::move(other));
     m_path = std::move(other.m_path);
     other.m_path = std::filesystem::path();
     return *this;

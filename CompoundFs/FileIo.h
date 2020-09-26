@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include "FileInterface.h"
 #include "Hasher.h"
 #include <vector>
