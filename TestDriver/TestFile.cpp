@@ -5,6 +5,7 @@
 #include "FileInterfaceTester.h"
 
 #include "CompoundFs/File.h"
+#include "CompoundFs/TempFile.h"
 #include "CompoundFs/ByteString.h"
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
@@ -14,7 +15,7 @@ using namespace TxFs;
 
 TEST(File, canWriteOnWriteLockedFile)
 {
-    auto wfile = TempFile();
+    auto wfile = TempFile<File>();
     auto rfile = File(wfile.getFileName(), OpenMode::ReadOnly);
     auto rlock = rfile.defaultAccess();
     auto wlock = wfile.defaultAccess();
@@ -27,4 +28,4 @@ TEST(File, canWriteOnWriteLockedFile)
 
 INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, DiskFileTester, File);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, FileInterfaceTester, TempFile);
+INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, FileInterfaceTester, TempFile<File>);

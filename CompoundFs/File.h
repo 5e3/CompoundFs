@@ -48,19 +48,5 @@ private:
     LockProtocol<FileSharedMutex, FileSharedMutex> m_lockProtocol;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-
-class TempFile : public File
-{
-public:
-    TempFile();
-    TempFile(TempFile&&);
-    TempFile& operator=(TempFile&& other);
-    ~TempFile();
-
-private:
-    std::filesystem::path m_path;
-
-};
 
 }

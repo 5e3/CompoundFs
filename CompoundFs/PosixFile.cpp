@@ -67,6 +67,13 @@ int ftruncate(int fd, int64_t size)
 #endif
 }
 
+namespace
+{
+constexpr uint64_t PageSize = 4096ULL;
+constexpr int64_t MaxEndOfFile = 0LL;
+constexpr uint32_t BlockSize = 16 * 1024 * 1024;
+}
+
 
 
 PosixFile::PosixFile()
@@ -144,6 +151,11 @@ Interval PosixFile::newInterval(size_t maxPages)
 
 const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
+    if (pageOffset + (end - begin) > PageSize)
+        throw std::runtime_error("File::writePage over page boundary");
+    if (currentSize() <= id)
+        throw std::runtime_error("File::writePage outside file");
+
     posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
     posix::write(m_file, begin, end - begin);
     return end;
@@ -151,6 +163,9 @@ const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8
 
 const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
 {
+    if (currentSize() < iv.end())
+        throw std::runtime_error("File::writePages outside file");
+
     posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
     posix::write(m_file, page, iv.length()*4096);
     return page + iv.length() * 4096;
@@ -158,6 +173,11 @@ const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
 
 uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
+    if (pageOffset + (end - begin) > PageSize)
+        throw std::runtime_error("File::readPage over page boundary");
+    if (currentSize() <= id)
+        throw std::runtime_error("File::readPage outside file");
+
     posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
     posix::read(m_file, begin, end - begin);
     return end;
@@ -165,6 +185,9 @@ uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, ui
 
 uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
 {
+    if (currentSize() < iv.end())
+        throw std::runtime_error("File::readPages outside file");
+
     posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
     posix::read(m_file, page, iv.length() * 4096);
     return page + iv.length() * 4096;

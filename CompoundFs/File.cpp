@@ -260,35 +260,3 @@ std::filesystem::path File::getFileName() const
     return buffer;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-TempFile::TempFile()
-    : File(std::filesystem::temp_directory_path() / std::tmpnam(nullptr), OpenMode::Create)
-{
-    m_path = getFileName();
-}
-
-TempFile::TempFile(TempFile&& other)
-    : File(std::move(other))
-    , m_path(std::move(other.m_path))
-{
-    other.m_path = std::filesystem::path();
-}
-
-TempFile::~TempFile()
-{
-    close();
-    if (!m_path.empty())
-        std::filesystem::remove(m_path);
-}
-
-TempFile& TempFile::operator=(TempFile&& other)
-{
-    close();
-    if (!m_path.empty())
-        std::filesystem::remove(m_path);
-    File::operator=(std::move(other));
-    m_path = std::move(other.m_path);
-    other.m_path = std::filesystem::path();
-    return *this;
-}

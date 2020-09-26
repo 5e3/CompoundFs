@@ -14,6 +14,7 @@ set (Sources
 		MemoryFile.cpp
 		PageAllocator.cpp
 		PosixFile.cpp
+		TempFile.cpp
 		TreeValue.cpp
 		Path.cpp
 		RollbackHandler.cpp
@@ -65,6 +66,7 @@ set (Headers
 		ReadOnlyFile.h
 		RollbackHandler.h
 		TableKeyCompare.h
+		TempFile.h
 		TreeValue.h
 		TypedCacheManager.h
 		WrappedFile.h
