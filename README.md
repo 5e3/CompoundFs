@@ -103,16 +103,15 @@ ____
 Here is the commit-phase in greater detail. For the baseline we consider a more complex situation: `CacheManager` 
 evicted some `Dirty` pages to temporary new locations. These pages are not needed anymore after commit.
 
-1. Aquire eXclusive File Lock.
-2. Collect all free pages including the evicted `Dirty` pages from `CacheManager` and mark them as 
-free in `FreeStore`.
-3. Close the `FreeStore`. From now on new pages are allocated by growing the file.
-4. FSize = current file size.
-5. Write all `New` pages.
-6. Copy contents of original `Dirty` pages to new location (by growing the file).
-7. Flush all pages.
-8. Write `LogPage` pages by growing the file.
-9. Flush all pages. 
+1. Collect all free pages including the evicted `Dirty` pages from `CacheManager` and mark them as free in `FreeStore`.
+2. Close the `FreeStore`. From now on new pages are allocated by growing the file.
+3. FSize = current file size.
+4. Write all `New` pages.
+5. Copy contents of original `Dirty` pages to new location (by growing the file).
+6. Flush all pages.
+7. Write `LogPage` pages by growing the file.
+8. Flush all pages. 
+9. Aquire eXclusive File Lock.
 10. Copy new `Dirty` contents over original pages.
 11. Flush all pages.
 12. Cut the file size to FSize (throw away `Dirty` copies and `LogPage` pages).
@@ -126,13 +125,14 @@ After point 10. we use the `LogPage` information to restore the original `Dirty`
 have been partly overwritten) and then cut the file.  
 
 ```
-if (current file size == FSize)
-  return;
+
 if (last page is not LogPage)
+  retrieve FSize
   cut file to FSize; 
   return;
 foreach pair {origIdx, copyIdx} in LogPage
   copyPage from copyIdx to origIdx
+retrieve FSize
 cut file to FSize; 
 return;
 
