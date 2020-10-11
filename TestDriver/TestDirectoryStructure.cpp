@@ -186,7 +186,7 @@ TEST(DirectoryStructure, storeCommitBlockEqualsRetrieveCommitBlock)
 {
     auto ds = makeDirectoryStructure();
     CommitBlock out { { 1234567, 123, 234 }, 54321, 23 };
-    ds.StoreCommitBlock(out);
+    ds.storeCommitBlock(out);
     auto in = ds.retrieveCommitBlock();
     ASSERT_EQ(in.m_freeStoreDescriptor, out.m_freeStoreDescriptor);
     ASSERT_EQ(in.m_compositSize, out.m_compositSize);

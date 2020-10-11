@@ -83,7 +83,7 @@ public:
     void commit();
     void rollback();
 
-    void StoreCommitBlock(const CommitBlock&);
+    void storeCommitBlock(const CommitBlock&);
     CommitBlock retrieveCommitBlock() const;
 
 private:
@@ -114,8 +114,6 @@ public:
 
     std::pair<Folder,std::string_view> key() const;
     TreeValue value() const { return TreeValue::fromStream(m_cursor.value());}
-    TreeValue::Type getValueType() const { return value().getType(); }
-    std::string getValueTypeName() const { return std::string(value().getTypeName()); }
     constexpr explicit operator bool() const noexcept { return m_cursor.operator bool(); }
 
 private:

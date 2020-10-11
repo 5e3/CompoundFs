@@ -12,21 +12,20 @@ using namespace TxFs;
 
 namespace
 {
-    struct ValueStream
-    {
-        ValueStream(const TreeValue& value) { value.toStream(m_byteStringStream); }
+struct ValueStream
+{
+    ValueStream(const TreeValue& value) { value.toStream(m_byteStringStream); }
 
-        operator ByteStringView() const { return m_byteStringStream; }
+    operator ByteStringView() const { return m_byteStringStream; }
 
-        ByteStringStream m_byteStringStream;
-    };
+    ByteStringStream m_byteStringStream;
+};
 
-    // ------------------------------------------------------------------------
+// ------------------------------------------------------------------------
 
-    constexpr Folder            SystemFolder { 1 };
-    constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
+constexpr Folder SystemFolder { 1 };
+constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
 }
-
 
 DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
     : m_cacheManager(std::move(ds.m_cacheManager))
@@ -55,7 +54,7 @@ DirectoryStructure& DirectoryStructure::operator=(DirectoryStructure&& ds)
     m_btree = std::move(ds.m_btree);
     m_maxFolderId = std::move(ds.m_maxFolderId);
     m_freeStore = std::move(ds.m_freeStore);
-    m_rootIndex = std::move(ds.m_rootIndex);
+    m_rootIndex = ds.m_rootIndex;
     connectFreeStore();
     return *this;
 }
@@ -68,15 +67,15 @@ DirectoryStructure::Startup DirectoryStructure::initialize(const std::shared_ptr
     return Startup { cacheManager, freeStore.m_index, freeStore.m_index - 1 };
 }
 
-
 void DirectoryStructure::connectFreeStore()
 {
-    m_cacheManager->setPageIntervalAllocator([fs = &m_freeStore](size_t maxPages) { return fs->allocate(static_cast<uint32_t> (maxPages)); });
+    m_cacheManager->setPageIntervalAllocator(
+        [fs = &m_freeStore](size_t maxPages) { return fs->allocate(static_cast<uint32_t>(maxPages)); });
 }
 
 std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey)
 {
-    ValueStream value(Folder { m_maxFolderId }); 
+    ValueStream value(Folder { m_maxFolderId });
     auto res = m_btree.insert(dkey, value, [](ByteStringView) { return false; });
 
     auto inserted = std::get_if<BTree::Inserted>(&res);
@@ -128,14 +127,12 @@ std::optional<TreeValue> DirectoryStructure::getAttribute(const DirectoryKey& dk
 
 size_t DirectoryStructure::remove(Folder folder)
 {
-    ByteStringStream key; // TODO: use DirectoryKey here
-    key.push(folder);
     std::vector<ByteString> keysToDelete;
-    for (auto cursor = m_btree.begin(key); cursor; cursor = m_btree.next(cursor))
+    for (auto cursor = begin(folder); cursor; cursor = next(cursor))
     {
-        if (!key.isPrefix(cursor.key()))
+        if (cursor.key().first != folder)
             break;
-        keysToDelete.emplace_back(cursor.key());
+        keysToDelete.emplace_back(cursor.m_cursor.key());
     }
 
     for (const auto& k: keysToDelete)
@@ -180,10 +177,9 @@ std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& d
 
 bool DirectoryStructure::createFile(const DirectoryKey& dkey)
 {
-    ValueStream value(FileDescriptor{});
-    auto res = m_btree.insert(dkey, value, [](ByteStringView bsv) {
-        return TreeValue::fromStream(bsv).getType() == TreeValue::Type::File;
-    });
+    ValueStream value(FileDescriptor {});
+    auto res = m_btree.insert(
+        dkey, value, [](ByteStringView bsv) { return TreeValue::fromStream(bsv).getType() == TreeValue::Type::File; });
 
     if (std::holds_alternative<BTree::Unchanged>(res))
         return false;
@@ -203,7 +199,7 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
     auto res = m_btree.insert(dkey, value, [](ByteStringView) { return false; });
 
     if (std::holds_alternative<BTree::Inserted>(res))
-        return FileDescriptor{};
+        return FileDescriptor {};
 
     auto cursor = std::get<BTree::Unchanged>(res).m_currentValue;
     auto currentValue = TreeValue::fromStream(cursor.value());
@@ -215,10 +211,9 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
 
 bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
 {
-    ValueStream value = TreeValue{desc};
-    auto res = m_btree.insert(dkey, value, [](ByteStringView bsv) {
-        return TreeValue::fromStream(bsv).getType() == TreeValue::Type::File;
-    });
+    ValueStream value = TreeValue { desc };
+    auto res = m_btree.insert(
+        dkey, value, [](ByteStringView bsv) { return TreeValue::fromStream(bsv).getType() == TreeValue::Type::File; });
 
     if (std::holds_alternative<BTree::Unchanged>(res))
         return false;
@@ -234,7 +229,7 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
 void DirectoryStructure::commit()
 {
     const auto& freePages = m_btree.getFreePages();
-    for (auto page : freePages)
+    for (auto page: freePages)
         m_freeStore.deallocate(page);
     m_btree = BTree(m_cacheManager, m_rootIndex);
 
@@ -248,7 +243,7 @@ void DirectoryStructure::commit()
     cb.m_freeStoreDescriptor = m_freeStore.close();
     cb.m_compositSize = commitHandler.getCompositeSize();
     cb.m_maxFolderId = m_maxFolderId;
-    StoreCommitBlock(cb);
+    storeCommitBlock(cb);
     commitHandler.commit();
     assert(commitHandler.empty());
 
@@ -270,7 +265,7 @@ void DirectoryStructure::rollback()
     connectFreeStore();
 }
 
-void DirectoryStructure::StoreCommitBlock(const CommitBlock& cb)
+void DirectoryStructure::storeCommitBlock(const CommitBlock& cb)
 {
     auto str = cb.toString();
     addAttribute(DirectoryKey(SystemFolder, CommitBlockAttributeName), str);
@@ -288,8 +283,7 @@ std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const
 {
     auto key = m_cursor.key();
     Folder folder;
-    auto name = ByteStringStream::pop(folder, key); //TODO: fix ByteStringStream to consume std::string_views
-    std::string_view nameView ( reinterpret_cast<const char*> (name.data()), name.size() );
+    auto name = ByteStringStream::pop(folder, key); // TODO: fix ByteStringStream to consume std::string_views
+    std::string_view nameView(reinterpret_cast<const char*>(name.data()), name.size());
     return std::pair(folder, nameView);
 }
-
