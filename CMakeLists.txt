@@ -48,6 +48,7 @@ FetchContent_GetProperties(lz4)
 if(NOT lz4_POPULATED)
   FetchContent_Populate(lz4)
   add_subdirectory(${lz4_SOURCE_DIR}/contrib/cmake_unofficial ${lz4_BINARY_DIR})
+  target_include_directories(lz4_static INTERFACE ${lz4_SOURCE_DIR})
 endif()
 
 FetchContent_Declare(

@@ -7,6 +7,10 @@
 #ifndef _WINDOWS
 #include <unistd.h>
 #else
+
+#pragma warning(disable : 4996) // disable "'open': The POSIX name for this item is deprecated."
+
+
 #include <io.h>
 #endif
 
@@ -53,7 +57,6 @@ constexpr auto ftruncate = wrapOsCall(::ftruncate);
 constexpr auto fsync = wrapOsCall(::fsync);
 #else
 constexpr auto lseek = wrapOsCall(::_lseeki64);
-//constexpr auto ftruncate = wrapOsCall(::_chsize_s);
 constexpr auto fsync = wrapOsCall(::_commit);
 
 int ftruncate(int fd, int64_t size)
@@ -63,6 +66,7 @@ int ftruncate(int fd, int64_t size)
     auto ret = ::_chsize_s(fd, size);
     if (ret != 0)
         throw std::system_error(EDOM, std::system_category());
+    return 0;
 }
 #endif
 }
@@ -70,10 +74,9 @@ int ftruncate(int fd, int64_t size)
 namespace
 {
 constexpr uint64_t PageSize = 4096ULL;
-constexpr int64_t MaxEndOfFile = 0LL;
+//constexpr int64_t MaxEndOfFile = 0LL;
 constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 }
-
 
 
 PosixFile::PosixFile()
@@ -145,8 +148,8 @@ PosixFile::PosixFile(int file, bool readOnly)
 Interval PosixFile::newInterval(size_t maxPages)
 {
     auto length = posix::lseek(m_file, 0, SEEK_END);
-    posix::ftruncate(m_file, length + maxPages * 4096);
-    return Interval(length / 4096, length / 4096 + maxPages);
+    posix::ftruncate(m_file, length + maxPages * PageSize);
+    return Interval(PageIndex(length / PageSize), PageIndex(length / PageSize + maxPages));
 }
 
 const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
@@ -156,8 +159,8 @@ const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8
     if (currentSize() <= id)
         throw std::runtime_error("File::writePage outside file");
 
-    posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
-    posix::write(m_file, begin, end - begin);
+    posix::lseek(m_file, id * PageSize + pageOffset, SEEK_SET);
+    posix::write(m_file, begin, unsigned(end - begin));
     return end;
 }
 
@@ -166,10 +169,21 @@ const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
     if (currentSize() < iv.end())
         throw std::runtime_error("File::writePages outside file");
 
-    posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
-    posix::write(m_file, page, iv.length()*4096);
-    return page + iv.length() * 4096;
+    posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
+    auto end = page + (iv.length() * PageSize);
+    writePages(page, end);
+
+    return end;
 }
+
+void PosixFile::writePages(const uint8_t* begin, const uint8_t* end)
+{
+    for (; (begin + BlockSize) < end; begin += BlockSize)
+        posix::write(m_file, begin, BlockSize);
+
+    posix::write(m_file, begin, unsigned(end-begin));
+}
+
 
 uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
@@ -178,8 +192,8 @@ uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, ui
     if (currentSize() <= id)
         throw std::runtime_error("File::readPage outside file");
 
-    posix::lseek(m_file, id * 4096 + pageOffset, SEEK_SET);
-    posix::read(m_file, begin, end - begin);
+    posix::lseek(m_file, id * PageSize + pageOffset, SEEK_SET);
+    posix::read(m_file, begin, unsigned(end - begin));
     return end;
 }
 
@@ -188,14 +202,25 @@ uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
     if (currentSize() < iv.end())
         throw std::runtime_error("File::readPages outside file");
 
-    posix::lseek(m_file, iv.begin() * 4096, SEEK_SET);
-    posix::read(m_file, page, iv.length() * 4096);
-    return page + iv.length() * 4096;
+    posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
+    auto end = page + (iv.length() * PageSize);
+    readPages(page, end);
+
+    return end;
 }
+
+void PosixFile::readPages(uint8_t* begin, uint8_t* end) const
+{
+    for (; (begin + BlockSize) < end; begin += BlockSize)
+        posix::read(m_file, begin, BlockSize);
+
+    posix::read(m_file, begin, unsigned(end - begin));
+}
+
 
 size_t PosixFile::currentSize() const
 {
-    return posix::lseek(m_file, 0, SEEK_END) / 4096;
+    return (size_t) posix::lseek(m_file, 0, SEEK_END) / PageSize;
 }
 
 void PosixFile::flushFile()
@@ -205,12 +230,12 @@ void PosixFile::flushFile()
 
 void PosixFile::truncate(size_t numberOfPages)
 { 
-    posix::ftruncate(m_file, numberOfPages * 4096);
+    posix::ftruncate(m_file, numberOfPages * PageSize);
 }
 
 Lock PosixFile::defaultAccess()
 {
-    return writeAccess();
+    return m_readOnly ? readAccess() : writeAccess();
 }
 
 Lock PosixFile::readAccess()
@@ -223,7 +248,7 @@ Lock PosixFile::writeAccess()
     throw std::logic_error("The method or operation is not implemented.");
 }
 
-CommitLock PosixFile::commitAccess(Lock&& writeLock)
+CommitLock PosixFile::commitAccess(Lock&& /*writeLock*/)
 {
     throw std::logic_error("The method or operation is not implemented.");
 }

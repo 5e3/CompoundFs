@@ -63,6 +63,7 @@ set (Headers
 		PageDef.h
 		PageMetaData.h
 		Path.h
+		PosixFile.h
 		ReadOnlyFile.h
 		RollbackHandler.h
 		TableKeyCompare.h
@@ -78,7 +79,6 @@ if(WIN32)
 set (PlatformHeaders
 		File.h
 		FileSharedMutex.h
-		PosixFile.h
 )
 elseif(LINUX)
 set (PlatformHeaders
