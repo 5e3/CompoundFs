@@ -226,7 +226,6 @@ void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageInd
     }
 
     growTree(key, leftRightIsLeaf, left, right);
-    //m_rootIndex = m_cacheManager.newPage<InnerNode>(key, left, right).m_index;
 }
 
 void TxFs::BTree::growTree(ByteStringView key, bool leftRightIsLeaf, PageIndex left, PageIndex right)
@@ -250,6 +249,23 @@ void TxFs::BTree::growTree(ByteStringView key, bool leftRightIsLeaf, PageIndex l
 
 
 
+}
+
+BTree::RenameResult BTree::rename(ByteStringView oldKey, ByteStringView newKey)
+{
+    auto cursor = find(oldKey);
+    if (!cursor)
+        return NotFound();
+
+    auto res = insert(newKey, cursor.value(), [](ByteStringView) { return false; });
+    if (std::get_if<Inserted>(&res))
+    {
+        [[maybe_unused]] auto succ = remove(oldKey);
+        assert(succ);
+        return Inserted();
+    }
+
+    return std::get<Unchanged>(res);
 }
 
 BTree::Cursor BTree::find(ByteStringView key) const

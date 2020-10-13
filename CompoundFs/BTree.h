@@ -30,7 +30,9 @@ public:
     struct Inserted;
     struct Replaced;
     struct Unchanged;
+    struct NotFound;
     using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
+    using RenameResult = std::variant<NotFound, Inserted, Unchanged>;
     using ReplacePolicy = bool (*)(ByteStringView beforValue);
 
 public:
@@ -40,6 +42,7 @@ public:
 
     std::optional<ByteString> insert(ByteStringView key, ByteStringView value);
     InsertResult insert(ByteStringView key, ByteStringView value, ReplacePolicy replacePolicy);
+    RenameResult rename(ByteStringView oldKey, ByteStringView newKey);
     std::optional<ByteString> remove(ByteStringView key);
 
     Cursor find(ByteStringView key) const;
@@ -112,6 +115,12 @@ struct BTree::Unchanged
 {
     Cursor m_currentValue;
 };
+//////////////////////////////////////////////////////////////////////////
+
+struct BTree::NotFound
+{};
+
+
 
 }
 #endif // BTREE_H

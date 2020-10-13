@@ -218,3 +218,37 @@ TEST(Cursor, creation)
     auto cur4 = ds.next(cur3);
     ASSERT_TRUE(!cur4);
 }
+
+namespace
+{
+    Folder makeFilledSubFolder(DirectoryStructure& ds, Folder folder, std::string_view name)
+    {
+        auto newFolder = ds.makeSubFolder(DirectoryKey(folder, name)).value();
+        for (uint64_t i = 0; i < 50; i++)
+            ds.addAttribute(DirectoryKey(newFolder, std::to_string(i) + name.data()), i);
+        return newFolder;
+    }
+}
+
+TEST(Cursor, iteratesOverFolder)
+{
+    auto ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    ds.addAttribute(DirectoryKey("attrib"), "test");
+    makeFilledSubFolder(ds, subFolder, "Test1");
+    auto folder = makeFilledSubFolder(ds, subFolder, "Test2");
+    makeFilledSubFolder(ds, subFolder, "Test3");
+
+    auto cur = ds.begin(DirectoryKey(folder));
+    ASSERT_EQ(cur.key().second, "0Test2");
+    ASSERT_EQ(cur.value().toValue<uint64_t>(), 0ULL);
+
+    std::set<uint64_t> iset;
+    for (; cur; cur = ds.next(cur))
+    {
+        ASSERT_EQ(cur.key().first, folder);
+        iset.insert(cur.value().toValue<uint64_t>());
+    }
+    ASSERT_EQ(iset.size(), 50);
+}

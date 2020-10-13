@@ -404,3 +404,65 @@ TEST(BTree, leftMergeWithDeletionOnTheRight)
      bt.remove("0035");
     ASSERT_TRUE(bt.find("0033"));
 }
+
+TEST(BTree, renameInexistantKeyReturnsNotFound)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+    for (size_t i = 0; i < 100; i++)
+    {
+        auto key = std::to_string(i);
+        bt.insert(key.c_str(), key.c_str());
+    }
+
+    auto res = bt.rename("100", "101");
+    ASSERT_TRUE(std::holds_alternative<BTree::NotFound>(res));
+}
+
+TEST(BTree, successfulRenameReturnsInserted)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+    for (size_t i = 0; i < 100; i++)
+    {
+        auto key = std::to_string(i);
+        bt.insert(key.c_str(), key.c_str());
+    }
+
+    auto res = bt.rename("10", "100");
+    ASSERT_TRUE(std::holds_alternative<BTree::Inserted>(res));
+
+    auto cur = bt.find("10");
+    ASSERT_FALSE(cur);
+    cur = bt.find("100");
+    ASSERT_TRUE(cur);
+    ASSERT_EQ(cur.value(), "10");
+}
+
+TEST(BTree, renameCannotOverwriteExistingEntry)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+    for (size_t i = 0; i < 100; i++)
+    {
+        auto key = std::to_string(i);
+        bt.insert(key.c_str(), key.c_str());
+    }
+
+    auto res = bt.rename("10", "50");
+    auto unchanged = std::get<BTree::Unchanged>(res);
+
+    auto key = unchanged.m_currentValue.current().first;
+    
+    ASSERT_EQ(unchanged.m_currentValue.key(), "50");
+    ASSERT_EQ(unchanged.m_currentValue.value(), "50");
+
+    auto cur = bt.find("10");
+    ASSERT_TRUE(cur);
+    ASSERT_EQ(cur.value(), "10");
+
+    ASSERT_TRUE(bt.remove("50"));
+    res = bt.rename("10", "50");
+    ASSERT_TRUE(std::holds_alternative<BTree::Inserted>(res));
+}
+

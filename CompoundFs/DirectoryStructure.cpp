@@ -129,11 +129,7 @@ size_t DirectoryStructure::remove(Folder folder)
 {
     std::vector<ByteString> keysToDelete;
     for (auto cursor = begin(folder); cursor; cursor = next(cursor))
-    {
-        if (cursor.key().first != folder)
-            break;
         keysToDelete.emplace_back(cursor.m_cursor.key());
-    }
 
     for (const auto& k: keysToDelete)
         remove(k);
@@ -286,4 +282,13 @@ std::pair<Folder, std::string_view> DirectoryStructure::Cursor::key() const
     auto name = ByteStringStream::pop(folder, key); // TODO: fix ByteStringStream to consume std::string_views
     std::string_view nameView(reinterpret_cast<const char*>(name.data()), name.size());
     return std::pair(folder, nameView);
+}
+
+DirectoryStructure::Cursor DirectoryStructure::next(Cursor cursor) const
+{
+    auto folder = cursor.key().first;
+    cursor = m_btree.next(cursor.m_cursor);
+    if (cursor && cursor.key().first != folder)
+        cursor = Cursor();
+    return cursor;
 }

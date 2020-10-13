@@ -132,10 +132,6 @@ inline DirectoryStructure::Cursor DirectoryStructure::begin(const DirectoryKey& 
     return m_btree.begin(dkey);
 }
 
-inline DirectoryStructure::Cursor DirectoryStructure::next(Cursor cursor) const 
-{ 
-    return m_btree.next(cursor.m_cursor); 
-}
 
 
 
