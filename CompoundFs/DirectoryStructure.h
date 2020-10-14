@@ -57,8 +57,8 @@ public:
 
 public:
     DirectoryStructure(const Startup& startup);
-    DirectoryStructure(DirectoryStructure&&);
-    DirectoryStructure& operator=(DirectoryStructure&&);
+    DirectoryStructure(DirectoryStructure&&) noexcept;
+    DirectoryStructure& operator=(DirectoryStructure&&) noexcept;
 
     static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
 

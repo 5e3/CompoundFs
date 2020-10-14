@@ -95,7 +95,7 @@ void PosixFile::close()
     m_file = -1;
 }
 
-PosixFile& PosixFile::operator=(PosixFile&& other)
+PosixFile& PosixFile::operator=(PosixFile&& other) noexcept
 {
     close();
     m_file = other.m_file;
@@ -104,7 +104,7 @@ PosixFile& PosixFile::operator=(PosixFile&& other)
     return *this;
 }
 
-PosixFile::PosixFile(PosixFile&& other)
+PosixFile::PosixFile(PosixFile&& other) noexcept
     : PosixFile(other.m_file, other.m_readOnly)
 {
     other.m_file = -1;

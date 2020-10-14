@@ -37,8 +37,6 @@ public:
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
-    BTree(BTree&&) = default;
-    BTree& operator=(BTree&&) = default;
 
     std::optional<ByteString> insert(ByteStringView key, ByteStringView value);
     InsertResult insert(ByteStringView key, ByteStringView value, ReplacePolicy replacePolicy);

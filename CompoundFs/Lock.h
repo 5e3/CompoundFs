@@ -19,7 +19,7 @@ public:
     constexpr Lock(TMutex* mutex, ReleaseFunc releaseFunc) noexcept;
     constexpr Lock(Lock&&) noexcept;
     ~Lock();
-    constexpr Lock& operator=(Lock&&);
+    constexpr Lock& operator=(Lock&&) noexcept;
 
     Lock(const Lock&) = delete;
     Lock& operator=(const Lock&) = delete;
@@ -92,7 +92,7 @@ inline Lock::~Lock()
     }
 }
 
-constexpr Lock& Lock::operator=(Lock&& rhs)
+constexpr Lock& Lock::operator=(Lock&& rhs) noexcept
 {
     release();
     m_mutex = rhs.m_mutex;

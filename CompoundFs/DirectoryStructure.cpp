@@ -27,7 +27,7 @@ constexpr Folder SystemFolder { 1 };
 constexpr std::string_view CommitBlockAttributeName { "CommitBlock" };
 }
 
-DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
+DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds) noexcept
     : m_cacheManager(std::move(ds.m_cacheManager))
     , m_btree(std::move(ds.m_btree))
     , m_maxFolderId(std::move(ds.m_maxFolderId))
@@ -37,7 +37,7 @@ DirectoryStructure::DirectoryStructure(DirectoryStructure&& ds)
     connectFreeStore();
 }
 
-DirectoryStructure::DirectoryStructure(const Startup& startup)
+DirectoryStructure::DirectoryStructure(const Startup& startup) 
     : m_cacheManager(startup.m_cacheManager)
     , m_btree(startup.m_cacheManager, startup.m_rootIndex)
     , m_maxFolderId(2)
@@ -48,7 +48,7 @@ DirectoryStructure::DirectoryStructure(const Startup& startup)
     connectFreeStore();
 }
 
-DirectoryStructure& DirectoryStructure::operator=(DirectoryStructure&& ds)
+DirectoryStructure& DirectoryStructure::operator=(DirectoryStructure&& ds) noexcept
 {
     m_cacheManager = std::move(ds.m_cacheManager);
     m_btree = std::move(ds.m_btree);

@@ -13,8 +13,8 @@ class PosixFile : public FileInterface
 public:
     PosixFile();
     PosixFile(std::filesystem::path path, OpenMode mode);
-    PosixFile(PosixFile&&);
-    PosixFile& operator=(PosixFile&&);
+    PosixFile(PosixFile&&) noexcept;
+    PosixFile& operator=(PosixFile&&) noexcept;
     ~PosixFile();
 
     void close();

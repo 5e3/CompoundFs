@@ -14,8 +14,8 @@ class File : public FileInterface
 public:
     File();
     File(std::filesystem::path path, OpenMode mode);
-    File(File&&);
-    File& operator=(File&&);
+    File(File&&) noexcept;
+    File& operator=(File&&) noexcept;
     ~File();
 
     void close();

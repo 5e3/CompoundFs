@@ -22,7 +22,7 @@ uint64_t rangeLength(std::pair<uint64_t, uint64_t> range)
 {
     auto len = range.second - range.first;
     if (!len)
-        std::range_error("FileSharedMutex empty range length.");
+        throw std::range_error("FileSharedMutex empty range length.");
     return len;
 }
 

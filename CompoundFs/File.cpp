@@ -63,7 +63,7 @@ File::File()
     : File(INVALID_HANDLE_VALUE, false)
 {}
 
-File::File(File&& other)
+File::File(File&& other) noexcept
     : File(other.m_handle, other.m_readOnly)
 {
     other.m_handle = INVALID_HANDLE_VALUE;
@@ -81,7 +81,7 @@ File::File(std::filesystem::path path, OpenMode mode)
     : File(open(path, mode), mode == OpenMode::ReadOnly)
 {}
 
-File& File::operator=(File&& other)
+File& File::operator=(File&& other) noexcept
 {
     close();
     m_handle = other.m_handle;

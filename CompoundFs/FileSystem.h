@@ -20,8 +20,6 @@ public:
 
 public:
     FileSystem(const Startup& startup);
-    FileSystem(FileSystem&&) = default;
-    FileSystem& operator=(FileSystem&&) = default;
 
     static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
 
