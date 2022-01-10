@@ -1,5 +1,5 @@
 # CompoundFs
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![min-Linux gcc/clang](https://github.com/5e3/CompoundFs/workflows/min-Linux%20gcc/clang/badge.svg) ![MSVC Win32/x64](https://github.com/5e3/CompoundFs/workflows/MSVC%20Win32/x64/badge.svg) ![Linux gcc/clang](https://github.com/5e3/CompoundFs/workflows/Linux%20gcc/clang/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![MSVC Win32/x64](https://github.com/5e3/CompoundFs/workflows/MSVC%20Win32/x64/badge.svg) ![Linux gcc/clang](https://github.com/5e3/CompoundFs/workflows/Linux%20gcc/clang/badge.svg)
 
 ### Several Files in One 
 CompoundFs is a fully fledged file-system organized in a single Operating-System file. It consists of a user defined 
