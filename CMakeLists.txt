@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 3.11)
 project(CompoundFs)
 enable_testing()
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 set(CMAKE_CXX_STANDARD 17)
 set(gtest_force_shared_crt ON CACHE BOOL "Override option" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Override option" FORCE)
@@ -63,6 +65,8 @@ if(NOT xxhash_POPULATED)
   add_library(xxhash ${xxhash_SOURCE_DIR}/xxhash.c ${xxhash_SOURCE_DIR}/xxhash.h)
   target_include_directories(xxhash INTERFACE ${xxhash_SOURCE_DIR})
 endif()
+
+set_target_properties(gtest gtest_main lz4_static lz4cli xxhash PROPERTIES FOLDER External)
 
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
