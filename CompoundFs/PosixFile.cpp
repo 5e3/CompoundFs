@@ -47,8 +47,8 @@ constexpr auto wrapOsCall(TRet (func)(int, TArgs...))
     };
 }
 
-constexpr auto write = wrapOsCall(::write);
-constexpr auto read = wrapOsCall(::read);
+constexpr auto write = wrapOsCall(::_write);
+constexpr auto read = wrapOsCall(::_read);
 
 #ifndef _WINDOWS
 #define O_BINARY 0

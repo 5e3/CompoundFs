@@ -10,13 +10,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(gtest_force_shared_crt ON CACHE BOOL "Override option" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Override option" FORCE)
 set(BUILD_GMOCK OFF CACHE BOOL "Override option" FORCE)
-set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "Override option" FORCE)
+#set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "Override option" FORCE)
 add_definitions ( -D_UNICODE )
 add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)
 add_subdirectory(Sandbox)
+
 
 
 
@@ -27,6 +28,8 @@ source_group("" FILES
 	)
 
 include(FetchContent)
+
+#------------------------------------------------------------------------------
 
 FetchContent_Declare(
   googletest
@@ -40,18 +43,38 @@ if(NOT googletest_POPULATED)
   add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 
+#------------------------------------------------------------------------------
+
 FetchContent_Declare(
-  lz4
-  GIT_REPOSITORY https://github.com/lz4/lz4.git
-  GIT_TAG        v1.9.2
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11
+  GIT_TAG        v2.10.4
 )
 
-FetchContent_GetProperties(lz4)
-if(NOT lz4_POPULATED)
-  FetchContent_Populate(lz4)
-  add_subdirectory(${lz4_SOURCE_DIR}/contrib/cmake_unofficial ${lz4_BINARY_DIR})
-  target_include_directories(lz4_static INTERFACE ${lz4_SOURCE_DIR})
+FetchContent_GetProperties(pybind11)
+if(NOT pybind11_POPULATED)
+  FetchContent_Populate(pybind11)
+  add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
+  #add_library(pybind11 INTERFACE)
+  #target_include_directories(pybind11 INTERFACE .)
 endif()
+
+#------------------------------------------------------------------------------
+
+# FetchContent_Declare(
+  # lz4
+  # GIT_REPOSITORY https://github.com/lz4/lz4.git
+  # GIT_TAG        v1.9.2
+# )
+
+# FetchContent_GetProperties(lz4)
+# if(NOT lz4_POPULATED)
+  # FetchContent_Populate(lz4)
+  # add_subdirectory(${lz4_SOURCE_DIR}/contrib/cmake_unofficial ${lz4_BINARY_DIR})
+  # target_include_directories(lz4_static INTERFACE ${lz4_SOURCE_DIR})
+# endif()
+
+#------------------------------------------------------------------------------
 
 FetchContent_Declare(
   xxhash
@@ -66,8 +89,13 @@ if(NOT xxhash_POPULATED)
   target_include_directories(xxhash INTERFACE ${xxhash_SOURCE_DIR})
 endif()
 
-set_target_properties(gtest gtest_main lz4_static lz4cli xxhash PROPERTIES FOLDER External)
+#------------------------------------------------------------------------------
 
+
+#set_target_properties(gtest gtest_main lz4_static lz4cli xxhash PROPERTIES FOLDER External)
+set_target_properties(gtest gtest_main xxhash PROPERTIES FOLDER External)
+
+add_subdirectory(PythonBindings)
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
 
