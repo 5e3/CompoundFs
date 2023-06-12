@@ -47,15 +47,17 @@ constexpr auto wrapOsCall(TRet (func)(int, TArgs...))
     };
 }
 
-constexpr auto write = wrapOsCall(::_write);
-constexpr auto read = wrapOsCall(::_read);
 
 #ifndef _WINDOWS
 #define O_BINARY 0
+constexpr auto write = wrapOsCall(::write);
+constexpr auto read = wrapOsCall(::read);
 constexpr auto lseek = wrapOsCall(::lseek);
 constexpr auto ftruncate = wrapOsCall(::ftruncate);
 constexpr auto fsync = wrapOsCall(::fsync);
 #else
+constexpr auto write = wrapOsCall(::_write);
+constexpr auto read = wrapOsCall(::_read);
 constexpr auto lseek = wrapOsCall(::_lseeki64);
 constexpr auto fsync = wrapOsCall(::_commit);
 
