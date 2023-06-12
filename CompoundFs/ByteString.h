@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <stdexcept>
 #include <vector>
+#include <limits>
 
 namespace TxFs
 {
