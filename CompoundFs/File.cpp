@@ -61,7 +61,8 @@ constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 
 File::File()
     : File(INVALID_HANDLE_VALUE, false)
-{}
+{
+}
 
 File::File(File&& other) noexcept
     : File(other.m_handle, other.m_readOnly)
@@ -72,14 +73,18 @@ File::File(File&& other) noexcept
 File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
-    , m_lockProtocol { FileSharedMutex { handle, MaxEndOfFile - 1, MaxEndOfFile },
-                       FileSharedMutex { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
-                       FileSharedMutex { handle, 0, MaxEndOfFile - 2 } }
-{}
+    , m_lockProtocol {
+        FileSharedMutex { handle, 0, MaxEndOfFile - 3 },
+        FileSharedMutex { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
+        FileSharedMutex { handle, MaxEndOfFile - 3, MaxEndOfFile - 2 },
+    }
+{
+}
 
 File::File(std::filesystem::path path, OpenMode mode)
     : File(open(path, mode), mode == OpenMode::ReadOnly)
-{}
+{
+}
 
 File& File::operator=(File&& other) noexcept
 {
@@ -121,10 +126,10 @@ void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
                                    nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         break;
 
-    case OpenMode::ReadOnly:
-        handle = Win32::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-        break;
+         case OpenMode::ReadOnly:
+             handle = Win32::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+             break;
 
     default:
         throw std::runtime_error("File::open(): unknown OpenMode");
@@ -140,7 +145,8 @@ Interval File::newInterval(size_t maxPages)
     Win32::Seek(m_handle, PageSize * maxPages + size.QuadPart);
     Win32::SetEndOfFile(m_handle);
 
-    return Interval(static_cast<PageIndex>(size.QuadPart / PageSize), static_cast<PageIndex>(size.QuadPart / PageSize + maxPages));
+    return Interval(static_cast<PageIndex>(size.QuadPart / PageSize),
+                    static_cast<PageIndex>(size.QuadPart / PageSize + maxPages));
 }
 
 const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
@@ -165,14 +171,14 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
     Win32::Seek(m_handle, PageSize * iv.begin());
     auto end = page + (iv.length() * PageSize);
     writePages(page, end);
-    
+
     return end;
 }
 
 void TxFs::File::writePages(const uint8_t* begin, const uint8_t* end)
 {
     DWORD bytesWritten;
-    for (; (begin+BlockSize) < end; begin += BlockSize)
+    for (; (begin + BlockSize) < end; begin += BlockSize)
         Win32::WriteFile(m_handle, begin, BlockSize, &bytesWritten, nullptr);
 
     Win32::WriteFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesWritten, nullptr);
@@ -207,7 +213,7 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
 void File::readPages(uint8_t* begin, uint8_t* end) const
 {
     DWORD bytesRead;
-    for (; (begin+BlockSize)<end; begin+=BlockSize)
+    for (; (begin + BlockSize) < end; begin += BlockSize)
         Win32::ReadFile(m_handle, begin, BlockSize, &bytesRead, nullptr);
 
     Win32::ReadFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesRead, nullptr);
@@ -259,4 +265,3 @@ std::filesystem::path File::getFileName() const
 
     return buffer;
 }
-

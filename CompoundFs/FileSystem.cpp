@@ -62,7 +62,7 @@ std::optional<ReadHandle> FileSystem::readFile(Path path)
     return ReadHandle { m_nextHandle++ };
 }
 
-std::optional<uint64_t> FileSystem::fileSize(Path path)
+std::optional<uint64_t> FileSystem::fileSize(Path path) const
 {
     if (!path.reduce(&m_directoryStructure))
         return std::nullopt;

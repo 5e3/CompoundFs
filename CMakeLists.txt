@@ -44,7 +44,7 @@ if(NOT googletest_POPULATED)
 endif()
 
 #------------------------------------------------------------------------------
-
+if (WIN32)
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11
@@ -57,6 +57,7 @@ if(NOT pybind11_POPULATED)
   add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
   #add_library(pybind11 INTERFACE)
   #target_include_directories(pybind11 INTERFACE .)
+endif()
 endif()
 
 #------------------------------------------------------------------------------

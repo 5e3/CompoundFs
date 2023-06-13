@@ -26,7 +26,7 @@ public:
     std::optional<WriteHandle> createFile(Path path);
     std::optional<WriteHandle> appendFile(Path path);
     std::optional<ReadHandle> readFile(Path path);
-    std::optional<uint64_t> fileSize(Path path);
+    std::optional<uint64_t> fileSize(Path path) const;
 
     size_t read(ReadHandle file, void* ptr, size_t size);
     size_t write(WriteHandle file, const void* ptr, size_t size);
