@@ -18,9 +18,6 @@ add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)
 add_subdirectory(Sandbox)
 
-
-
-
 source_group("" FILES 
 	.clang-format
 	.gitignore
@@ -96,7 +93,9 @@ endif()
 #set_target_properties(gtest gtest_main lz4_static lz4cli xxhash PROPERTIES FOLDER External)
 set_target_properties(gtest gtest_main xxhash PROPERTIES FOLDER External)
 
+if(WIN32)
 add_subdirectory(PythonBindings)
+endif()
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
 
