@@ -79,7 +79,12 @@ std::pair<size_t, size_t> PageAllocator::trim()
 
 std::shared_ptr<uint8_t> PageAllocator::allocBlock()
 {
-    uint8_t* block = (uint8_t*) ::VirtualAlloc(nullptr, m_pagesPerBlock * 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    // reserves the memory but allocates only on touch (when you start using it)
+    uint8_t* block = (uint8_t*) ::VirtualAlloc(nullptr, m_pagesPerBlock * 4096, MEM_COMMIT, PAGE_READWRITE);
+
+    // actually allocates the memory immediately 
+    //uint8_t* block = (uint8_t*) ::VirtualAlloc(nullptr, m_pagesPerBlock * 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
     if (block == nullptr)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "PageAllocator");
 
@@ -100,5 +105,8 @@ std::shared_ptr<uint8_t> PageAllocator::allocBlock()
 
 std::shared_ptr<uint8_t> PageAllocator::makePage(std::shared_ptr<uint8_t> block, uint8_t* page)
 {
+    // Note that m_freePage is a unique_ptr<> and the lambda uses the raw pointer to the vector<>
+    // which makes PageAllocator movable. The raw pointer to the vector<> after a move operation 
+    // is still the same.
     return std::shared_ptr<uint8_t>(page, [block,fp=m_freePages.get()](uint8_t* page) { fp->emplace_back(block, page); });
 }
