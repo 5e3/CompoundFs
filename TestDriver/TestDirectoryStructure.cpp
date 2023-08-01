@@ -94,11 +94,27 @@ TEST(DirectoryStructure, recursiveRemove2)
     ds.addAttribute(DirectoryKey(subFolder, "attrib"), "test");
     DirectoryKey dkey("subFolder");
     auto nof = ds.remove(dkey);
-    ASSERT_EQ(nof , 6);
+    ASSERT_EQ(nof, 6);
     ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub1")));
     ASSERT_TRUE(!ds.subFolder(DirectoryKey(subFolder, "subsub2")));
     ASSERT_TRUE(!ds.getAttribute(DirectoryKey(subFolder, "attrib")));
     ASSERT_TRUE(ds.subFolder(DirectoryKey(subFolder2, "subsub1")));
+}
+
+TEST(DirectoryStructure, recursiveRemoveReturnsNumOfDeletedItems)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto subFolder = ds.makeSubFolder(DirectoryKey("subFolder")).value();
+    for (int i = 0; i < 4; i++)
+    {
+        auto subSubFolder = ds.makeSubFolder(DirectoryKey(subFolder, std::to_string(i))).value();
+        for (int j = 0; j < 3; j++)
+            ds.addAttribute(DirectoryKey(subSubFolder, std::to_string(j)), "test");
+    }
+    DirectoryKey dkey("subFolder");
+    auto nof = ds.remove(dkey);
+    ASSERT_EQ(nof, 1+4+4*3);
 }
 
 TEST(DirectoryStructure, addGetAttribute)

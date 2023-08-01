@@ -131,10 +131,11 @@ size_t DirectoryStructure::remove(Folder folder)
     for (auto cursor = begin(folder); cursor; cursor = next(cursor))
         keysToDelete.emplace_back(cursor.m_cursor.key());
 
+    size_t numOfRemovedItems = 0;
     for (const auto& k: keysToDelete)
-        remove(k);
+        numOfRemovedItems += remove(k);
 
-    return keysToDelete.size();
+    return numOfRemovedItems;
 }
 
 size_t DirectoryStructure::remove(ByteStringView key)
