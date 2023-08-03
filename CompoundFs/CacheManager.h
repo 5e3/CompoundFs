@@ -40,8 +40,7 @@ public:
     PageDef<uint8_t> newPage();
     ConstPageDef<uint8_t> loadPage(PageIndex id);
     PageDef<uint8_t> repurpose(PageIndex index);
-    PageDef<uint8_t> makePageWritable(const ConstPageDef<uint8_t>& loadedPage) noexcept;
-    void setPageDirty(PageIndex id) noexcept;
+    template <typename TPage> PageDef<TPage> makePageWritable(const ConstPageDef<TPage>& loadedPage) noexcept;
     Interval allocatePageInterval(size_t maxPages) noexcept;
     size_t trim(uint32_t maxPages);
 
@@ -51,6 +50,7 @@ public:
     std::unique_ptr<FileInterface> handOverFile();
 
 private:
+    void setPageDirty(PageIndex id) noexcept;
     PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
     std::vector<PrioritizedPage> getUnpinnedPages() const;
 
@@ -73,6 +73,17 @@ inline void CacheManager::setPageIntervalAllocator(TCallable&& pageIntervalAlloc
 {
     m_pageIntervalAllocator = pageIntervalAllocator;
 }
+
+/// Transforms a const page into a writable page. CacheManager needs to know that pages written by a previous
+/// transaction are now about to be changed. Such pages are subject to the dirty-page protocol.
+template <typename TPage>
+inline PageDef<TPage> CacheManager::makePageWritable(const ConstPageDef<TPage>& loadedPage) noexcept
+{
+    setPageDirty(loadedPage.m_index);
+    return PageDef<TPage>(std::const_pointer_cast<TPage>(loadedPage.m_page), loadedPage.m_index);
+}
+
+
 
 
 }

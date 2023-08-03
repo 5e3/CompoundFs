@@ -34,8 +34,7 @@ public:
     template <typename TPage>
     PageDef<TPage> makePageWritable(const ConstPageDef<TPage>& loadedPage)
     {
-        m_cacheManager->setPageDirty(loadedPage.m_index);
-        return PageDef<TPage>(std::const_pointer_cast<TPage>(loadedPage.m_page), loadedPage.m_index);
+        return m_cacheManager->makePageWritable(loadedPage);
     }
 
     template <typename TPage, class... Ts>

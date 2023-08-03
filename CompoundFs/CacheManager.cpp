@@ -78,14 +78,6 @@ PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
     return PageDef<uint8_t>(it->second.m_page, origId);
 }
 
-/// Transforms a const page into a writable page. CacheManager needs to know that pages written by a previous
-/// transaction are now about to be changed. Such pages are subject to the dirty-page protocol.
-PageDef<uint8_t> CacheManager::makePageWritable(const ConstPageDef<uint8_t>& loadedPage) noexcept
-{
-    setPageDirty(loadedPage.m_index);
-    return PageDef<uint8_t>(std::const_pointer_cast<uint8_t>(loadedPage.m_page), loadedPage.m_index);
-}
-
 /// Marks that a page was changed: Pages previously read-in are marked dirty (which makes them follow the
 /// dirty-page protocoll). All other pages are treated as PageClass::New.
 void CacheManager::setPageDirty(PageIndex id) noexcept
