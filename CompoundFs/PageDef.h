@@ -17,17 +17,20 @@ struct ConstPageDef final
 
     constexpr ConstPageDef() noexcept
         : m_index(PageIdx::INVALID)
-    {}
+    {
+    }
 
     constexpr ConstPageDef(const PageDef<TPage>& pdef) noexcept
         : m_page(pdef.m_page)
         , m_index(pdef.m_index)
-    {}
+    {
+    }
 
     constexpr ConstPageDef(std::shared_ptr<const TPage> page, PageIndex index) noexcept
         : m_page(page)
         , m_index(index)
-    {}
+    {
+    }
 
     constexpr bool operator==(const ConstPageDef& rhs) const noexcept
     {
@@ -45,16 +48,19 @@ struct PageDef final
 
     constexpr PageDef() noexcept
         : m_index(PageIdx::INVALID)
-    {}
+    {
+    }
 
     constexpr PageDef(std::shared_ptr<TPage> page, PageIndex index) noexcept
         : m_page(page)
         , m_index(index)
-    {}
+    {
+    }
 
     constexpr bool operator==(const PageDef& rhs) const noexcept
     {
         return m_page == rhs.m_page && m_index == rhs.m_index;
     }
 };
+
 }
