@@ -8,6 +8,10 @@
 #include "CompoundFs/Path.h"
 #include "CompoundFs/RollbackHandler.h"
 #include "CompoundFs/FileIo.h"
+#include "CompoundFs/File.h"
+#include "CompoundFs/TempFile.h"
+
+#include <fstream>
 
 using namespace TxFs;
 
@@ -45,6 +49,22 @@ TEST(Composite, openDoesRollback)
     auto size = file->currentSize();
     auto fsys = Composite::open<WrappedFile>(file);
     ASSERT_LT(file->currentSize(), size);
+}
+
+TEST(Composite, openNonTxFsFileThrows)
+{
+    std::filesystem::path tmpFileName = Private::createTempFileName();
+    {
+        std::string data(1000, 'X');
+        std::ofstream out(tmpFileName.string().c_str());
+        out << data;
+    }
+
+    std::shared_ptr<FileInterface> file = std::make_shared<File>(tmpFileName, OpenMode::Open);
+    ASSERT_THROW(Composite::open<WrappedFile>(file), std::exception);
+
+    std::error_code ec;
+    std::filesystem::remove(tmpFileName, ec);
 }
 
 struct CompositeTester : ::testing::Test

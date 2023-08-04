@@ -173,19 +173,18 @@ const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
 
     posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
     auto end = page + (iv.length() * PageSize);
-    writePages(page, end);
+    writePagesInBlocks(page, end);
 
     return end;
 }
 
-void PosixFile::writePages(const uint8_t* begin, const uint8_t* end)
+void PosixFile::writePagesInBlocks(const uint8_t* begin, const uint8_t* end)
 {
     for (; (begin + BlockSize) < end; begin += BlockSize)
         posix::write(m_file, begin, BlockSize);
 
     posix::write(m_file, begin, unsigned(end-begin));
 }
-
 
 uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
@@ -195,8 +194,8 @@ uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, ui
         throw std::runtime_error("File::readPage outside file");
 
     posix::lseek(m_file, id * PageSize + pageOffset, SEEK_SET);
-    posix::read(m_file, begin, unsigned(end - begin));
-    return end;
+    int bytesRead = posix::read(m_file, begin, unsigned(end - begin));
+    return begin + bytesRead;
 }
 
 uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
@@ -206,23 +205,26 @@ uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
 
     posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
     auto end = page + (iv.length() * PageSize);
-    readPages(page, end);
+    size_t bytesRead = readPagesInBlocks(page, end);
 
-    return end;
+    return page + bytesRead;
 }
 
-void PosixFile::readPages(uint8_t* begin, uint8_t* end) const
+size_t PosixFile::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
 {
+    size_t bytesRead = 0;
     for (; (begin + BlockSize) < end; begin += BlockSize)
-        posix::read(m_file, begin, BlockSize);
+        bytesRead += posix::read(m_file, begin, BlockSize);
 
-    posix::read(m_file, begin, unsigned(end - begin));
+    bytesRead += posix::read(m_file, begin, unsigned(end - begin));
+    return bytesRead;
 }
-
 
 size_t PosixFile::currentSize() const
 {
-    return (size_t) posix::lseek(m_file, 0, SEEK_END) / PageSize;
+    auto bytes = posix::lseek(m_file, 0, SEEK_END);
+    bytes += PageSize - 1;
+    return bytes / PageSize; // pages rounded up
 }
 
 void PosixFile::flushFile()

@@ -170,12 +170,12 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
 
     Win32::Seek(m_handle, PageSize * iv.begin());
     auto end = page + (iv.length() * PageSize);
-    writePages(page, end);
+    writePagesInBlocks(page, end);
 
     return end;
 }
 
-void TxFs::File::writePages(const uint8_t* begin, const uint8_t* end)
+void TxFs::File::writePagesInBlocks(const uint8_t* begin, const uint8_t* end)
 {
     DWORD bytesWritten;
     for (; (begin + BlockSize) < end; begin += BlockSize)
@@ -195,7 +195,7 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
     DWORD bytesRead;
     Win32::ReadFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesRead, nullptr);
 
-    return end;
+    return begin + bytesRead;
 }
 
 uint8_t* File::readPages(Interval iv, uint8_t* page) const
@@ -205,26 +205,31 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
 
     Win32::Seek(m_handle, PageSize * iv.begin());
     auto end = page + (iv.length() * PageSize);
-    readPages(page, end);
+    size_t bytesRead = readPagesInBlocks(page, end);
 
-    return end;
+    return page + bytesRead;
 }
 
-void File::readPages(uint8_t* begin, uint8_t* end) const
+size_t File::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
 {
     DWORD bytesRead;
+    size_t totalBytesRead = 0;
     for (; (begin + BlockSize) < end; begin += BlockSize)
+    {
         Win32::ReadFile(m_handle, begin, BlockSize, &bytesRead, nullptr);
+        totalBytesRead += bytesRead;
+    }
 
     Win32::ReadFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesRead, nullptr);
+    return totalBytesRead + bytesRead;
 }
 
 size_t File::currentSize() const
 {
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
-
-    return static_cast<size_t>(size.QuadPart / PageSize);
+    size.QuadPart += PageSize - 1;
+    return static_cast<size_t>(size.QuadPart / PageSize); // pages rounded up
 }
 
 void File::flushFile()
