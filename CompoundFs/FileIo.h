@@ -19,7 +19,7 @@ struct SignedPage
     bool validateCheckSum() const 
     { 
         auto checkSum = hash32(m_data, sizeof(m_data));
-        return checkSum != m_checkSum;
+        return checkSum == m_checkSum;
     }
 };
 
@@ -30,7 +30,7 @@ inline bool testReadSignedPage(const FileInterface* fi, PageIndex idx, void* pag
     uint8_t* buffer = static_cast<uint8_t*>(page);
     fi->readPage(idx, 0, buffer, buffer + 4096);
     SignedPage* sp = static_cast<SignedPage*>(page);
-    return !sp->validateCheckSum();
+    return sp->validateCheckSum();
 }
 
 inline void readSignedPage(const FileInterface* fi, PageIndex idx, void* page)
