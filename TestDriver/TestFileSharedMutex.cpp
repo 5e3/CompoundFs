@@ -57,7 +57,7 @@ TEST(FileSharedMutex, throwOnInvalidHandle)
 
 TEST(FileSharedMutex, throwOnEmptyRange)
 {
-    File f = nullptr;
+    File f;
     FileSharedMutex fsm { f.m_handle, -2, -2 };
     ASSERT_THROW(fsm.try_lock(), std::exception);
 }
