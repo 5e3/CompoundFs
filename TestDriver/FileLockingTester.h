@@ -2,6 +2,8 @@
 #pragma once
 
 #include <gtest/gtest.h>
+#include <mutex>
+#include <shared_mutex>
 
 namespace TxFs
 {

@@ -10,6 +10,8 @@
 #include <shared_mutex>
 
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
 
