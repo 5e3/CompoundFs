@@ -41,7 +41,11 @@ struct File
     ~File() 
     { 
         ::CloseHandle(m_handle);
-        ::DeleteFile(m_path.c_str());
+        if (!m_path.empty())
+        {
+            std::error_code ec;
+            std::filesystem::remove(m_path, ec);
+        }
     }
 
     std::filesystem::path m_path;

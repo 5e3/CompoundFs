@@ -39,7 +39,10 @@ struct File
     { 
         ::close(m_handle);
         if (!m_path.empty())
-            std::filesystem::remove(m_path);
+        {
+            std::error_code ec;
+            std::filesystem::remove(m_path, ec);
+        }
     }
 
     std::filesystem::path m_path;
