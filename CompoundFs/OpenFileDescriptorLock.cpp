@@ -32,9 +32,11 @@ void OpenFileDescriptorLock::lock()
 bool OpenFileDescriptorLock::try_lock()
 {
     int ret = lockOperation(F_WRLCK, false);
-    if (ret == -1 && errno != EAGAIN)
+    if (ret != -1)
+        return true;
+    else if (errno != EAGAIN)
         throwException();
-    return true;
+    return false;
 }
 
 void OpenFileDescriptorLock::unlock()
@@ -52,9 +54,11 @@ void OpenFileDescriptorLock::lock_shared()
 bool OpenFileDescriptorLock::try_lock_shared()
 {
     int ret = lockOperation(F_RDLCK, false);
-    if (ret == -1 && errno != EAGAIN)
+    if (ret != -1)
+        return true;
+    else if (errno != EAGAIN)
         throwException();
-    return true;
+    return false;
 }
 
 void OpenFileDescriptorLock::unlock_shared()
