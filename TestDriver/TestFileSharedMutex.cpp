@@ -53,10 +53,10 @@ struct File
 };
 }
 
-TEST(FileSharedMutex, canWriteOnXLockedRange)
+TEST(FileLockWindows, canWriteOnXLockedRange)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, 0, -1 };
+    FileLockWindows fsm { f.m_handle, 0, -1 };
     fsm.lock();
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
@@ -64,10 +64,10 @@ TEST(FileSharedMutex, canWriteOnXLockedRange)
     ASSERT_EQ(res , 5);
 }
 
-TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
+TEST(FileLockWindows, cannotWriteOnSharedLockedRange)
 {
     File f;
-    FileSharedMutex fsm { f.m_handle, 0, -1 };
+    FileLockWindows fsm { f.m_handle, 0, -1 };
     fsm.lock_shared();
 
     int handle = _open_osfhandle((intptr_t) f.m_handle, 0);
@@ -75,13 +75,13 @@ TEST(FileSharedMutex, cannotWriteOnSharedLockedRange)
     ASSERT_EQ(res , -1);
 }
 
-TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
+TEST(FileLockWindows, othersCannotWriteOnLockedRange)
 {
     bool exclusive = true;
     do
     {
         File f;
-        FileSharedMutex fsm { f.m_handle, 0, -1 };
+        FileLockWindows fsm { f.m_handle, 0, -1 };
         if (exclusive)
             fsm.lock();
         else
@@ -101,7 +101,7 @@ namespace
     struct Helper
     {
         using File = File;
-        using FileLock = FileSharedMutex;
+        using FileLock = FileLockWindows;
     };
 }
 

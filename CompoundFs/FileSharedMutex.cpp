@@ -22,13 +22,13 @@ uint64_t rangeLength(std::pair<uint64_t, uint64_t> range)
 {
     auto len = range.second - range.first;
     if (!len)
-        throw std::range_error("FileSharedMutex empty range length.");
+        throw std::range_error("FileLockWindows empty range length.");
     return len;
 }
 
 }
 
-void FileSharedMutex::lock()
+void FileLockWindows::lock()
 {
     OVERLAPPED ol = toOverLapped(m_lockRange.first);
     auto len = rangeLength(m_lockRange);
@@ -38,7 +38,7 @@ void FileSharedMutex::lock()
         handleError();
 }
 
-bool FileSharedMutex::try_lock()
+bool FileLockWindows::try_lock()
 {
     OVERLAPPED ol = toOverLapped(m_lockRange.first);
     auto len = rangeLength(m_lockRange);
@@ -50,12 +50,12 @@ bool FileSharedMutex::try_lock()
     return succ != FALSE;
 }
 
-void FileSharedMutex::unlock()
+void FileLockWindows::unlock()
 {
     unlockFile();
 }
 
-void FileSharedMutex::lock_shared()
+void FileLockWindows::lock_shared()
 {
     OVERLAPPED ol = toOverLapped(m_lockRange.first);
     auto len = rangeLength(m_lockRange);
@@ -65,7 +65,7 @@ void FileSharedMutex::lock_shared()
         handleError();
 }
 
-bool FileSharedMutex::try_lock_shared()
+bool FileLockWindows::try_lock_shared()
 {
     OVERLAPPED ol = toOverLapped(m_lockRange.first);
     auto len = rangeLength(m_lockRange);
@@ -77,12 +77,12 @@ bool FileSharedMutex::try_lock_shared()
     return succ != FALSE;
 }
 
-void FileSharedMutex::unlock_shared()
+void FileLockWindows::unlock_shared()
 {
     unlockFile();
 }
 
-void FileSharedMutex::unlockFile()
+void FileLockWindows::unlockFile()
 {
     OVERLAPPED ol = toOverLapped(m_lockRange.first);
     auto len = rangeLength(m_lockRange);
@@ -91,7 +91,7 @@ void FileSharedMutex::unlockFile()
         handleError();
 }
 
-void FileSharedMutex::handleError()
+void FileLockWindows::handleError()
 {
-    throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileSharedMutex");
+    throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "FileLockWindows");
 }

@@ -45,7 +45,7 @@ private:
 private:
     void* m_handle;
     bool m_readOnly;
-    LockProtocol<FileSharedMutex, FileSharedMutex> m_lockProtocol;
+    LockProtocol<FileLockWindows, FileLockWindows> m_lockProtocol;
 };
 
 

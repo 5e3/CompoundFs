@@ -74,9 +74,9 @@ File::File(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
     , m_lockProtocol {
-        FileSharedMutex { handle, 0, MaxEndOfFile - 3 },
-        FileSharedMutex { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
-        FileSharedMutex { handle, MaxEndOfFile - 3, MaxEndOfFile - 2 },
+        FileLockWindows { handle, 0, MaxEndOfFile - 3 },
+        FileLockWindows { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
+        FileLockWindows { handle, MaxEndOfFile - 3, MaxEndOfFile - 2 },
     }
 {
 }

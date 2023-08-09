@@ -11,10 +11,10 @@ namespace TxFs
     /// Implements standard win32 file locking with a std::shared_lock interface.
     /// Note that windows file locking is mandatory. Read()/write() operations
     /// will fail if it contradicts the lock.
-    class FileSharedMutex final
+    class FileLockWindows final
     {
     public:
-        FileSharedMutex(void* handle, int64_t begin, int64_t end)
+        FileLockWindows(void* handle, int64_t begin, int64_t end)
             : m_fileHandle(handle)
             , m_lockRange(begin, end)
         {
