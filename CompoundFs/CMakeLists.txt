@@ -24,7 +24,7 @@ set (Sources
 if(WIN32)
 set (PlatformSources
 		File.cpp
-		FileSharedMutex.cpp
+		FileLockWindows.cpp
 )
 elseif(LINUX)
 set (PlatformSources
@@ -80,7 +80,7 @@ set (Headers
 if(WIN32)
 set (PlatformHeaders
 		File.h
-		FileSharedMutex.h
+		FileLockWindows.h
 )
 elseif(LINUX)
 set (PlatformHeaders

@@ -2,7 +2,7 @@
 
 #include "FileInterface.h"
 #include "LockProtocol.h"
-#include "FileSharedMutex.h"
+#include "FileLockWindows.h"
 #include "Lock.h"
 #include <filesystem>
 

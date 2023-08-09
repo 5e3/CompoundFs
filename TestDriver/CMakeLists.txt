@@ -33,7 +33,7 @@ set (Sources
 if(WIN32)
 set (PlatformSources
 		TestFile.cpp
-		TestFileSharedMutex.cpp
+		TestFileLockWindows.cpp
 )
 elseif(LINUX)
 set (PlatformSources
