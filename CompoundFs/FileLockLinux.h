@@ -13,10 +13,10 @@ namespace TxFs
     /// that we only discover non-conformance at run time. Note that OFD locks are
     /// advisory. One can still do any file operations despite the presence of a lock (no-
     /// thing gets enforced). 
-    class OpenFileDescriptorLock final
+    class FileLockLinux final
     {
     public:
-        OpenFileDescriptorLock(int handle, int64_t begin, int64_t end)
+        FileLockLinux(int handle, int64_t begin, int64_t end)
             : m_fileHandle(handle)
             , m_lockRange(begin, end)
         {

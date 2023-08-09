@@ -28,7 +28,7 @@ set (PlatformSources
 )
 elseif(LINUX)
 set (PlatformSources
-		OpenFileDescriptorLock.cpp
+		FileLockLinux.cpp
 )
 endif()
 
@@ -60,7 +60,7 @@ set (Headers
 		LogPage.h
 		MemoryFile.h
 		Node.h
-		OpenFileDescriptorLock.h
+		FileLockLinux.h
 		PageAllocator.h
 		PageDef.h
 		PageMetaData.h

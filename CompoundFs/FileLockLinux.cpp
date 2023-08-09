@@ -1,7 +1,7 @@
 
 #define _GNU_SOURCE // enable OFD locks
 
-#include "OpenFileDescriptorLock.h"
+#include "FileLockLinux.h"
 #include <string>
 #include <system_error>
 #include <unistd.h>
@@ -16,20 +16,20 @@ uint64_t rangeLength(std::pair<uint64_t, uint64_t> range)
 {
     auto len = range.second - range.first;
     if (!len)
-        throw std::range_error("OpenFileDescriptorLock empty range length.");
+        throw std::range_error("FileLockLinux empty range length.");
     return len;
 }
 
 }
 
-void OpenFileDescriptorLock::lock()
+void FileLockLinux::lock()
 {
     int ret = lockOperation(F_WRLCK, true);
     if (ret == -1)
         throwException();
 }
 
-bool OpenFileDescriptorLock::try_lock()
+bool FileLockLinux::try_lock()
 {
     int ret = lockOperation(F_WRLCK, false);
     if (ret != -1)
@@ -39,19 +39,19 @@ bool OpenFileDescriptorLock::try_lock()
     return false;
 }
 
-void OpenFileDescriptorLock::unlock()
+void FileLockLinux::unlock()
 {
     unlockFile();
 }
 
-void OpenFileDescriptorLock::lock_shared()
+void FileLockLinux::lock_shared()
 {
     int ret = lockOperation(F_RDLCK, true);
     if (ret == -1)
         throwException();
 }
 
-bool OpenFileDescriptorLock::try_lock_shared()
+bool FileLockLinux::try_lock_shared()
 {
     int ret = lockOperation(F_RDLCK, false);
     if (ret != -1)
@@ -61,24 +61,24 @@ bool OpenFileDescriptorLock::try_lock_shared()
     return false;
 }
 
-void OpenFileDescriptorLock::unlock_shared()
+void FileLockLinux::unlock_shared()
 {
     unlockFile();
 }
 
-void OpenFileDescriptorLock::unlockFile()
+void FileLockLinux::unlockFile()
 {
     int ret = lockOperation(F_UNLCK, false);
     if (ret == -1)
         throwException();
 }
 
-void OpenFileDescriptorLock::throwException()
+void FileLockLinux::throwException()
 {
     throw std::system_error(EDOM, std::system_category());
 }
 
-int OpenFileDescriptorLock::lockOperation(short lockOp, bool block)
+int FileLockLinux::lockOperation(short lockOp, bool block)
 {
     flock fl {};
     fl.l_type = lockOp;

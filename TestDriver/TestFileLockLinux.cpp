@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "CompoundFs/OpenFileDescriptorLock.h"
+#include "CompoundFs/FileLockLinux.h"
 #include "FileLockingTester.h"
 
 #include <filesystem>
