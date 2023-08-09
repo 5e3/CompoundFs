@@ -37,7 +37,7 @@ set (PlatformSources
 )
 elseif(LINUX)
 set (PlatformSources
-		TestOpenDescriptorLock.cpp
+		TestOpenFileDescriptorLock.cpp
 )
 endif()
 
