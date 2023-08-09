@@ -51,20 +51,32 @@ TEST(Composite, openDoesRollback)
     ASSERT_LT(file->currentSize(), size);
 }
 
+//TEST(Composite, openNonTxFsFileThrows)
+//{
+//    std::filesystem::path tmpFileName = Private::createTempFileName();
+//    {
+//        std::string data(1000, 'X');
+//        std::ofstream out(tmpFileName.string().c_str());
+//        out << data;
+//    }
+//
+//    std::shared_ptr<FileInterface> file = std::make_shared<File>(tmpFileName, OpenMode::Open);
+//    ASSERT_THROW(Composite::open<WrappedFile>(file), std::exception);
+//
+//    std::error_code ec;
+//    std::filesystem::remove(tmpFileName, ec);
+//}
+
 TEST(Composite, openNonTxFsFileThrows)
 {
-    std::filesystem::path tmpFileName = Private::createTempFileName();
+    std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
     {
-        std::string data(1000, 'X');
-        std::ofstream out(tmpFileName.string().c_str());
-        out << data;
+        ByteStringView data("12345");
+        file->newInterval(1);
+        file->writePage(0, 0, data.data(), data.end());
     }
 
-    std::shared_ptr<FileInterface> file = std::make_shared<File>(tmpFileName, OpenMode::Open);
     ASSERT_THROW(Composite::open<WrappedFile>(file), std::exception);
-
-    std::error_code ec;
-    std::filesystem::remove(tmpFileName, ec);
 }
 
 struct CompositeTester : ::testing::Test

@@ -37,6 +37,7 @@ set (PlatformSources
 )
 elseif(LINUX)
 set (PlatformSources
+		TestOpenDescriptorLock.cpp
 )
 endif()
 
@@ -44,6 +45,7 @@ set (Headers
 		DiskFileTester.h
 		MinimalTreeBuilder.h
 		FileInterfaceTester.h
+		FileLockingTester.h
 		FileSystemHelper.h
 	)
 	

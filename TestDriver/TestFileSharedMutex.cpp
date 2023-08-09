@@ -1,6 +1,7 @@
 
 #include <gtest/gtest.h>
 #include "CompoundFs/FileSharedMutex.h"
+#include "FileLockingTester.h"
 
 #include <filesystem>
 #include <cstdio>
@@ -48,20 +49,6 @@ struct File
 };
 }
 
-TEST(FileSharedMutex, throwOnInvalidHandle)
-{
-    File f = nullptr;
-    FileSharedMutex fsm { f.m_handle, -2, -1 };
-    ASSERT_THROW(fsm.try_lock(), std::exception);
-}
-
-TEST(FileSharedMutex, throwOnEmptyRange)
-{
-    File f;
-    FileSharedMutex fsm { f.m_handle, -2, -2 };
-    ASSERT_THROW(fsm.try_lock(), std::exception);
-}
-
 TEST(FileSharedMutex, canWriteOnXLockedRange)
 {
     File f;
@@ -105,26 +92,13 @@ TEST(FileSharedMutex, othersCannotWriteOnLockedRange)
     } while (exclusive == false);
 }
 
-TEST(FileSharedMutex, XLockPreventsOtherLocks)
+namespace
 {
-    File f;
-    FileSharedMutex fsm { f.m_handle, -2, -1 };
-    std::unique_lock lock(fsm);
-
-    File f2 = f;
-    FileSharedMutex fsm2 { f2.m_handle, -2, -1 };
-    ASSERT_TRUE(!fsm2.try_lock_shared());
-    ASSERT_TRUE(!fsm2.try_lock());
+    struct Helper
+    {
+        using File = File;
+        using FileLock = FileSharedMutex;
+    };
 }
 
-TEST(FileSharedMutex, SLockPreventsXLock)
-{
-    File f;
-    FileSharedMutex fsm { f.m_handle, -2, -1 };
-    std::shared_lock lock(fsm);
-
-    File f2 = f;
-    FileSharedMutex fsm2 { f2.m_handle, -2, -1 };
-    ASSERT_TRUE(!fsm2.try_lock());
-    ASSERT_TRUE(fsm2.try_lock_shared());
-}
+INSTANTIATE_TYPED_TEST_SUITE_P(WindowsFileLocking, FileLockingTester, Helper);
