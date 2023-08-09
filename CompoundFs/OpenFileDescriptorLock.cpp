@@ -20,21 +20,18 @@ uint64_t rangeLength(std::pair<uint64_t, uint64_t> range)
     return len;
 }
 
-enum class LockOp : uint16_t { WriteLock = F_WRLCK, ReadLock = F_RDLCK, Unlock = F_UNLCK };
-
-
 }
 
 void OpenFileDescriptorLock::lock()
 {
-    int ret = lockOperation(LockOp::WriteLock, true);
+    int ret = lockOperation(F_WRLCK, true);
     if (ret == -1)
         handleError();
 }
 
 bool OpenFileDescriptorLock::try_lock()
 {
-    int ret = lockOperation(LockOp::WriteLock, false);
+    int ret = lockOperation(F_WRLCK, false);
     if (ret == -1 && errno != EAGAIN)
         handleError();
     return errno != EAGAIN;
@@ -47,14 +44,14 @@ void OpenFileDescriptorLock::unlock()
 
 void OpenFileDescriptorLock::lock_shared()
 {
-    int ret = lockOperation(LockOp::ReadLock, true);
+    int ret = lockOperation(F_RDLCK, true);
     if (ret == -1)
         handleError();
 }
 
 bool OpenFileDescriptorLock::try_lock_shared()
 {
-    int ret = lockOperation(LockOp::ReadLock, false);
+    int ret = lockOperation(F_RDLCK, false);
     if (ret == -1 && errno != EAGAIN)
         handleError();
     return errno != EAGAIN;
@@ -67,7 +64,7 @@ void OpenFileDescriptorLock::unlock_shared()
 
 void OpenFileDescriptorLock::unlockFile()
 {
-    int ret = lockOperation(LockOp::Unlock, false);
+    int ret = lockOperation(F_UNLCK, false);
     if (ret == -1)
         handleError();
 }
@@ -77,10 +74,10 @@ void OpenFileDescriptorLock::handleError()
     throw std::system_error(EDOM, std::system_category());
 }
 
-int OpenFileDescriptorLock::lockOperation(LockOp lockOp, bool block)
+int OpenFileDescriptorLock::lockOperation(short lockOp, bool block)
 {
     flock fl {};
-    fl.l_type = (short) lockOp;
+    fl.l_type = lockOp;
     fl.l_whence = SEEK_SET;
 
     static_assert(sizeof(fl.l_start) == sizeof(int64_t));
