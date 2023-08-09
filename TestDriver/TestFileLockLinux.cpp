@@ -65,7 +65,7 @@ namespace
     struct Helper
     {
         using File = PhysicalFile;
-        using FileLock = OpenFileDescriptorLock;
+        using FileLock = FileLockLinux;
     };
 }
 
