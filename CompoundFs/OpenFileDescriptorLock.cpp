@@ -4,7 +4,7 @@
 #include "OpenFileDescriptorLock.h"
 #include <string>
 #include <system_error>
-#include <io.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 
