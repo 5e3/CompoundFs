@@ -9,7 +9,7 @@
 #include <mutex>
 #include <shared_mutex>
 
-#include <io.h>
+#include <unistd.h>
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
 
