@@ -19,7 +19,7 @@ TYPED_TEST_SUITE_P(FileLockingTester);
 TYPED_TEST_P(FileLockingTester, throwOnInvalidHandle)
 {
     typename TypeParam::File file = nullptr;  // not initialized
-    typename TypeParam::FileLock fl { file.m_handle, -2, -1 };
+    typename TypeParam::FileLock fl { file.m_handle, 0, 1 };
     ASSERT_THROW(fl.try_lock(), std::exception);
 }
 
@@ -33,11 +33,11 @@ TYPED_TEST_P(FileLockingTester, throwOnEmptyRange)
 TYPED_TEST_P(FileLockingTester, XLockPreventsOtherLocks)
 {
     typename TypeParam::File f;
-    typename TypeParam::FileLock fl { f.m_handle, -2, -1 };
+    typename TypeParam::FileLock fl { f.m_handle, 0, 1 };
     std::unique_lock lock(fl);
 
     typename TypeParam::File f2 = f;
-    typename TypeParam::FileLock fl2 { f2.m_handle, -2, -1 };
+    typename TypeParam::FileLock fl2 { f2.m_handle, 0, 1 };
     ASSERT_TRUE(!fl2.try_lock_shared());
     ASSERT_TRUE(!fl2.try_lock());
 }
@@ -45,12 +45,12 @@ TYPED_TEST_P(FileLockingTester, XLockPreventsOtherLocks)
 TYPED_TEST_P(FileLockingTester, SLockPreventsXLock)
 {
     typename TypeParam::File f;
-    typename TypeParam::FileLock fl { f.m_handle, -2, -1 };
+    typename TypeParam::FileLock fl { f.m_handle, 0, 1 };
     std::shared_lock lock(fl);
 
     typename TypeParam::File f2 = f;
-    typename TypeParam::FileLock fl2 { f2.m_handle, -2, -1 };
-    ASSERT_TRUE(!fl2.try_lock());
+    typename TypeParam::FileLock fl2 { f2.m_handle, 0, 1 };
+    ASSERT_TRUE(!fl2.try_lock());               
     ASSERT_TRUE(fl2.try_lock_shared());
 }
 
