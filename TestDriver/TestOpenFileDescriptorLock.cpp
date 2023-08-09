@@ -19,25 +19,25 @@ using namespace TxFs;
 
 namespace
 {
-struct File
+struct PhysicalFile
 {
-    File()
+    PhysicalFile()
         : m_path(std::filesystem::temp_directory_path() / std::tmpnam(nullptr))
         , m_handle(::open(m_path.c_str(), O_CREAT | O_RDWR | O_TRUNC, 0666))
     {
     }
 
-    File(const File& f)
+    PhysicalFile(const PhysicalFile& f)
         : m_path(f.m_path)
         , m_handle(::open(m_path.c_str(), O_CREAT | O_RDWR, 0666))
     {
     }
 
-    File(nullptr_t)
+    PhysicalFile(std::nullptr_t)
         : m_handle(-1)
     {
     }
-    ~File() 
+    ~PhysicalFile() 
     { 
         ::close(m_handle);
         if (!m_path.empty())
@@ -54,7 +54,7 @@ struct File
 
 TEST(OpenFileDescriptorLock, throwOnInvalidHandle)
 {
-    //File f = nullptr;
+    //PhysicalFile f = nullptr;
     //FileSharedMutex fsm { f.m_handle, -2, -1 };
     //ASSERT_THROW(fsm.try_lock(), std::exception);
 }
@@ -64,7 +64,7 @@ namespace
 {
     struct Helper
     {
-        using File = File;
+        using File = PhysicalFile;
         using FileLock = OpenFileDescriptorLock;
     };
 }
