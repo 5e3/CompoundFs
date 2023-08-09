@@ -32,7 +32,7 @@ namespace TxFs
         void unlock_shared();
 
     private:
-        void handleError();
+        void throwException();
         int lockOperation(short type, bool block);
         void unlockFile();
 

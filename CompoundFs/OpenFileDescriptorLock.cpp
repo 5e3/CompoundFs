@@ -26,15 +26,15 @@ void OpenFileDescriptorLock::lock()
 {
     int ret = lockOperation(F_WRLCK, true);
     if (ret == -1)
-        handleError();
+        throwException();
 }
 
 bool OpenFileDescriptorLock::try_lock()
 {
     int ret = lockOperation(F_WRLCK, false);
     if (ret == -1 && errno != EAGAIN)
-        handleError();
-    return errno != EAGAIN;
+        throwException();
+    return true;
 }
 
 void OpenFileDescriptorLock::unlock()
@@ -46,15 +46,15 @@ void OpenFileDescriptorLock::lock_shared()
 {
     int ret = lockOperation(F_RDLCK, true);
     if (ret == -1)
-        handleError();
+        throwException();
 }
 
 bool OpenFileDescriptorLock::try_lock_shared()
 {
     int ret = lockOperation(F_RDLCK, false);
     if (ret == -1 && errno != EAGAIN)
-        handleError();
-    return errno != EAGAIN;
+        throwException();
+    return true;
 }
 
 void OpenFileDescriptorLock::unlock_shared()
@@ -66,10 +66,10 @@ void OpenFileDescriptorLock::unlockFile()
 {
     int ret = lockOperation(F_UNLCK, false);
     if (ret == -1)
-        handleError();
+        throwException();
 }
 
-void OpenFileDescriptorLock::handleError()
+void OpenFileDescriptorLock::throwException()
 {
     throw std::system_error(EDOM, std::system_category());
 }
