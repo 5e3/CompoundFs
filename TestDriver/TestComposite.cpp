@@ -8,7 +8,7 @@
 #include "CompoundFs/Path.h"
 #include "CompoundFs/RollbackHandler.h"
 #include "CompoundFs/FileIo.h"
-#include "CompoundFs/File.h"
+#include "CompoundFs/WindowsFile.h"
 #include "CompoundFs/TempFile.h"
 
 #include <fstream>
@@ -19,7 +19,7 @@ TEST(Composite, EmptyFileGetsInitialzed)
 {
     std::shared_ptr<FileInterface> file = std::make_shared<MemoryFile>();
     Composite::open<WrappedFile>(file);
-    ASSERT_GT(file->currentSize(), 0U);
+    ASSERT_GT(file->fileSizeInPages(), 0U);
 }
 
 TEST(Composite, canReopenFile)
@@ -46,26 +46,10 @@ TEST(Composite, openDoesRollback)
         // no commit()
     }
 
-    auto size = file->currentSize();
+    auto size = file->fileSizeInPages();
     auto fsys = Composite::open<WrappedFile>(file);
-    ASSERT_LT(file->currentSize(), size);
+    ASSERT_LT(file->fileSizeInPages(), size);
 }
-
-//TEST(Composite, openNonTxFsFileThrows)
-//{
-//    std::filesystem::path tmpFileName = Private::createTempFileName();
-//    {
-//        std::string data(1000, 'X');
-//        std::ofstream out(tmpFileName.string().c_str());
-//        out << data;
-//    }
-//
-//    std::shared_ptr<FileInterface> file = std::make_shared<File>(tmpFileName, OpenMode::Open);
-//    ASSERT_THROW(Composite::open<WrappedFile>(file), std::exception);
-//
-//    std::error_code ec;
-//    std::filesystem::remove(tmpFileName, ec);
-//}
 
 TEST(Composite, openNonTxFsFileThrows)
 {
@@ -121,9 +105,9 @@ TEST_F(CompositeTester, commitedDeletedSpaceGetsReused)
     }
 
     auto fsys = Composite::open<WrappedFile>(m_file);
-    auto size = m_file->currentSize();
+    auto size = m_file->fileSizeInPages();
     makeFile(fsys, "testFile");
-    ASSERT_EQ(size, m_file->currentSize());
+    ASSERT_EQ(size, m_file->fileSizeInPages());
 }
 
 TEST_F(CompositeTester, maxFolderIdGetsWrittenOnCommit)
@@ -140,8 +124,8 @@ TEST_F(CompositeTester, findAllEntriesAfterRootPageOverflow)
     {
         auto fsys = Composite::open<WrappedFile>(m_file);
 
-        auto csize = m_file->currentSize();
-        while (csize == m_file->currentSize())
+        auto csize = m_file->fileSizeInPages();
+        while (csize == m_file->fileSizeInPages())
         {
             auto data = std::to_string(i++);
             fsys.addAttribute(Path(data), i);
@@ -166,8 +150,8 @@ TEST_F(CompositeTester, findAllEntriesAfterRootPageUnderflow)
         fsys.commit();
 
         // overflow btree
-        auto csize = m_file->currentSize();
-        while (csize == m_file->currentSize())
+        auto csize = m_file->fileSizeInPages();
+        while (csize == m_file->fileSizeInPages())
         {
             auto data = std::to_string(i++);
             fsys.addAttribute(Path(data), i);
@@ -199,14 +183,14 @@ TEST_F(CompositeTester, treeSpaceGetsReused)
         fsys.remove("test");
         fsys.commit();
 
-        csize = m_file->currentSize();
-        while (csize == m_file->currentSize())
+        csize = m_file->fileSizeInPages();
+        while (csize == m_file->fileSizeInPages())
         {
             auto data = std::to_string(i++);
             fsys.addAttribute(Path(data), data);
         }
         fsys.commit();
-        csize = m_file->currentSize();
+        csize = m_file->fileSizeInPages();
         for (uint64_t j = 0; j < i; j++)
             ASSERT_EQ(fsys.remove(Path(std::to_string(j))), 1);
         fsys.commit();
@@ -218,7 +202,7 @@ TEST_F(CompositeTester, treeSpaceGetsReused)
         auto data = std::to_string(j++);
         fsys.addAttribute(Path(data), data);
     }
-    ASSERT_EQ(m_file->currentSize(), csize);
+    ASSERT_EQ(m_file->fileSizeInPages(), csize);
 }
 
 struct CrashCommitFile : WrappedFile
@@ -236,7 +220,7 @@ struct CrashCommitFile : WrappedFile
 
     void truncate(size_t numberOfPages) override
     {
-        if (currentSize() != numberOfPages)
+        if (fileSizeInPages() != numberOfPages)
             throw Exception();
         WrappedFile::truncate(numberOfPages);
     }

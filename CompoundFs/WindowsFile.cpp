@@ -1,6 +1,6 @@
 
 
-#include "File.h"
+#include "WindowsFile.h"
 #include "windows.h"
 
 #include <utility>
@@ -16,13 +16,13 @@ namespace Win32
 void throwOnError(BOOL succ)
 {
     if (!succ)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "WindowsFile::OS_Call");
 }
 
 void throwOnError(HANDLE handle)
 {
     if (handle == INVALID_HANDLE_VALUE)
-        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "File::OS_Call");
+        throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "WindowsFile::OS_Call");
 }
 
 template <typename TRet, typename... TArgs>
@@ -59,18 +59,18 @@ constexpr int64_t MaxEndOfFile = 0LL;
 constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 }
 
-File::File()
-    : File(INVALID_HANDLE_VALUE, false)
+WindowsFile::WindowsFile()
+    : WindowsFile(INVALID_HANDLE_VALUE, false)
 {
 }
 
-File::File(File&& other) noexcept
-    : File(other.m_handle, other.m_readOnly)
+WindowsFile::WindowsFile(WindowsFile&& other) noexcept
+    : WindowsFile(other.m_handle, other.m_readOnly)
 {
     other.m_handle = INVALID_HANDLE_VALUE;
 }
 
-File::File(void* handle, bool readOnly)
+WindowsFile::WindowsFile(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
     , m_lockProtocol {
@@ -81,12 +81,12 @@ File::File(void* handle, bool readOnly)
 {
 }
 
-File::File(std::filesystem::path path, OpenMode mode)
-    : File(open(path, mode), mode == OpenMode::ReadOnly)
+WindowsFile::WindowsFile(std::filesystem::path path, OpenMode mode)
+    : WindowsFile(open(path, mode), mode == OpenMode::ReadOnly)
 {
 }
 
-File& File::operator=(File&& other) noexcept
+WindowsFile& WindowsFile::operator=(WindowsFile&& other) noexcept
 {
     close();
     m_handle = other.m_handle;
@@ -96,12 +96,12 @@ File& File::operator=(File&& other) noexcept
     return *this;
 }
 
-File::~File()
+WindowsFile::~WindowsFile()
 {
     close();
 }
 
-void File::close()
+void WindowsFile::close()
 {
     if (m_handle != INVALID_HANDLE_VALUE)
     {
@@ -111,7 +111,7 @@ void File::close()
     m_handle = INVALID_HANDLE_VALUE;
 }
 
-void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
+void* TxFs::WindowsFile::open(std::filesystem::path path, OpenMode mode)
 {
     void* handle = nullptr;
     switch (mode)
@@ -132,13 +132,13 @@ void* TxFs::File::open(std::filesystem::path path, OpenMode mode)
              break;
 
     default:
-        throw std::runtime_error("File::open(): unknown OpenMode");
+        throw std::runtime_error("WindowsFile::open(): unknown OpenMode");
     }
 
     return handle;
 }
 
-Interval File::newInterval(size_t maxPages)
+Interval WindowsFile::newInterval(size_t maxPages)
 {
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
@@ -149,12 +149,12 @@ Interval File::newInterval(size_t maxPages)
                     static_cast<PageIndex>(size.QuadPart / PageSize + maxPages));
 }
 
-const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
+const uint8_t* WindowsFile::writePage(PageIndex id, size_t pageOffset, const uint8_t* begin, const uint8_t* end)
 {
     if (pageOffset + (end - begin) > PageSize)
-        throw std::runtime_error("File::writePage over page boundary");
-    if (currentSize() <= id)
-        throw std::runtime_error("File::writePage outside file");
+        throw std::runtime_error("WindowsFile::writePage over page boundary");
+    if (fileSizeInPages() <= id)
+        throw std::runtime_error("WindowsFile::writePage outside file");
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
     DWORD bytesWritten;
@@ -163,10 +163,10 @@ const uint8_t* File::writePage(PageIndex id, size_t pageOffset, const uint8_t* b
     return end;
 }
 
-const uint8_t* File::writePages(Interval iv, const uint8_t* page)
+const uint8_t* WindowsFile::writePages(Interval iv, const uint8_t* page)
 {
-    if (currentSize() < iv.end())
-        throw std::runtime_error("File::writePages outside file");
+    if (fileSizeInPages() < iv.end())
+        throw std::runtime_error("WindowsFile::writePages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
     auto end = page + (iv.length() * PageSize);
@@ -175,7 +175,7 @@ const uint8_t* File::writePages(Interval iv, const uint8_t* page)
     return end;
 }
 
-void TxFs::File::writePagesInBlocks(const uint8_t* begin, const uint8_t* end)
+void TxFs::WindowsFile::writePagesInBlocks(const uint8_t* begin, const uint8_t* end)
 {
     DWORD bytesWritten;
     for (; (begin + BlockSize) < end; begin += BlockSize)
@@ -184,12 +184,12 @@ void TxFs::File::writePagesInBlocks(const uint8_t* begin, const uint8_t* end)
     Win32::WriteFile(m_handle, begin, static_cast<DWORD>(end - begin), &bytesWritten, nullptr);
 }
 
-uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
+uint8_t* WindowsFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t* end) const
 {
     if (pageOffset + (end - begin) > PageSize)
-        throw std::runtime_error("File::readPage over page boundary");
-    if (currentSize() <= id)
-        throw std::runtime_error("File::readPage outside file");
+        throw std::runtime_error("WindowsFile::readPage over page boundary");
+    if (fileSizeInPages() <= id)
+        throw std::runtime_error("WindowsFile::readPage outside file");
 
     Win32::Seek(m_handle, PageSize * id + pageOffset);
     DWORD bytesRead;
@@ -198,10 +198,10 @@ uint8_t* File::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, uint8_t
     return begin + bytesRead;
 }
 
-uint8_t* File::readPages(Interval iv, uint8_t* page) const
+uint8_t* WindowsFile::readPages(Interval iv, uint8_t* page) const
 {
-    if (currentSize() < iv.end())
-        throw std::runtime_error("File::readPages outside file");
+    if (fileSizeInPages() < iv.end())
+        throw std::runtime_error("WindowsFile::readPages outside file");
 
     Win32::Seek(m_handle, PageSize * iv.begin());
     auto end = page + (iv.length() * PageSize);
@@ -210,7 +210,7 @@ uint8_t* File::readPages(Interval iv, uint8_t* page) const
     return page + bytesRead;
 }
 
-size_t File::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
+size_t WindowsFile::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
 {
     DWORD bytesRead;
     size_t totalBytesRead = 0;
@@ -224,7 +224,7 @@ size_t File::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
     return totalBytesRead + bytesRead;
 }
 
-size_t File::currentSize() const
+size_t WindowsFile::fileSizeInPages() const
 {
     LARGE_INTEGER size;
     Win32::GetFileSizeEx(m_handle, &size);
@@ -232,38 +232,38 @@ size_t File::currentSize() const
     return static_cast<size_t>(size.QuadPart / PageSize); // pages rounded up
 }
 
-void File::flushFile()
+void WindowsFile::flushFile()
 {
     Win32::FlushFileBuffers(m_handle);
 }
 
-void File::truncate(size_t numberOfPages)
+void WindowsFile::truncate(size_t numberOfPages)
 {
     Win32::Seek(m_handle, PageSize * numberOfPages);
     Win32::SetEndOfFile(m_handle);
 }
 
-Lock File::defaultAccess()
+Lock WindowsFile::defaultAccess()
 {
     return m_readOnly ? readAccess() : writeAccess();
 }
 
-Lock File::readAccess()
+Lock WindowsFile::readAccess()
 {
     return m_lockProtocol.readAccess();
 }
 
-Lock File::writeAccess()
+Lock WindowsFile::writeAccess()
 {
     return m_lockProtocol.writeAccess();
 }
 
-CommitLock File::commitAccess(Lock&& writeLock)
+CommitLock WindowsFile::commitAccess(Lock&& writeLock)
 {
     return m_lockProtocol.commitAccess(std::move(writeLock));
 }
 
-std::filesystem::path File::getFileName() const
+std::filesystem::path WindowsFile::getFileName() const
 {
     std::wstring buffer(1028, 0);
     Win32::GetFinalPathNameByHandle(m_handle, buffer.data(), static_cast<DWORD>(buffer.size()), VOLUME_NAME_DOS);

@@ -158,7 +158,7 @@ const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8
 {
     if (pageOffset + (end - begin) > PageSize)
         throw std::runtime_error("File::writePage over page boundary");
-    if (currentSize() <= id)
+    if (fileSizeInPages() <= id)
         throw std::runtime_error("File::writePage outside file");
 
     posix::lseek(m_file, id * PageSize + pageOffset, SEEK_SET);
@@ -168,7 +168,7 @@ const uint8_t* PosixFile::writePage(PageIndex id, size_t pageOffset, const uint8
 
 const uint8_t* PosixFile::writePages(Interval iv, const uint8_t* page)
 {
-    if (currentSize() < iv.end())
+    if (fileSizeInPages() < iv.end())
         throw std::runtime_error("File::writePages outside file");
 
     posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
@@ -190,7 +190,7 @@ uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, ui
 {
     if (pageOffset + (end - begin) > PageSize)
         throw std::runtime_error("File::readPage over page boundary");
-    if (currentSize() <= id)
+    if (fileSizeInPages() <= id)
         throw std::runtime_error("File::readPage outside file");
 
     posix::lseek(m_file, id * PageSize + pageOffset, SEEK_SET);
@@ -200,7 +200,7 @@ uint8_t* PosixFile::readPage(PageIndex id, size_t pageOffset, uint8_t* begin, ui
 
 uint8_t* PosixFile::readPages(Interval iv, uint8_t* page) const
 {
-    if (currentSize() < iv.end())
+    if (fileSizeInPages() < iv.end())
         throw std::runtime_error("File::readPages outside file");
 
     posix::lseek(m_file, iv.begin() * PageSize, SEEK_SET);
@@ -220,7 +220,7 @@ size_t PosixFile::readPagesInBlocks(uint8_t* begin, uint8_t* end) const
     return bytesRead;
 }
 
-size_t PosixFile::currentSize() const
+size_t PosixFile::fileSizeInPages() const
 {
     auto bytes = posix::lseek(m_file, 0, SEEK_END);
     bytes += PageSize - 1;

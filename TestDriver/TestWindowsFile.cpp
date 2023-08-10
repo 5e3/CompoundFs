@@ -4,7 +4,7 @@
 #include "DiskFileTester.h"
 #include "FileInterfaceTester.h"
 
-#include "CompoundFs/File.h"
+#include "CompoundFs/WindowsFile.h"
 #include "CompoundFs/TempFile.h"
 #include "CompoundFs/ByteString.h"
 
@@ -13,10 +13,10 @@
 using namespace TxFs;
 
 
-TEST(File, canWriteOnWriteLockedFile)
+TEST(WindowsFile, canWriteOnWriteLockedFile)
 {
-    auto wfile = TempFile<File>();
-    auto rfile = File(wfile.getFileName(), OpenMode::ReadOnly);
+    auto wfile = TempFile<WindowsFile>();
+    auto rfile = WindowsFile(wfile.getFileName(), OpenMode::ReadOnly);
     auto rlock = rfile.defaultAccess();
     auto wlock = wfile.defaultAccess();
     wfile.newInterval(5);
@@ -24,10 +24,10 @@ TEST(File, canWriteOnWriteLockedFile)
     ASSERT_NO_THROW(wfile.writePage(1, 0, out.data(), out.end()));
 }
 
-TEST(File, canReadFromWriteLockedFile)
+TEST(WindowsFile, canReadFromWriteLockedFile)
 {
-    auto wfile = TempFile<File>();
-    auto rfile = File(wfile.getFileName(), OpenMode::ReadOnly);
+    auto wfile = TempFile<WindowsFile>();
+    auto rfile = WindowsFile(wfile.getFileName(), OpenMode::ReadOnly);
     auto rlock = rfile.defaultAccess();
     auto wlock = wfile.defaultAccess();
     wfile.newInterval(5);
@@ -37,6 +37,6 @@ TEST(File, canReadFromWriteLockedFile)
     rfile.readPage(1, 0, buf, buf + sizeof(buf));
 }
 
-INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, DiskFileTester, File);
+INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, DiskFileTester, WindowsFile);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, FileInterfaceTester, TempFile<File>);
+INSTANTIATE_TYPED_TEST_SUITE_P(WinFile, FileInterfaceTester, TempFile<WindowsFile>);

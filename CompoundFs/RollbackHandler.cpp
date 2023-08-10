@@ -23,7 +23,7 @@ void RollbackHandler::rollback(size_t compositeSize)
     m_cache.m_pageCache.clear();
     m_cache.m_newPageIds.clear();
     m_cache.m_divertedPageIds.clear();
-    assert(compositeSize <= m_cache.file()->currentSize());
+    assert(compositeSize <= m_cache.file()->fileSizeInPages());
     m_cache.m_fileInterface->truncate(compositeSize);
 }
 
@@ -37,7 +37,7 @@ void RollbackHandler::virtualRevertPartialCommit()
 std::vector<std::pair<PageIndex, PageIndex>> RollbackHandler::readLogs() const
 {
     std::vector<std::pair<PageIndex, PageIndex>> res;
-    auto size = m_cache.m_fileInterface->currentSize();
+    auto size = m_cache.m_fileInterface->fileSizeInPages();
     if (!size)
         return res;
 

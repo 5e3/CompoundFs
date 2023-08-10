@@ -60,7 +60,7 @@ TYPED_TEST_P(DiskFileTester, createTruncatesFile)
     TypeParam file(this->m_tempFileName, OpenMode::Create);
     file.newInterval(5);
     file = TypeParam(this->m_tempFileName, OpenMode::Create);
-    ASSERT_EQ(file.currentSize(), 0);
+    ASSERT_EQ(file.fileSizeInPages(), 0);
     file = TypeParam();
 }
 
@@ -79,7 +79,7 @@ TYPED_TEST_P(DiskFileTester, uninitializedFileThrows)
 {
     TypeParam file;
     ASSERT_THROW(file.newInterval(2), std::exception);
-    ASSERT_THROW(file.currentSize(), std::exception);
+    ASSERT_THROW(file.fileSizeInPages(), std::exception);
     ASSERT_THROW(file.flushFile(), std::exception);
     ASSERT_THROW(file.truncate(0), std::exception);
     ASSERT_THROW(file.readAccess(), std::exception);
@@ -119,7 +119,7 @@ TYPED_TEST_P(DiskFileTester, nonEmptyFileReportsRoundedupSize)
 {
     this->prepareFileWithContents("1234");
     TypeParam file(this->m_tempFileName, OpenMode::Open);
-    ASSERT_EQ(file.currentSize(), 1); // char[4] rounded up => 1 page
+    ASSERT_EQ(file.fileSizeInPages(), 1); // char[4] rounded up => 1 page
 }
 
 TYPED_TEST_P(DiskFileTester, readPageOverEndOfFileReturnsBufferPosition)

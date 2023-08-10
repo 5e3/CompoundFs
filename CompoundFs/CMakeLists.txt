@@ -23,7 +23,7 @@ set (Sources
 
 if(WIN32)
 set (PlatformSources
-		File.cpp
+		WindowsFile.cpp
 		FileLockWindows.cpp
 )
 elseif(LINUX)
@@ -79,7 +79,7 @@ set (Headers
 	
 if(WIN32)
 set (PlatformHeaders
-		File.h
+		WindowsFile.h
 		FileLockWindows.h
 )
 elseif(LINUX)

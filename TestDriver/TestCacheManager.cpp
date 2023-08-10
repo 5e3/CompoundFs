@@ -218,7 +218,7 @@ TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
         *p = i + 20;
     }
     cm.trim(0);
-    ASSERT_EQ(cm.getFileInterface()->currentSize() , 20);
+    ASSERT_EQ(cm.getFileInterface()->fileSizeInPages() , 20);
 
     for (int i = 0; i < 10; i++)
     {

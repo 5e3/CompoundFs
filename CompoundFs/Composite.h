@@ -17,7 +17,7 @@ public:
     static FileSystem open(TArgs&&... args)
     {
         std::unique_ptr<FileInterface> file = std::make_unique<TFile>(std::forward<TArgs>(args)...);
-        if (file->currentSize() == 0)
+        if (file->fileSizeInPages() == 0)
             return initializeNew(std::move(file));
 
         return initializeExisting(std::move(file));

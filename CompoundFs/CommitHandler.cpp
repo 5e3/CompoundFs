@@ -29,7 +29,7 @@ void CommitHandler::commit()
         return;
     }
 
-    auto fileSize = m_cache.m_fileInterface->currentSize();
+    auto fileSize = m_cache.m_fileInterface->fileSizeInPages();
     {
         // order the file writes: make sure the copies are visible before the Logs
         auto origToCopyPages = copyDirtyPages(dirtyPageIds);
@@ -160,5 +160,5 @@ bool CommitHandler::empty() const
 
 size_t CommitHandler::getCompositeSize() const
 {
-    return m_cache.m_fileInterface->currentSize();
+    return m_cache.m_fileInterface->fileSizeInPages();
 }

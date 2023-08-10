@@ -32,7 +32,7 @@ set (Sources
 	
 if(WIN32)
 set (PlatformSources
-		TestFile.cpp
+		TestWindowsFile.cpp
 		TestFileLockWindows.cpp
 )
 elseif(LINUX)

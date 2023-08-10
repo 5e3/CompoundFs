@@ -63,11 +63,11 @@ void MemoryFile::flushFile()
 
 void MemoryFile::truncate(size_t numberOfPages)
 {
-    assert(numberOfPages <= currentSize());
+    assert(numberOfPages <= fileSizeInPages());
     m_file.resize(numberOfPages);
 }
 
-size_t MemoryFile::currentSize() const
+size_t MemoryFile::fileSizeInPages() const
 {
     return m_file.size();
 }

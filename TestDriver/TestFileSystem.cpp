@@ -216,11 +216,11 @@ TEST_F(FileSystemTester, afterCommitItemsStillAvailable)
 
 TEST_F(FileSystemTester, writingDataIncreasesCompositSize)
 {
-    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    auto compositSize = m_cacheManager->getFileInterface()->fileSizeInPages();
     auto handle = *m_fileSystem.createFile("test3.txt");
     m_fileSystem.write(handle, m_helper.m_fileData.data(), m_helper.m_fileData.size());
     m_fileSystem.close(handle);
-    ASSERT_GT(m_cacheManager->getFileInterface()->currentSize(), compositSize);
+    ASSERT_GT(m_cacheManager->getFileInterface()->fileSizeInPages(), compositSize);
 }
 
 TEST_F(FileSystemTester, rollbackRemovesAllEntries)
@@ -233,9 +233,9 @@ TEST_F(FileSystemTester, rollbackRemovesAllEntries)
 
 TEST_F(FileSystemTester, rollbackReducesCompositSize)
 {
-    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    auto compositSize = m_cacheManager->getFileInterface()->fileSizeInPages();
     m_fileSystem.rollback();
-    ASSERT_LT(m_cacheManager->getFileInterface()->currentSize(), compositSize);
+    ASSERT_LT(m_cacheManager->getFileInterface()->fileSizeInPages(), compositSize);
 }
 
 TEST_F(FileSystemTester, rollbackMakesDeletedItemsReapear)
@@ -255,10 +255,10 @@ TEST_F(FileSystemTester, commitedDeletedSpaceGetsReused)
     m_fileSystem.commit();
     m_fileSystem.remove("test");
     m_fileSystem.commit();
-    auto compositSize = m_cacheManager->getFileInterface()->currentSize();
+    auto compositSize = m_cacheManager->getFileInterface()->fileSizeInPages();
     auto handle = *m_fileSystem.createFile("test3.txt");
     m_fileSystem.write(handle, m_helper.m_fileData.data(), m_helper.m_fileData.size());
-    ASSERT_EQ(m_cacheManager->getFileInterface()->currentSize(), compositSize);
+    ASSERT_EQ(m_cacheManager->getFileInterface()->fileSizeInPages(), compositSize);
 }
 
 TEST_F(FileSystemTester, treeSpaceGetsReused)
@@ -266,14 +266,14 @@ TEST_F(FileSystemTester, treeSpaceGetsReused)
     m_fileSystem.rollback();
     auto file = m_cacheManager->getFileInterface();
     uint64_t i = 0;
-    auto csize = file->currentSize();
-    while (csize == file->currentSize())
+    auto csize = file->fileSizeInPages();
+    while (csize == file->fileSizeInPages())
     {
         auto data = std::to_string(i++);
         m_fileSystem.addAttribute(Path(data), data);
     }
     m_fileSystem.commit();
-    csize = file->currentSize();
+    csize = file->fileSizeInPages();
     for (uint64_t j = 0; j < i; j++)
         ASSERT_EQ(m_fileSystem.remove(Path(std::to_string(j))), 1);
     m_fileSystem.commit();
@@ -282,5 +282,5 @@ TEST_F(FileSystemTester, treeSpaceGetsReused)
         auto data = std::to_string(j);
         m_fileSystem.addAttribute(Path(data), data);
     }
-    ASSERT_EQ(file->currentSize(), csize);
+    ASSERT_EQ(file->fileSizeInPages(), csize);
 }

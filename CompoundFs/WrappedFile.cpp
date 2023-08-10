@@ -34,9 +34,9 @@ uint8_t* WrappedFile::readPages(Interval iv, uint8_t* page) const
     return m_wrappedFile->readPages(iv, page);
 }
 
-size_t WrappedFile::currentSize() const
+size_t WrappedFile::fileSizeInPages() const
 {
-    return m_wrappedFile->currentSize();
+    return m_wrappedFile->fileSizeInPages();
 }
 
 void WrappedFile::flushFile()

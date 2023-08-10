@@ -217,7 +217,7 @@ TEST(BTree, removeAllKeysLeavesTreeEmpty)
         bt.insert(s.c_str(), s.c_str());
     }
 
-    auto size = cm->getFileInterface()->currentSize();
+    auto size = cm->getFileInterface()->fileSizeInPages();
 
     for (auto key: keys)
     {

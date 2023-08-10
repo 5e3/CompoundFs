@@ -2,7 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "CompoundFs/Composite.h"
-#include <CompoundFs/File.h>
+#include <CompoundFs/WindowsFile.h>
 #include <CompoundFs/Path.h>
 #include <sstream>
 
@@ -14,9 +14,9 @@ namespace
 FileSystem openCompoundFile(const char* path, OpenMode mode)
 {
     if (mode == OpenMode::ReadOnly)
-        return Composite::openReadOnly<File>(path, mode);
+        return Composite::openReadOnly<WindowsFile>(path, mode);
     else
-        return Composite::open<File>(path, mode);
+        return Composite::open<WindowsFile>(path, mode);
 }
 
 std::string valueToString(const TreeValue& tv)

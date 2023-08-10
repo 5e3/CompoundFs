@@ -27,7 +27,7 @@ TYPED_TEST_SUITE_P(FileInterfaceTester);
 
 TYPED_TEST_P(FileInterfaceTester, newlyCreatedFileIsEmpty)
 {
-    ASSERT_EQ(this->m_fileInterface->currentSize(), 0);
+    ASSERT_EQ(this->m_fileInterface->fileSizeInPages(), 0);
 }
 
 TYPED_TEST_P(FileInterfaceTester, newIntervalReturnsCorrespondingInterval)
@@ -42,10 +42,10 @@ TYPED_TEST_P(FileInterfaceTester, truncateReducesFileSize)
 {
     this->m_fileInterface->newInterval(5);
     this->m_fileInterface->truncate(5);
-    ASSERT_EQ(this->m_fileInterface->currentSize(), 5);
+    ASSERT_EQ(this->m_fileInterface->fileSizeInPages(), 5);
 
     this->m_fileInterface->truncate(2);
-    ASSERT_EQ(this->m_fileInterface->currentSize(), 2);
+    ASSERT_EQ(this->m_fileInterface->fileSizeInPages(), 2);
 }
 
 TYPED_TEST_P(FileInterfaceTester, readWriteOutsideCurrentFileSizeThrows)
