@@ -8,6 +8,9 @@
 namespace TxFs
 {
 
+///////////////////////////////////////////////////////////////////////////////
+/// FileInterface implementation for posix (primarily Linux). The implementation
+/// works also on windows which improves debugablility (on windows).  
 class PosixFile : public FileInterface
 {
 public:

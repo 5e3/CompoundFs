@@ -14,6 +14,10 @@
 namespace TxFs
 {
 
+////////////////////////////////////////////////////////////////////////////////
+/// MemoryFile stores every file operation in memory. Useful for testing the software.
+/// Could be interesting for scenarios where a file is e.g. transfered over the network.
+/// Note that this file object is not copyable...
 class MemoryFile : public FileInterface
 {
 public:

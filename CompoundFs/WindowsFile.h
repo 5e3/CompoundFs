@@ -8,6 +8,9 @@
 namespace TxFs
 {
 
+ //////////////////////////////////////////////////////////////////////////////
+/// Implementation of a physical file for Windows. No copying but moving. Expect
+/// std::exception derived classes on error.
 class WindowsFile : public FileInterface
 {
 public:
