@@ -6,6 +6,7 @@
 #include <utility>
 #include <filesystem>
 #include <cstdio>
+#include <array>
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
 
@@ -113,29 +114,18 @@ void WindowsFile::close()
 
 void* TxFs::WindowsFile::open(std::filesystem::path path, OpenMode mode)
 {
-    void* handle = nullptr;
-    switch (mode)
-    {
-    case OpenMode::Create:
-        handle = Win32::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                   nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        break;
+    static_assert(OpenMode(0) == OpenMode::CreateNew);
+    static_assert(OpenMode(1) == OpenMode::Create);
+    static_assert(OpenMode(2) == OpenMode::Open);
+    static_assert(OpenMode(3) == OpenMode::OpenExisting);
+    static_assert(OpenMode(4) == OpenMode::ReadOnly);
 
-    case OpenMode::Open:
-        handle = Win32::CreateFile(path.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                   nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        break;
-
-         case OpenMode::ReadOnly:
-             handle = Win32::CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-             break;
-
-    default:
-        throw std::runtime_error("WindowsFile::open(): unknown OpenMode");
-    }
-
-    return handle;
+    std::array<DWORD, 5> fileModes = { CREATE_NEW, CREATE_ALWAYS, OPEN_ALWAYS, OPEN_EXISTING, OPEN_EXISTING };
+    std::array<DWORD, 5> access = { GENERIC_READ | GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE,
+                                    GENERIC_READ | GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE, GENERIC_READ };
+    auto imode = static_cast<size_t>(mode);
+    return Win32::CreateFile(path.c_str(), access.at(imode), FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                             fileModes.at(imode), FILE_ATTRIBUTE_NORMAL, nullptr);
 }
 
 Interval WindowsFile::newInterval(size_t maxPages)

@@ -3,6 +3,7 @@
 #include "PosixFile.h"
 #include "Lock.h"
 #include <fcntl.h>
+#include <array>
 
 #ifndef _WINDOWS
 #include <unistd.h>
@@ -119,26 +120,22 @@ PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
 
 int PosixFile::open(std::filesystem::path path, OpenMode mode)
 {
-    int file = -1;
-    switch (mode)
-    {
-    case OpenMode::Create:
-        file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_TRUNC | O_BINARY);
-        break;
+    static_assert(OpenMode(0) == OpenMode::CreateNew);
+    static_assert(OpenMode(1) == OpenMode::Create);
+    static_assert(OpenMode(2) == OpenMode::Open);
+    static_assert(OpenMode(3) == OpenMode::OpenExisting);
+    static_assert(OpenMode(4) == OpenMode::ReadOnly);
 
-    case OpenMode::Open:
-        file = posix::open(path.string().c_str(), O_CREAT | O_RDWR | O_BINARY);
-        break;
-
-    case OpenMode::ReadOnly:
-        file = posix::open(path.string().c_str(), O_RDONLY | O_BINARY);
-        break;
-
-    default:
-        throw std::runtime_error("File::open(): unknown OpenMode");
-    }
-
-    return file;
+    std::array<int, 5> fileModes = 
+    { 
+        O_CREAT | O_RDWR | O_EXCL | O_BINARY,
+        O_CREAT | O_RDWR | O_TRUNC | O_BINARY, 
+        O_CREAT | O_RDWR | O_BINARY, 
+        O_RDWR | O_BINARY, 
+        O_RDONLY | O_BINARY
+    };
+     auto imode = static_cast<int>(mode);
+    return posix::open(path.string().c_str(), fileModes.at(imode));
 }
 
 PosixFile::PosixFile(int file, bool readOnly)

@@ -23,16 +23,15 @@ struct DiskFileTester : ::testing::Test
     DiskFileTester()
         : m_tempFileName(std::filesystem::temp_directory_path() / std::tmpnam(nullptr))
     {
-
     }
 
     void prepareFileWithContents(std::string_view sv)
-    { 
+    {
         std::ofstream out(m_tempFileName);
         out << sv;
     }
 
-    ~DiskFileTester()  
+    ~DiskFileTester()
     {
         std::error_code errorCode;
         std::filesystem::remove(m_tempFileName, errorCode);
@@ -53,8 +52,6 @@ TYPED_TEST_P(DiskFileTester, openNonExistantFilesThrows)
     ASSERT_THROW(TypeParam f(this->m_tempFileName, OpenMode::ReadOnly), std::system_error);
 }
 
-
-
 TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 {
     TypeParam file(this->m_tempFileName, OpenMode::Create);
@@ -62,6 +59,30 @@ TYPED_TEST_P(DiskFileTester, createTruncatesFile)
     file = TypeParam(this->m_tempFileName, OpenMode::Create);
     ASSERT_EQ(file.fileSizeInPages(), 0);
     file = TypeParam();
+}
+
+TYPED_TEST_P(DiskFileTester, createNewThrowsIfFileExists)
+{
+    {
+        TypeParam file(this->m_tempFileName, OpenMode::CreateNew);
+    }
+
+    ASSERT_THROW(TypeParam file(this->m_tempFileName, OpenMode::CreateNew), std::exception);
+}
+
+TYPED_TEST_P(DiskFileTester, openExistingThrowsIfFileDoesNotExists)
+{
+    ASSERT_THROW(TypeParam file(this->m_tempFileName, OpenMode::OpenExisting), std::exception);
+    {
+        TypeParam file(this->m_tempFileName, OpenMode::Create);
+    }
+
+    TypeParam file(this->m_tempFileName, OpenMode::OpenExisting);
+}
+
+TYPED_TEST_P(DiskFileTester, overflowingOpenModeThrows)
+{
+    ASSERT_THROW(TypeParam file(this->m_tempFileName, OpenMode(5)), std::exception);
 }
 
 TYPED_TEST_P(DiskFileTester, canOpenSameFileMoreThanOnce)
@@ -73,7 +94,6 @@ TYPED_TEST_P(DiskFileTester, canOpenSameFileMoreThanOnce)
     }
     file = TypeParam();
 }
-
 
 TYPED_TEST_P(DiskFileTester, uninitializedFileThrows)
 {
@@ -143,8 +163,9 @@ TYPED_TEST_P(DiskFileTester, readPagesOverEndOfFileReturnsBufferPosition)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(DiskFileTester, illegalFileNamesThrow, openNonExistantFilesThrows, createTruncatesFile,
-                            canOpenSameFileMoreThanOnce, uninitializedFileThrows, readOnlyFileThrowsOnWriteOps,
-                            canReadWriteBigPages, nonEmptyFileReportsRoundedupSize,
+                            createNewThrowsIfFileExists, openExistingThrowsIfFileDoesNotExists,
+                            overflowingOpenModeThrows, canOpenSameFileMoreThanOnce, uninitializedFileThrows,
+                            readOnlyFileThrowsOnWriteOps, canReadWriteBigPages, nonEmptyFileReportsRoundedupSize,
                             readPageOverEndOfFileReturnsBufferPosition, readPagesOverEndOfFileReturnsBufferPosition);
 
 }

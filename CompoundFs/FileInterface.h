@@ -12,14 +12,19 @@ class Lock;
 class CommitLock;
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Create=>create a new file overwriting an already existing, Open=>open an 
-/// existing file or-else create a new file, ReadOnly=>open an existing file for
-/// reading.
-enum class OpenMode { Create, Open, ReadOnly };
+/// Modes how files are created or opened.
+enum class OpenMode 
+{ 
+    CreateNew,    // create a new file if no file already exists
+    Create,       // create a new file overwriting an already existing
+    Open,         // open an existing file or-else create a new file
+    OpenExisting, // open an existing file
+    ReadOnly      // open an existing file for reading
+};
 
 ///////////////////////////////////////////////////////////////////////////////
 /// This is the abstraction of a file for CompoundFs. You have to allocate with newInterval()
-/// before you write to the file. Locking is advisory. Make sure you have aquired the 
+/// before you write to the file. Locking is advisory. Make sure you have acquired the 
 /// correct locks before you write to a file (linux will not even fail writes). All APIs 
 /// will throw exceptions on failures.
 
