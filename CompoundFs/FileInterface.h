@@ -15,10 +15,10 @@ class CommitLock;
 /// Modes how files are created or opened.
 enum class OpenMode 
 { 
-    CreateNew,    // create a new file if no file already exists
-    Create,       // create a new file overwriting an already existing
+    CreateNew,    // create a new file - throw if file already exists
+    CreateAlways, // create a new file overwriting an already existing
     Open,         // open an existing file or-else create a new file
-    OpenExisting, // open an existing file
+    OpenExisting, // open an existing file - throw if file doesn't exsit
     ReadOnly      // open an existing file for reading
 };
 

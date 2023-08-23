@@ -123,8 +123,10 @@ PYBIND11_MODULE(PythonBindings, m)
     ;
 
     py::enum_<OpenMode>(m, "OpenMode")
-        .value("Create", OpenMode::Create)
+        .value("CreateNew", OpenMode::CreateNew)
+        .value("CreateAlways", OpenMode::CreateAlways)
         .value("Open", OpenMode::Open)
+        .value("OpenExisting", OpenMode::OpenExisting)
         .value("ReadOnly", OpenMode::ReadOnly);
 
     m.def("openCompoundFile", &openCompoundFile, py::return_value_policy::take_ownership);

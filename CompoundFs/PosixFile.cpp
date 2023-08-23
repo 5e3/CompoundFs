@@ -118,24 +118,33 @@ PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
 {
 }
 
+namespace
+{
+
+int mapToPosixFileModes(OpenMode mode)
+{
+    switch (mode)
+    {
+    case OpenMode::CreateNew:
+        return O_CREAT | O_RDWR | O_EXCL | O_BINARY;
+    case OpenMode::CreateAlways:
+        return O_CREAT | O_RDWR | O_TRUNC | O_BINARY;
+    case OpenMode::Open:
+        return O_CREAT | O_RDWR | O_BINARY;
+    case OpenMode::OpenExisting:
+        return O_RDWR | O_BINARY;
+    case OpenMode::ReadOnly:
+        return O_RDONLY | O_BINARY;
+    default:
+        throw std::runtime_error("Unknown OpenMode");
+    }
+}
+
+}
+
 int PosixFile::open(std::filesystem::path path, OpenMode mode)
 {
-    static_assert(OpenMode(0) == OpenMode::CreateNew);
-    static_assert(OpenMode(1) == OpenMode::Create);
-    static_assert(OpenMode(2) == OpenMode::Open);
-    static_assert(OpenMode(3) == OpenMode::OpenExisting);
-    static_assert(OpenMode(4) == OpenMode::ReadOnly);
-
-    std::array<int, 5> fileModes = 
-    { 
-        O_CREAT | O_RDWR | O_EXCL | O_BINARY,
-        O_CREAT | O_RDWR | O_TRUNC | O_BINARY, 
-        O_CREAT | O_RDWR | O_BINARY, 
-        O_RDWR | O_BINARY, 
-        O_RDONLY | O_BINARY
-    };
-     auto imode = static_cast<int>(mode);
-    return posix::open(path.string().c_str(), fileModes.at(imode));
+    return posix::open(path.string().c_str(), mapToPosixFileModes(mode));
 }
 
 PosixFile::PosixFile(int file, bool readOnly)

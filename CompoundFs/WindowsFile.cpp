@@ -112,20 +112,41 @@ void WindowsFile::close()
     m_handle = INVALID_HANDLE_VALUE;
 }
 
+namespace
+{
+
+DWORD mapToWindowsFileModes(OpenMode mode)
+{
+    switch (mode)
+    {
+    case OpenMode::CreateNew:
+        return CREATE_NEW;
+    case OpenMode::CreateAlways:
+        return CREATE_ALWAYS;
+    case OpenMode::Open:
+        return OPEN_ALWAYS;
+    case OpenMode::OpenExisting:
+        return OPEN_EXISTING;
+    case OpenMode::ReadOnly:
+        return OPEN_EXISTING;
+    default:
+        throw std::runtime_error("Unknown OpenMode");
+    }
+}
+
+DWORD mapToWindowsAccessFlags(OpenMode mode)
+{
+    if (mode == OpenMode::ReadOnly)
+        return GENERIC_READ;
+    return GENERIC_READ | GENERIC_WRITE;
+}
+
+}
+
 void* TxFs::WindowsFile::open(std::filesystem::path path, OpenMode mode)
 {
-    static_assert(OpenMode(0) == OpenMode::CreateNew);
-    static_assert(OpenMode(1) == OpenMode::Create);
-    static_assert(OpenMode(2) == OpenMode::Open);
-    static_assert(OpenMode(3) == OpenMode::OpenExisting);
-    static_assert(OpenMode(4) == OpenMode::ReadOnly);
-
-    std::array<DWORD, 5> fileModes = { CREATE_NEW, CREATE_ALWAYS, OPEN_ALWAYS, OPEN_EXISTING, OPEN_EXISTING };
-    std::array<DWORD, 5> access = { GENERIC_READ | GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE,
-                                    GENERIC_READ | GENERIC_WRITE, GENERIC_READ | GENERIC_WRITE, GENERIC_READ };
-    auto imode = static_cast<size_t>(mode);
-    return Win32::CreateFile(path.c_str(), access.at(imode), FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                             fileModes.at(imode), FILE_ATTRIBUTE_NORMAL, nullptr);
+    return Win32::CreateFile(path.c_str(), mapToWindowsAccessFlags(mode), FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                             mapToWindowsFileModes(mode), FILE_ATTRIBUTE_NORMAL, nullptr);
 }
 
 Interval WindowsFile::newInterval(size_t maxPages)

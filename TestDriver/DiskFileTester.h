@@ -42,7 +42,7 @@ TYPED_TEST_SUITE_P(DiskFileTester);
 
 TYPED_TEST_P(DiskFileTester, illegalFileNamesThrow)
 {
-    ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::Create), std::system_error);
+    ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::CreateAlways), std::system_error);
     ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::Open), std::system_error);
     ASSERT_THROW(TypeParam f("<?* />.txt", OpenMode::ReadOnly), std::system_error);
 }
@@ -54,9 +54,9 @@ TYPED_TEST_P(DiskFileTester, openNonExistantFilesThrows)
 
 TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 {
-    TypeParam file(this->m_tempFileName, OpenMode::Create);
+    TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     file.newInterval(5);
-    file = TypeParam(this->m_tempFileName, OpenMode::Create);
+    file = TypeParam(this->m_tempFileName, OpenMode::CreateAlways);
     ASSERT_EQ(file.fileSizeInPages(), 0);
     file = TypeParam();
 }
@@ -74,7 +74,7 @@ TYPED_TEST_P(DiskFileTester, openExistingThrowsIfFileDoesNotExists)
 {
     ASSERT_THROW(TypeParam file(this->m_tempFileName, OpenMode::OpenExisting), std::exception);
     {
-        TypeParam file(this->m_tempFileName, OpenMode::Create);
+        TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     }
 
     TypeParam file(this->m_tempFileName, OpenMode::OpenExisting);
@@ -87,7 +87,7 @@ TYPED_TEST_P(DiskFileTester, overflowingOpenModeThrows)
 
 TYPED_TEST_P(DiskFileTester, canOpenSameFileMoreThanOnce)
 {
-    TypeParam file(this->m_tempFileName, OpenMode::Create);
+    TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     {
         TypeParam file1(this->m_tempFileName, OpenMode::Open);
         TypeParam file2(this->m_tempFileName, OpenMode::ReadOnly);
@@ -109,7 +109,7 @@ TYPED_TEST_P(DiskFileTester, uninitializedFileThrows)
 TYPED_TEST_P(DiskFileTester, readOnlyFileThrowsOnWriteOps)
 {
     {
-        TypeParam wfile(this->m_tempFileName, OpenMode::Create);
+        TypeParam wfile(this->m_tempFileName, OpenMode::CreateAlways);
         wfile.newInterval(5);
     }
 
@@ -126,7 +126,7 @@ TYPED_TEST_P(DiskFileTester, canReadWriteBigPages)
     std::vector<uint64_t> out((16 * 3 * 1024 * 1024 - 4096) / sizeof(uint64_t));
     std::iota(out.begin(), out.end(), 0);
 
-    TypeParam file(this->m_tempFileName, OpenMode::Create);
+    TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     auto iv = file.newInterval(out.size() * sizeof(uint64_t) / 4096);
     file.writePages(iv, (const uint8_t*) out.data());
 

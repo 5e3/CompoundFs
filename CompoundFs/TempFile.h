@@ -37,7 +37,7 @@ TempFile<TFile>::TempFile()
 
 template <typename TFile>
 TempFile<TFile>::TempFile(const std::filesystem::path& tmpFileName)
-    : TFile(tmpFileName, OpenMode::Create)
+    : TFile(tmpFileName, OpenMode::CreateAlways)
     , m_path(tmpFileName)
 {
 }
