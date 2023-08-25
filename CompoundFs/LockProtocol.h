@@ -16,7 +16,7 @@ class LockProtocol final
 {
 public:
     LockProtocol() = default;
-    LockProtocol(TSharedMutex&& signal, TSharedMutex&& shared, TMutex&& writer);
+    LockProtocol(TSharedMutex&& gate, TSharedMutex&& shared, TMutex&& writer);
 
     Lock readAccess();
     std::optional<Lock> tryReadAccess();

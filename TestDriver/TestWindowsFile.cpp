@@ -13,7 +13,7 @@
 using namespace TxFs;
 
 
-TEST(WindowsFile, canWriteOnWriteLockedFile)
+TEST(WindowsFile, canWriteOnReadAndWriteLockedFile)
 {
     auto wfile = TempFile<WindowsFile>();
     auto rfile = WindowsFile(wfile.getFileName(), OpenMode::ReadOnly);
@@ -24,7 +24,7 @@ TEST(WindowsFile, canWriteOnWriteLockedFile)
     ASSERT_NO_THROW(wfile.writePage(1, 0, out.data(), out.end()));
 }
 
-TEST(WindowsFile, canReadFromWriteLockedFile)
+TEST(WindowsFile, canReadFromReadAndWriteLockedFile)
 {
     auto wfile = TempFile<WindowsFile>();
     auto rfile = WindowsFile(wfile.getFileName(), OpenMode::ReadOnly);
