@@ -1,6 +1,7 @@
 
 #include <sys/types.h>
 #include "PosixFile.h"
+#include "FileLockPosition.h"
 #include "Lock.h"
 #include <fcntl.h>
 #include <array>
@@ -56,6 +57,12 @@ constexpr auto read = wrapOsCall(::read);
 constexpr auto lseek = wrapOsCall(::lseek);
 constexpr auto ftruncate = wrapOsCall(::ftruncate);
 constexpr auto fsync = wrapOsCall(::fsync);
+
+int fileHandleToLockHandle(int file)
+{
+    return file;
+}
+
 #else
 constexpr auto write = wrapOsCall(::_write);
 constexpr auto read = wrapOsCall(::_read);
@@ -71,13 +78,17 @@ int ftruncate(int fd, int64_t size)
         throw std::system_error(EDOM, std::system_category());
     return 0;
 }
+
+void* fileHandleToLockHandle(int file)
+{
+    return (void*) (file < 0 ? intptr_t (-1LL) : ::_get_osfhandle(file));
+}
 #endif
 }
 
 namespace
 {
 constexpr uint64_t PageSize = 4096ULL;
-//constexpr int64_t MaxEndOfFile = 0LL;
 constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 }
 
@@ -150,7 +161,19 @@ int PosixFile::open(std::filesystem::path path, OpenMode mode)
 PosixFile::PosixFile(int file, bool readOnly)
     : m_file(file)
     , m_readOnly(readOnly)
+    , m_lockProtocol{ 
+        FileLock { posix::fileHandleToLockHandle(file), FileLockPosition::GateBegin, FileLockPosition::GateEnd },
+        FileLock { posix::fileHandleToLockHandle(file), FileLockPosition::SharedBegin, FileLockPosition::SharedEnd },
+        FileLock { posix::fileHandleToLockHandle(file), FileLockPosition::WriteBegin, FileLockPosition::WriteEnd },
+    }
 {
+    static constexpr int64_t MaxFileSize = 4096LL * int64_t(std::numeric_limits<uint32_t>::max() - 1LL);
+    static_assert(MaxFileSize < FileLockPosition::GateBegin);
+    static_assert(FileLockPosition::GateBegin < FileLockPosition::GateEnd);
+    static_assert(MaxFileSize < FileLockPosition::SharedBegin);
+    static_assert(FileLockPosition::SharedBegin < FileLockPosition::SharedEnd);
+    static_assert(MaxFileSize < FileLockPosition::WriteBegin);
+    static_assert(FileLockPosition::WriteBegin < FileLockPosition::WriteEnd);
 }
 
 Interval PosixFile::newInterval(size_t maxPages)
@@ -250,16 +273,16 @@ Lock PosixFile::defaultAccess()
 
 Lock PosixFile::readAccess()
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    return m_lockProtocol.readAccess();
 }
 
 Lock PosixFile::writeAccess()
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    return m_lockProtocol.writeAccess();
 }
 
-CommitLock PosixFile::commitAccess(Lock&& /*writeLock*/)
+CommitLock PosixFile::commitAccess(Lock&& writeLock)
 {
-    throw std::logic_error("The method or operation is not implemented.");
+    return m_lockProtocol.commitAccess(std::move(writeLock));
 }
 

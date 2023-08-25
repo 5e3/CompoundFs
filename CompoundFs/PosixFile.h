@@ -4,13 +4,22 @@
 #include <filesystem>
 
 #include "FileInterface.h"
+#include "LockProtocol.h"
+
+#ifndef _WINDOWS
+#include "FileLockLinux.h"
+namespace TxFs {using FileLock = FileLockLinux;}
+#else
+#include "FileLockWindows.h"
+namespace TxFs {using FileLock = FileLockWindows;}
+#endif
 
 namespace TxFs
 {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// FileInterface implementation for posix (primarily Linux). The implementation
-/// works also on windows which improves debugablility (on windows).  
+/// works also on windows which improves debuggability (on windows).  
 class PosixFile : public FileInterface
 {
 public:
@@ -45,5 +54,6 @@ private:
 private:
     int m_file;
     bool m_readOnly;
+    LockProtocol<FileLock, FileLock> m_lockProtocol;
 };
 }

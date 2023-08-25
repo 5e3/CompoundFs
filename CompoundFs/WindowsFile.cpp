@@ -1,12 +1,15 @@
 
 
 #include "WindowsFile.h"
+#include "FileLockPosition.h"
+#define NOMINMAX
 #include "windows.h"
 
 #include <utility>
 #include <filesystem>
 #include <cstdio>
 #include <array>
+#include <limits>
 
 #pragma warning(disable : 4996) // disable "'tmpnam': This function or variable may be unsafe."
 
@@ -75,11 +78,18 @@ WindowsFile::WindowsFile(void* handle, bool readOnly)
     : m_handle(handle)
     , m_readOnly(readOnly)
     , m_lockProtocol {
-        FileLockWindows { handle, 0, MaxEndOfFile - 3 },
-        FileLockWindows { handle, MaxEndOfFile - 2, MaxEndOfFile - 1 },
-        FileLockWindows { handle, MaxEndOfFile - 3, MaxEndOfFile - 2 },
+        FileLockWindows { handle, FileLockPosition::GateBegin, FileLockPosition::GateEnd},
+        FileLockWindows { handle, FileLockPosition::SharedBegin, FileLockPosition::SharedEnd},
+        FileLockWindows { handle, FileLockPosition::WriteBegin, FileLockPosition::WriteEnd},
     }
 {
+    static constexpr int64_t MaxFileSize = 4096LL * int64_t(std::numeric_limits<uint32_t>::max() - 1LL);
+    static_assert(MaxFileSize < FileLockPosition::GateBegin);
+    static_assert(FileLockPosition::GateBegin < FileLockPosition::GateEnd);
+    static_assert(MaxFileSize < FileLockPosition::SharedBegin);
+    static_assert(FileLockPosition::SharedBegin < FileLockPosition::SharedEnd);
+    static_assert(MaxFileSize < FileLockPosition::WriteBegin);
+    static_assert(FileLockPosition::WriteBegin < FileLockPosition::WriteEnd);
 }
 
 WindowsFile::WindowsFile(std::filesystem::path path, OpenMode mode)

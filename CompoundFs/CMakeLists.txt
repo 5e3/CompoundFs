@@ -45,6 +45,7 @@ set (Headers
 		FileDescriptor.h
 		FileInterface.h
 		FileIo.h
+		FileLockPosition.h
 		FileReader.h
 		FileSystem.h
 		FileTable.h
