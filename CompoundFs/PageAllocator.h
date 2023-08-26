@@ -32,7 +32,7 @@ private:
     using BlockPage = std::pair<std::shared_ptr<uint8_t>, uint8_t*>;
     size_t m_blocksAllocated;
     size_t m_pagesPerBlock;
-    std::unique_ptr<std::vector<BlockPage>> m_freePages; // to make lambdas imune to move ops
+    std::unique_ptr<std::vector<BlockPage>> m_freePages; // to make lambdas immune to move ops
     std::shared_ptr<uint8_t> m_block;
     uint8_t* m_currentPosInBlock;
 };
