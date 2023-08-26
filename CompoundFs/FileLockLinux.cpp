@@ -1,5 +1,6 @@
 
-#define _GNU_SOURCE // enable OFD locks
+#define _GNU_SOURCE // enable OFD locks on GNU
+#define PRIVATE // enable OFD locks on macOS
 
 #include "FileLockLinux.h"
 #include <string>
@@ -80,7 +81,7 @@ void FileLockLinux::throwException()
 
 int FileLockLinux::lockOperation(short lockOp, bool block)
 {
-    flock fl {};
+    struct flock fl {};
     fl.l_type = lockOp;
     fl.l_whence = SEEK_SET;
 
