@@ -4,6 +4,7 @@
 #include "FileInterface.h"
 #include "Hasher.h"
 #include <vector>
+#include <array>
 #include <string.h>
 #include <stdexcept>
 
@@ -56,10 +57,10 @@ inline void copyPage(FileInterface* fi, PageIndex from, PageIndex to)
 
 inline bool isEqualPage(const FileInterface* fi, PageIndex p1, PageIndex p2)
 {
-    std::vector<uint8_t[4096]> buffer(2);
-    readSignedPage(fi, p1, buffer[0]);
-    fi->readPage(p2, 0, buffer[1], buffer[1] + 4096);
-    return memcmp(buffer[0], buffer[1], 4096) == 0;
+    std::vector<std::array<uint8_t, 4096>> buffer(2);
+    readSignedPage(fi, p1, buffer[0].data());
+    fi->readPage(p2, 0, buffer[1].data(), buffer[1].data() + 4096);
+    return memcmp(buffer[0].data(), buffer[1].data(), 4096) == 0;
 }
 
 template <typename TCont>
