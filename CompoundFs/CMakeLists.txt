@@ -26,7 +26,7 @@ set (PlatformSources
 		WindowsFile.cpp
 		FileLockWindows.cpp
 )
-elseif(LINUX)
+else()
 set (PlatformSources
 		FileLockLinux.cpp
 )
@@ -83,8 +83,9 @@ set (PlatformHeaders
 		WindowsFile.h
 		FileLockWindows.h
 )
-elseif(LINUX)
+else()
 set (PlatformHeaders
+		FileLockLinux.h
 )
 endif()
 
