@@ -68,7 +68,8 @@ public:
     /// space of these files will be available in the next transaction.
     void deleteFile(FileDescriptor fd)
     {
-        assert(fd != FileDescriptor());
+        if (fd == FileDescriptor())
+            return;
 
         // round up to page size
         fd.m_fileSize = ((fd.m_fileSize + 4096 - 1) / 4096) * 4096;

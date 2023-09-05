@@ -25,12 +25,16 @@ public:
 
     void open(FileDescriptor fileId)
     {
-        assert(fileId != FileDescriptor());
         m_curFilePos = 0;
         m_fileSize = fileId.m_fileSize;
-        ConstPageDef<FileTable> fileTable = m_cacheManager.loadPage<FileTable>(fileId.m_first);
-        fileTable.m_page->insertInto(m_pageSequence);
-        m_nextFileTable = fileTable.m_page->getNext();
+        if (fileId != FileDescriptor())
+        {
+            ConstPageDef<FileTable> fileTable = m_cacheManager.loadPage<FileTable>(fileId.m_first);
+            fileTable.m_page->insertInto(m_pageSequence);
+            m_nextFileTable = fileTable.m_page->getNext();
+        }
+        else
+            m_nextFileTable = PageIdx::INVALID;
     }
 
     Interval nextInterval(uint32_t maxSize)

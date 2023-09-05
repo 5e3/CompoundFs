@@ -33,9 +33,27 @@ TEST(FileWriter, WriteCloseCreatesFileDescriptor)
     f.write(data.data(), data.end());
     FileDescriptor fd = f.close();
 
-    ASSERT_NE(fd , FileDescriptor());
-    ASSERT_EQ(fd.m_fileSize , data.size());
-    ASSERT_EQ(fd.m_first , fd.m_last);
+    ASSERT_NE(fd, FileDescriptor());
+    ASSERT_EQ(fd.m_fileSize, data.size());
+    ASSERT_EQ(fd.m_first, fd.m_last);
+}
+
+TEST(FileWriter, AppendWithEmptyFileDescWorksLikeCreateNew)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+
+    FileWriter f(cm);
+    FileDescriptor fd = f.close();
+
+    f.openAppend(fd);
+    ByteStringView data("Test");
+    f.write(data.data(), data.end());
+    fd = f.close();
+
+
+    ASSERT_NE(fd, FileDescriptor());
+    ASSERT_EQ(fd.m_fileSize, data.size());
+    ASSERT_EQ(fd.m_first, fd.m_last);
 }
 
 TEST(FileWriter, WriteCloseCreatesFileTablePage)
@@ -327,8 +345,21 @@ TEST(FileReader, ReadNullFile)
     ASSERT_EQ(f.read(0, 0), nullptr);
 
     uint8_t buf;
-    ASSERT_EQ(f.read(&buf, &buf + 1) , &buf);
-    ASSERT_EQ(f.bytesLeft() , 0);
+    ASSERT_EQ(f.read(&buf, &buf + 1), &buf);
+    ASSERT_EQ(f.bytesLeft(), 0);
+}
+
+TEST(FileReader, OpenReadNullFile)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    FileReader f(cm);
+    f.open(FileDescriptor());
+
+    ASSERT_EQ(f.read(0, 0), nullptr);
+
+    uint8_t buf;
+    ASSERT_EQ(f.read(&buf, &buf + 1), &buf);
+    ASSERT_EQ(f.bytesLeft(), 0);
 }
 
 std::vector<uint8_t> makeRandomVector(size_t size)

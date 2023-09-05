@@ -296,3 +296,27 @@ TEST(FreeStore, deleteBigAndSmallFilesAndAllocateUntilEmpty)
     ASSERT_EQ(fsfd.m_first , freeStorePage.m_index);
     ASSERT_EQ(fsfd.m_last , fsfd.m_first);
 }
+
+TEST(FreeStore, deleteEmptyFileDoesntDoAnything)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    TypedCacheManager tcm(cm);
+    auto freeStorePage = tcm.newPage<FileTable>();
+    FileDescriptor fsfd(freeStorePage.m_index);
+    auto fileSize = cm->getFileInterface()->fileSizeInPages();
+
+    {
+        FileWriter fw(cm);
+        auto fd = fw.close();
+        FreeStore fs(cm, fsfd);
+        fs.deleteFile(fd);
+        fsfd = fs.close();
+    }
+
+    FreeStore fs(cm, fsfd);
+    ASSERT_EQ(fs.allocate(1), Interval());
+
+    fsfd = fs.close();
+    ASSERT_EQ(fsfd.m_fileSize, 0);
+    ASSERT_EQ(fileSize, cm->getFileInterface()->fileSizeInPages());
+}

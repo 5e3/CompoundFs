@@ -32,9 +32,14 @@ public:
 
     void openAppend(FileDescriptor fileId)
     {
-        m_fileDescriptor = fileId;
-        m_fileTable = m_cacheManager.loadPage<FileTable>(fileId.m_last);
-        m_fileTable.m_page->insertInto(m_pageSequence);
+        if (fileId != FileDescriptor())
+        {
+            m_fileDescriptor = fileId;
+            m_fileTable = m_cacheManager.loadPage<FileTable>(fileId.m_last);
+            m_fileTable.m_page->insertInto(m_pageSequence);
+        }
+        else
+            createNew();
     }
 
     FileDescriptor close()

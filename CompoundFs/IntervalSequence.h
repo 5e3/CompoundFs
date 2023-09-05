@@ -20,6 +20,7 @@ public:
     void pushBack(Interval iv)
     {
         assert(!iv.empty());
+        assert(iv.begin() != PageIdx::INVALID);
         m_totalLength += iv.length();
         if (m_intervals.empty())
         {
