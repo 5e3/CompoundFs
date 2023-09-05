@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.15)
 
 project(CompoundFs)
 enable_testing()
@@ -94,7 +94,7 @@ endif()
 set_target_properties(gtest gtest_main xxhash PROPERTIES FOLDER External)
 
 if(WIN32)
-add_subdirectory(PythonBindings)
+add_subdirectory(py_txfs)
 endif()
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)

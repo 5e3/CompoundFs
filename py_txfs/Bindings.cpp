@@ -70,7 +70,7 @@ std::string reprImpl(const TreeValue& tv)
 
 }
 
-PYBIND11_MODULE(PythonBindings, m)
+PYBIND11_MODULE(py_txfs, m)
 {
     py::class_<WriteHandle>(m, "WriteHandle").def("__repr__", [](WriteHandle wh) {
         std::ostringstream ss;
