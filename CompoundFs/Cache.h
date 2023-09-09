@@ -13,14 +13,17 @@
 namespace TxFs
 {
 
-struct Cache final
+class Cache final
 {
+public:
     using PageCache = std::unordered_map<PageIndex, CachedPage>;
     using DivertedPageIds = std::unordered_map<PageIndex, PageIndex>;
     using NewPageIds = std::unordered_set<PageIndex>;
 
     FileInterface* file() { return m_fileInterface.get(); }
     const FileInterface* file() const { return m_fileInterface.get(); }
+
+    CommitLock commitAccess() { return m_fileInterface->commitAccess(std::move(m_lock)); }
 
     std::unique_ptr<FileInterface> m_fileInterface;
     PageCache m_pageCache;
