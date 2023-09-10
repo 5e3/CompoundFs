@@ -13,11 +13,9 @@ RollbackHandler::RollbackHandler(Cache& cache) noexcept
 void TxFs::RollbackHandler::revertPartialCommit()
 {
     auto logs = readLogs();
-    auto commitLock = m_cache.commitAccess();
     for (auto [orig, cpy]: logs)
         TxFs::copyPage(m_cache.file(), cpy, orig);
     m_cache.file()->flushFile();
-    m_cache.m_lock = commitLock.release();
 }
 
 void RollbackHandler::rollback(size_t compositeSize)
