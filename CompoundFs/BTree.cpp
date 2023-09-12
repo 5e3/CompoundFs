@@ -3,6 +3,7 @@
 #include "BTree.h"
 #include "Leaf.h"
 #include "InnerNode.h"
+#include "SmallBufferStack.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -199,8 +200,8 @@ ConstPageDef<Leaf> BTree::findLeaf(ByteStringView key, InnerNodeStack& stack) co
     {
         auto nodeDef = m_cacheManager.loadPage<Node>(id);
         if (nodeDef.m_page->m_type == NodeType::Leaf)
-            return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(nodeDef.m_page), id);
-        stack.emplace_back(std::static_pointer_cast<const InnerNode>(nodeDef.m_page), id);
+            return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(std::move(nodeDef.m_page)), id);
+        stack.emplace_back(std::static_pointer_cast<const InnerNode>(std::move(nodeDef.m_page)), id);
         id = stack.back().m_page->findPage(key);
     }
 }

@@ -26,6 +26,7 @@ set (Sources
 		TestPath.cpp
 		TestPosixFile.cpp
 		TestReadOnlyFile.cpp
+		TestSmallBufferStack.cpp
 		TestTreeValue.cpp
 		TestTypedCacheManager.cpp
 	)

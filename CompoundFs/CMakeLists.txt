@@ -69,6 +69,7 @@ set (Headers
 		PosixFile.h
 		ReadOnlyFile.h
 		RollbackHandler.h
+		SmallBufferStack.h
 		TableKeyCompare.h
 		TempFile.h
 		TreeValue.h
