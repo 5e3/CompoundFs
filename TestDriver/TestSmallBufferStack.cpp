@@ -77,3 +77,47 @@ TEST(SmallBufferStack, EmplacePerfectForwards)
     stack.emplace_back(std::move(ptr));
     ASSERT_EQ(stack.back().use_count(), 1);
 }
+
+TEST(SmallBufferStack, DtorCallsAllElementDtors)
+{
+    auto ptr = std::make_shared<int>(5);
+    {
+        SmallBufferStack<std::shared_ptr<int>, 5> stack;
+        for (int i = 0; i < 5; i++)
+            stack.push_back(ptr);
+        ASSERT_EQ(stack.back().use_count(), 6);
+    }
+    ASSERT_EQ(ptr.use_count(), 1);
+
+    {
+        SmallBufferStack<std::shared_ptr<int>, 5> stack;
+        for (int i = 0; i < 6; i++)
+            stack.push_back(ptr);
+        ASSERT_EQ(stack.back().use_count(), 7);
+    }
+    ASSERT_EQ(ptr.use_count(), 1);
+}
+
+TEST(SmallBufferStack, PopBackCallsElementDtor)
+{
+    auto ptr = std::make_shared<int>(5);
+    SmallBufferStack<std::shared_ptr<int>, 5> stack;
+    for (int i = 0; i < 5; i++)
+        stack.push_back(ptr);
+    ASSERT_EQ(stack.back().use_count(), 6);
+
+    stack.pop_back();
+    ASSERT_EQ(stack.back().use_count(), 5);
+}
+
+TEST(SmallBufferStack, MovePushBack)
+{
+    auto ptr = std::make_shared<int>(5);
+    SmallBufferStack<std::shared_ptr<int>, 5> stack;
+    for (int i = 0; i < 4; i++)
+        stack.push_back(ptr);
+    ASSERT_EQ(stack.back().use_count(), 5);
+
+    stack.push_back(std::move(ptr));
+    ASSERT_EQ(stack.back().use_count(), 5);
+}
