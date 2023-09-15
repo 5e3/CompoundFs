@@ -7,6 +7,7 @@
 #include <system_error>
 #include <numeric>
 #include <fstream>
+#include <thread>
 
 #include "CompoundFs/FileInterface.h"
 #include "CompoundFs/ByteString.h"
@@ -36,6 +37,20 @@ struct DiskFileTester : ::testing::Test
         std::error_code errorCode;
         std::filesystem::remove(m_tempFileName, errorCode);
     }
+
+    class File : public TDiskFile
+    {
+    public:
+        File(std::filesystem::path path, OpenMode mode)
+            : TDiskFile(path, mode)
+        {
+        }
+        
+        bool tryGetReadAccess()
+        {
+            return m_lockProtocol.tryReadAccess().has_value();
+        }
+    };
 };
 
 TYPED_TEST_SUITE_P(DiskFileTester);
@@ -56,9 +71,28 @@ TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 {
     TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     file.newInterval(5);
-    file = TypeParam(this->m_tempFileName, OpenMode::CreateAlways);
+    TypeParam file2 = TypeParam(this->m_tempFileName, OpenMode::CreateAlways);
     ASSERT_EQ(file.fileSizeInPages(), 0);
-    file = TypeParam();
+    ASSERT_EQ(file2.fileSizeInPages(), 0);
+}
+
+TYPED_TEST_P(DiskFileTester, truncateHoldsCommitLock)
+{
+    File file(this->m_tempFileName, OpenMode::CreateAlways);
+    file.newInterval(5);
+    auto lock = file.readAccess();
+
+    std::thread t ([this]() { TypeParam file2 = TypeParam(this->m_tempFileName, OpenMode::CreateAlways); });
+    File file3(this->m_tempFileName, OpenMode::OpenExisting);
+    while (file3.fileSizeInPages() > 0 && file3.tryGetReadAccess())
+    {
+        std::this_thread::yield();
+    }
+
+    EXPECT_NE(file.fileSizeInPages(), 0);
+    lock.release();
+    t.join();
+    EXPECT_EQ(file.fileSizeInPages(), 0);
 }
 
 TYPED_TEST_P(DiskFileTester, createNewThrowsIfFileExists)
@@ -163,7 +197,7 @@ TYPED_TEST_P(DiskFileTester, readPagesOverEndOfFileReturnsBufferPosition)
 }
 
 REGISTER_TYPED_TEST_SUITE_P(DiskFileTester, illegalFileNamesThrow, openNonExistantFilesThrows, createTruncatesFile,
-                            createNewThrowsIfFileExists, openExistingThrowsIfFileDoesNotExists,
+                            truncateHoldsCommitLock, createNewThrowsIfFileExists, openExistingThrowsIfFileDoesNotExists,
                             overflowingOpenModeThrows, canOpenSameFileMoreThanOnce, uninitializedFileThrows,
                             readOnlyFileThrowsOnWriteOps, canReadWriteBigPages, nonEmptyFileReportsRoundedupSize,
                             readPageOverEndOfFileReturnsBufferPosition, readPagesOverEndOfFileReturnsBufferPosition);

@@ -54,6 +54,8 @@ private:
 private:
     int m_file;
     bool m_readOnly;
+
+protected:
     LockProtocol<FileLock, FileLock> m_lockProtocol;
 };
 }

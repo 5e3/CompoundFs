@@ -95,6 +95,12 @@ WindowsFile::WindowsFile(void* handle, bool readOnly)
 WindowsFile::WindowsFile(std::filesystem::path path, OpenMode mode)
     : WindowsFile(open(path, mode), mode == OpenMode::ReadOnly)
 {
+    if (mode == OpenMode::CreateAlways)
+    {   // truncate with commit lock
+        auto lock = commitAccess(writeAccess());
+        truncate(0);
+        lock.release();
+    }
 }
 
 WindowsFile& WindowsFile::operator=(WindowsFile&& other) noexcept
@@ -132,7 +138,7 @@ DWORD mapToWindowsFileModes(OpenMode mode)
     case OpenMode::CreateNew:
         return CREATE_NEW;
     case OpenMode::CreateAlways:
-        return CREATE_ALWAYS;
+        return OPEN_ALWAYS; // open without truncate
     case OpenMode::Open:
         return OPEN_ALWAYS;
     case OpenMode::OpenExisting:

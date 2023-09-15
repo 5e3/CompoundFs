@@ -47,6 +47,8 @@ private:
 private:
     void* m_handle;
     bool m_readOnly;
+
+protected:
     LockProtocol<FileLockWindows, FileLockWindows> m_lockProtocol;
 };
 

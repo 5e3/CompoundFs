@@ -127,6 +127,12 @@ PosixFile::PosixFile(PosixFile&& other) noexcept
 PosixFile::PosixFile(std::filesystem::path path, OpenMode mode)
     : PosixFile(open(path, mode), mode == OpenMode::ReadOnly)
 {
+    if (mode == OpenMode::CreateAlways)
+    {   // truncate with commit lock
+        auto lock = commitAccess(writeAccess());
+        truncate(0);
+        lock.release();
+    }
 }
 
 namespace
@@ -138,8 +144,8 @@ int mapToPosixFileModes(OpenMode mode)
     {
     case OpenMode::CreateNew:
         return O_CREAT | O_RDWR | O_EXCL | O_BINARY;
-    case OpenMode::CreateAlways:
-        return O_CREAT | O_RDWR | O_TRUNC | O_BINARY;
+    case OpenMode::CreateAlways: // open without truncate
+        return O_CREAT | O_RDWR | O_BINARY;
     case OpenMode::Open:
         return O_CREAT | O_RDWR | O_BINARY;
     case OpenMode::OpenExisting:
