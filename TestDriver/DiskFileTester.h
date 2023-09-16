@@ -15,6 +15,17 @@
 
 namespace TxFs
 {
+template <typename TDiskFile>
+class SpecialAccessFile : public TDiskFile
+{
+public:
+    SpecialAccessFile(std::filesystem::path path, TxFs::OpenMode mode)
+        : TDiskFile(path, mode)
+    {
+    }
+
+    bool tryGetReadAccess() { return this->m_lockProtocol.tryReadAccess().has_value(); }
+};
 
 template <typename TDiskFile>
 struct DiskFileTester : ::testing::Test
@@ -37,20 +48,6 @@ struct DiskFileTester : ::testing::Test
         std::error_code errorCode;
         std::filesystem::remove(m_tempFileName, errorCode);
     }
-
-    class File : public TDiskFile
-    {
-    public:
-        File(std::filesystem::path path, OpenMode mode)
-            : TDiskFile(path, mode)
-        {
-        }
-        
-        bool tryGetReadAccess()
-        {
-            return m_lockProtocol.tryReadAccess().has_value();
-        }
-    };
 };
 
 TYPED_TEST_SUITE_P(DiskFileTester);
@@ -78,12 +75,19 @@ TYPED_TEST_P(DiskFileTester, createTruncatesFile)
 
 TYPED_TEST_P(DiskFileTester, truncateHoldsCommitLock)
 {
-    File file(this->m_tempFileName, OpenMode::CreateAlways);
+    TypeParam file(this->m_tempFileName, OpenMode::CreateAlways);
     file.newInterval(5);
+    EXPECT_NE(file.fileSizeInPages(), 0);
     auto lock = file.readAccess();
 
-    std::thread t ([this]() { TypeParam file2 = TypeParam(this->m_tempFileName, OpenMode::CreateAlways); });
-    File file3(this->m_tempFileName, OpenMode::OpenExisting);
+    // thread cannot complete it's c'tor because of the read-lock we hold - so it blocks
+    std::thread t([this]() { TypeParam file2 = TypeParam(this->m_tempFileName, OpenMode::CreateAlways); });
+
+    SpecialAccessFile<TypeParam> file3(this->m_tempFileName, OpenMode::OpenExisting);
+
+    // Either the thread truncates the file without commit-lock (which is wrong) or we cannot get the read-lock because
+    // the commit lock is blocked after the gate lock is hold and we now cannot get access to gate lock
+    // so tryGetReadAccess() returns false.
     while (file3.fileSizeInPages() > 0 && file3.tryGetReadAccess())
     {
         std::this_thread::yield();
