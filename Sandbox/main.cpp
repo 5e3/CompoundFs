@@ -88,27 +88,42 @@
 //}
 //
 
+//int main()
+//{
+//    //std::string txt = loadFile();
+//    //LZ4F_cctx* context = nullptr;
+//    //auto error = LZ4F_createCompressionContext(&context, LZ4F_VERSION);
+//    //
+//    //std::vector<unsigned char> buffer(2*1000 * 1000);
+//
+//    //auto size = buffer.size();
+//    //size -=  LZ4F_compressBegin(context, buffer.data(), size, nullptr);
+//    //auto src = txt.data();
+//    //while (true)
+//    //{
+//    //    auto written = LZ4F_compressUpdate(context, buffer.data(), buffer.size(), src, 16*4096, nullptr);
+//    //    src += 16*4096;
+//    //    if (written)
+//    //        std::cout << src - txt.data() << "," << written << "\n";
+//    //}
+//
+//    //std::cout << std::endl;
+//
+//
+//}
+//
+
+#include "CompoundFs/Composite.h"
+//#include "CompoundFs/WindowsFile.h"
+#include "CompoundFs/Path.h"
+
+using namespace TxFs;
+
 int main()
 {
-    //std::string txt = loadFile();
-    //LZ4F_cctx* context = nullptr;
-    //auto error = LZ4F_createCompressionContext(&context, LZ4F_VERSION);
-    //
-    //std::vector<unsigned char> buffer(2*1000 * 1000);
-
-    //auto size = buffer.size();
-    //size -=  LZ4F_compressBegin(context, buffer.data(), size, nullptr);
-    //auto src = txt.data();
-    //while (true)
-    //{
-    //    auto written = LZ4F_compressUpdate(context, buffer.data(), buffer.size(), src, 16*4096, nullptr);
-    //    src += 16*4096;
-    //    if (written)
-    //        std::cout << src - txt.data() << "," << written << "\n";
-    //}
-
-    //std::cout << std::endl;
-
+    //auto fs = Composite::open<WindowsFile>("c:/CompoundFs/test.compound", OpenMode::Open);
+    //auto fh = fs.appendFile(Path("autoexec.bat"));
+    //auto data = ByteStringView("test");
+    //fs.write(*fh, data.data(), data.size());
 
 }
-
