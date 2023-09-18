@@ -13,6 +13,7 @@ set (Sources
 		TestFileInterface.cpp
 		TestFileReaderWriter.cpp
 		TestFileSystem.cpp
+		TestFileSystemHelper.cpp
 		TestFileTable.cpp
 		TestFreeStore.cpp
 		TestIntervalSequence.cpp

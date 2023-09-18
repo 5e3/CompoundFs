@@ -10,6 +10,7 @@ set (Sources
 		Composite.cpp
 		DirectoryStructure.cpp
 		FileSystem.cpp
+		FileSystemHelper.cpp
 		Hasher.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp
@@ -48,6 +49,7 @@ set (Headers
 		FileLockPosition.h
 		FileReader.h
 		FileSystem.h
+		FileSystemHelper.h
 		FileTable.h
 		FileWriter.h
 		FreeStore.h
