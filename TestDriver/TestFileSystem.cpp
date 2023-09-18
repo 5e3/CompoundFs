@@ -20,6 +20,14 @@ FileSystem makeFileSystem()
     return fs;
 }
 
+void createFile(Path path, FileSystem& fs)
+{
+    auto fh = *fs.createFile(path);
+    ByteStringView data("test");
+    fs.write(fh, data.data(), data.size());
+    fs.close(fh);
+}
+
 }
 
 TEST(FileSystem, createFile)
@@ -185,6 +193,49 @@ TEST(FileSystem, fileSizeReturnsCurrentFileSize)
     ASSERT_EQ(*fs.fileSize("folder/file.file"), 2 * data.size());
     auto handle2 = *fs.readFile("folder/file.file");
     ASSERT_EQ(fs.fileSize(handle2), 2 * data.size());
+}
+
+FileSystem prepareFileSystemWithFiles()
+{
+    auto fs = makeFileSystem();
+    createFile("folder/file.file", fs);
+    createFile("folder/file2.file", fs);
+    createFile("folder/subFolder/file3.file", fs);
+    createFile("folder/subFolder/file4.file", fs);
+    return fs;
+}
+
+TEST(FileSystem, renameMovesDirectory)
+{
+    auto fs = prepareFileSystemWithFiles();
+
+    ASSERT_TRUE(fs.rename("folder/subFolder", "folder2"));
+    ASSERT_FALSE(fs.subFolder("folder/subFolder"));
+    ASSERT_TRUE(fs.readFile("folder2/file3.file"));
+    ASSERT_TRUE(fs.readFile("folder2/file4.file"));
+}
+
+TEST(FileSystem, renameWhereSourceDoesntExistsFails)
+{
+    auto fs = prepareFileSystemWithFiles();
+
+    ASSERT_FALSE(fs.rename("folder/file3", "file5"));
+}
+
+TEST(FileSystem, renameWhereDestinationIsNotAFolderFails)
+{
+    auto fs = prepareFileSystemWithFiles();
+
+    ASSERT_FALSE(fs.rename("folder/subFolder/file3.file", "folder/file.file/subFolder/file3.file"));
+}
+
+TEST(FileSystem, renameCanMoveAFile)
+{
+    auto fs = prepareFileSystemWithFiles();
+
+    ASSERT_TRUE(fs.rename("folder/subFolder/file3.file", "folder2/subFolder/file3.file"));
+    ASSERT_TRUE(fs.readFile("folder2/subFolder/file3.file"));
+    ASSERT_FALSE(fs.readFile("folder/subFolder/file3.file"));
 }
 
 class FileSystemTester : public ::testing::Test

@@ -68,6 +68,7 @@ public:
     bool addAttribute(const DirectoryKey& dkey, const TreeValue& attribute);
     std::optional<TreeValue> getAttribute(const DirectoryKey& dkey) const;
 
+    bool rename(const DirectoryKey& oldKey, const DirectoryKey& newKey);
     size_t remove(ByteStringView key);
     size_t remove(Folder folder);
 

@@ -42,6 +42,7 @@ public:
     bool addAttribute(Path path, const TreeValue& attribute);
     std::optional<TreeValue> getAttribute(Path path) const;
 
+    bool rename(Path oldPath, Path newPath);
     size_t remove(Path path);
 
     Cursor find(Path path) const;

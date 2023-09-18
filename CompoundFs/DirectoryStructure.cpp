@@ -125,6 +125,12 @@ std::optional<TreeValue> DirectoryStructure::getAttribute(const DirectoryKey& dk
     return attribute;
 }
 
+bool DirectoryStructure::rename(const DirectoryKey& oldKey, const DirectoryKey& newKey)
+{
+    auto res = m_btree.rename(oldKey, newKey);
+    return std::get_if<BTree::Inserted>(&res);
+}
+
 size_t DirectoryStructure::remove(Folder folder)
 {
     std::vector<ByteString> keysToDelete;
@@ -219,6 +225,7 @@ bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor des
     if (replaced)
         return true;
 
+    // res is a <Inserted> - so it did not exist before
     remove(dkey);
     return false;
 }

@@ -149,6 +149,19 @@ std::optional<TreeValue> FileSystem::getAttribute(Path path) const
     return m_directoryStructure.getAttribute(DirectoryKey(path.m_root, path.m_relativePath));
 }
 
+bool FileSystem::rename(Path oldPath, Path newPath)
+{
+    if (!oldPath.reduce(&m_directoryStructure))
+        return false;
+    DirectoryKey oldKey(oldPath.m_root, oldPath.m_relativePath);
+
+    if (!newPath.create(&m_directoryStructure))
+        return false;
+    DirectoryKey newKey(newPath.m_root, newPath.m_relativePath);
+
+    return m_directoryStructure.rename(oldKey, newKey);
+}
+
 size_t FileSystem::remove(Path path)
 {
     if (!path.reduce(&m_directoryStructure))
