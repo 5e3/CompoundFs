@@ -300,3 +300,12 @@ DirectoryStructure::Cursor DirectoryStructure::next(Cursor cursor) const
         cursor = Cursor();
     return cursor;
 }
+
+DirectoryStructure::Cursor DirectoryStructure::begin(const DirectoryKey& dkey) const
+{
+    auto folder = dkey.getFolder();
+    DirectoryStructure::Cursor cursor = m_btree.begin(dkey);
+    if (cursor && cursor.key().first != folder)
+        cursor = Cursor();
+    return cursor;
+}

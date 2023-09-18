@@ -176,7 +176,7 @@ TEST(DirectoryStructure, appendFile)
 
     ASSERT_EQ(*ds.appendFile(dkey) , desc);
 }
-
+                                           
 TEST(DirectoryStructure, updateFileNeedsExistingFile)
 {
     DirectoryStructure ds = makeDirectoryStructure();
@@ -207,6 +207,17 @@ TEST(DirectoryStructure, storeCommitBlockEqualsRetrieveCommitBlock)
     ASSERT_EQ(in.m_freeStoreDescriptor, out.m_freeStoreDescriptor);
     ASSERT_EQ(in.m_compositSize, out.m_compositSize);
     ASSERT_EQ(in.m_maxFolderId, out.m_maxFolderId);
+}
+
+TEST(DirectoryStructure, EmptyFolderReturnsNullCursorOnBegin)
+{
+    auto ds = makeDirectoryStructure();
+    auto folder1 = *ds.makeSubFolder(DirectoryKey("test1"));
+    auto folder2 = *ds.makeSubFolder(DirectoryKey("test2"));
+    ds.addAttribute(DirectoryKey(folder2, "testAttrib"), "test");
+
+    auto cursor = ds.begin(DirectoryKey(folder1, ""));
+    ASSERT_FALSE(cursor);
 }
 
 

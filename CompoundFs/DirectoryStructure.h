@@ -37,6 +37,12 @@ public:
     DirectoryKey(Folder folder) noexcept { m_key.push(folder); }
 
     operator ByteStringView () const noexcept { return m_key; }
+    Folder getFolder() const
+    {
+        Folder folder;
+        ByteStringStream::pop(folder, m_key);
+        return folder;
+    }
 
 private:
     ByteStringStream m_key;
@@ -126,11 +132,6 @@ private:
 inline DirectoryStructure::Cursor DirectoryStructure::find(const DirectoryKey& dkey) const
 {
     return m_btree.find(dkey);
-}
-
-inline DirectoryStructure::Cursor DirectoryStructure::begin(const DirectoryKey& dkey) const
-{
-    return m_btree.begin(dkey);
 }
 
 
