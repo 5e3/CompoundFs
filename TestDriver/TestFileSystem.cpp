@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include "FileSystemHelper.h"
+#include "FileSystemUtility.h"
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/DirectoryStructure.h"
 #include "CompoundFs/Path.h"
@@ -238,12 +238,19 @@ TEST(FileSystem, renameCanMoveAFile)
     ASSERT_FALSE(fs.readFile("folder/subFolder/file3.file"));
 }
 
+TEST(FileSystem, CannotRenameRootFolder)
+{
+    auto fs = prepareFileSystemWithFiles();
+
+    ASSERT_FALSE(fs.rename("", "newRoot"));
+}
+
 class FileSystemTester : public ::testing::Test
 {
 public:
     std::shared_ptr<CacheManager> m_cacheManager;
     FileSystem m_fileSystem;
-    FileSystemHelper m_helper;
+    FileSystemUtility m_helper;
 
     FileSystemTester()
         : m_cacheManager(std::make_shared<CacheManager>(std::make_unique<MemoryFile>()))

@@ -1,7 +1,7 @@
 
 
 #include <gtest/gtest.h>
-#include "FileSystemHelper.h"
+#include "FileSystemUtility.h"
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/DirectoryStructure.h"
 #include "CompoundFs/Path.h"

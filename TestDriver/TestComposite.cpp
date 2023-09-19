@@ -1,6 +1,6 @@
 
 #include <gtest/gtest.h>
-#include "FileSystemHelper.h"
+#include "FileSystemUtility.h"
 
 #include "CompoundFs/Composite.h"
 #include "CompoundFs/MemoryFile.h"
@@ -66,7 +66,7 @@ TEST(Composite, openNonTxFsFileThrows)
 struct CompositeTester : ::testing::Test
 {
     std::shared_ptr<FileInterface> m_file;
-    FileSystemHelper m_helper;
+    FileSystemUtility m_helper;
 
     CompositeTester()
         : m_file(std::make_shared<MemoryFile>())

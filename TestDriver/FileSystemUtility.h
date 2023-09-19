@@ -36,11 +36,11 @@ inline std::string makeFile(FileSystem& fileSystem, std::string_view path, char 
 }
 
 
-struct FileSystemHelper
+struct FileSystemUtility
 {
     std::string m_fileData;
 
-    FileSystemHelper()
+    FileSystemUtility()
         : m_fileData(5000, '1')
     {
     }

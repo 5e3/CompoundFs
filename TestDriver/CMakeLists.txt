@@ -48,7 +48,7 @@ set (Headers
 		MinimalTreeBuilder.h
 		FileInterfaceTester.h
 		FileLockingTester.h
-		FileSystemHelper.h
+		FileSystemUtility.h
 	)
 	
 
