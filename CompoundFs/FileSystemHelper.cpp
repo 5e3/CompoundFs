@@ -7,7 +7,7 @@ using namespace TxFs;
 
 
    
-FolderContents TxFs::getFolderContents(Path path, const FileSystem& fs)
+FolderContents TxFs::retrieveFolderContents(Path path, const FileSystem& fs)
 {
     FolderContents fc;
     auto res = fs.subFolder(path);

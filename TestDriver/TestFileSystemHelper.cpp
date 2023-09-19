@@ -30,14 +30,14 @@ void createFile(Path path, FileSystem& fs)
 
 }
 
-TEST(FileSystemHelper, getFolderContents)
+TEST(FileSystemHelper, retrieveFolderContents)
 {
     auto fs = makeFileSystem();
     createFile("folder/file1", fs);
     createFile("folder/file2", fs);
     createFile("folder/subFolder/file3", fs);
 
-    auto contents = getFolderContents("folder", fs);
+    auto contents = retrieveFolderContents("folder", fs);
     ASSERT_EQ(contents.size(), 3);
 }
 

@@ -24,7 +24,7 @@ public:
 
 using FolderContents = std::vector<std::pair<FolderKey, TreeValue>>;
 
-FolderContents getFolderContents(Path path, const FileSystem& fs);
+FolderContents retrieveFolderContents(Path path, const FileSystem& fs);
 
 //////////////////////////////////////////////////////////////////////////
 
