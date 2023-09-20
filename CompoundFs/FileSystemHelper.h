@@ -24,9 +24,18 @@ public:
 
 using FolderContents = std::vector<std::pair<FolderKey, TreeValue>>;
 
+//////////////////////////////////////////////////////////////////////////
+
+
+
+size_t copy(FileSystem& sourceFs, Path sourcePath, FileSystem& destFs, Path destPath);
+inline size_t copy(FileSystem& sourceFs, Path sourcePath, Path destPath)
+{
+    return copy(sourceFs, sourcePath, sourceFs, destPath);
+}
+
 FolderContents retrieveFolderContents(Path path, const FileSystem& fs);
 
-//////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 

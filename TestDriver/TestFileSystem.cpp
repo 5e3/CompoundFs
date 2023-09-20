@@ -117,6 +117,17 @@ TEST(FileSystem, subFolder)
     ASSERT_EQ(folder, folder2);
 }
 
+TEST(FileSystem, subFolderAppliedToRootFolderWorks)
+{
+    auto fs = makeFileSystem();
+    auto folder = fs.makeSubFolder("");
+    ASSERT_TRUE(folder);
+
+    auto folder2 = fs.subFolder("");
+    ASSERT_TRUE(folder2);
+    ASSERT_EQ(folder, folder2);
+}
+
 TEST(FileSystem, attribute)
 {
     auto fs = makeFileSystem();

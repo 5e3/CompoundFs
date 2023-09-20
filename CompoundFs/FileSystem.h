@@ -3,12 +3,12 @@
 #include "DirectoryStructure.h"
 #include "FileReader.h"
 #include "FileWriter.h"
+#include "Path.h"
 
 namespace TxFs
 {
 enum class WriteHandle : uint32_t;
 enum class ReadHandle : uint32_t;
-class Path;
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -52,6 +52,9 @@ public:
     void commit();
     void rollback();
 
+    bool reducePath(Path& p) const;
+    bool createPath(Path& p);
+
 private:
     void closeAllFiles();
 
@@ -80,6 +83,16 @@ inline FileSystem::Cursor FileSystem::next(Cursor cursor) const
 inline FileSystem::Startup FileSystem::initialize(const std::shared_ptr<CacheManager>& cacheManager)
 {
     return DirectoryStructure::initialize(cacheManager);
+}
+
+inline bool FileSystem::reducePath(Path& path) const
+{
+    return path.reduce(&m_directoryStructure);
+}
+
+inline bool FileSystem::createPath(Path& path)
+{
+    return path.create(&m_directoryStructure);
 }
 
 }
