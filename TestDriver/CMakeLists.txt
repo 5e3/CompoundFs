@@ -14,6 +14,7 @@ set (Sources
 		TestFileReaderWriter.cpp
 		TestFileSystem.cpp
 		TestFileSystemHelper.cpp
+		TestFileSystemVisitor.cpp
 		TestFileTable.cpp
 		TestFreeStore.cpp
 		TestIntervalSequence.cpp

@@ -50,6 +50,7 @@ set (Headers
 		FileReader.h
 		FileSystem.h
 		FileSystemHelper.h
+		FileSystemVisitor.h
 		FileTable.h
 		FileWriter.h
 		FreeStore.h
