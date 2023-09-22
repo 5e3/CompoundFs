@@ -38,9 +38,27 @@ TEST(DirectoryStructure, makeFolderReturnsFolder)
 
     res = ds.makeSubFolder(DirectoryKey("test"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(*res , folder);
+    ASSERT_EQ(*res, folder);
 
-    ASSERT_EQ(ds.subFolder(DirectoryKey("test")) , *res);
+    ASSERT_EQ(ds.subFolder(DirectoryKey("test")), *res);
+}
+
+TEST(DirectoryStructure, makeRootFolder)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto res = ds.makeSubFolder(DirectoryKey(""));
+    ASSERT_TRUE(res);
+    ASSERT_EQ(*res, DirectoryKey::Root);
+}
+
+TEST(DirectoryStructure, subFolderLookupRootFolder)
+{
+    DirectoryStructure ds = makeDirectoryStructure();
+
+    auto res = ds.subFolder(DirectoryKey(""));
+    ASSERT_TRUE(res);
+    ASSERT_EQ(*res, DirectoryKey::Root);
 }
 
 TEST(DirectoryStructure, makeSubFolder)

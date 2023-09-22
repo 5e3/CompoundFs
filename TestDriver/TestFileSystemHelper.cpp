@@ -6,7 +6,9 @@
 #include "CompoundFs/DirectoryStructure.h"
 #include "CompoundFs/Path.h"
 #include "CompoundFs/FileSystemHelper.h"
+#include <string>
 
+using namespace std::string_literals;
 using namespace TxFs;
 
 namespace
@@ -68,5 +70,26 @@ TEST(FileSystemHelper, folderToFolder2)
 
     ASSERT_EQ(copy(fs, "folder", "folder2"), 5);
     ASSERT_EQ(copy(fs, "folder", "folder2"), 5);
+}
+
+TEST(FileSystemHelper, folderToRoot)
+{
+    auto fs = makeFileSystem();
+    createFile("folder/file1", fs);
+    createFile("folder/file2", fs);
+    createFile("folder/subFolder/file3", fs);
+
     ASSERT_EQ(copy(fs, "folder", ""), 5);
+}
+
+TEST(FileSystemHelper, manyItemsFolderToFolder2)
+{
+    auto fs = makeFileSystem();
+    for (int i = 0; i < 100; i++)
+    {
+        auto key = std::to_string(i);
+        fs.addAttribute(Path("folder/"s + key), key);
+    }
+
+    ASSERT_EQ(copy(fs, "folder", "folder2"), 101);
 }

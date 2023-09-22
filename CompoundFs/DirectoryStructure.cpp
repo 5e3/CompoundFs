@@ -75,6 +75,9 @@ void DirectoryStructure::connectFreeStore()
 
 std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey)
 {
+    if (dkey == DirectoryKey(""))
+        return DirectoryKey::Root;
+
     ValueStream value(Folder { m_maxFolderId });
     auto res = m_btree.insert(dkey, value, [](ByteStringView) { return false; });
 
@@ -92,6 +95,9 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey
 
 std::optional<Folder> DirectoryStructure::subFolder(const DirectoryKey& dkey) const
 {
+    if (dkey == DirectoryKey(""))
+        return DirectoryKey::Root;
+
     auto cursor = m_btree.find(dkey);
     if (!cursor)
         return std::nullopt;

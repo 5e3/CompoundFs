@@ -39,6 +39,24 @@ struct CopyProcessor
         }
     }
 
+    size_t copyType(const TreeEntry& entry, Folder destFolder)
+    {
+        Path destPath(destFolder, Path(entry.m_key).m_relativePath);
+        switch (entry.m_value.getType())
+        {
+        case TreeValue::Type::File: {
+            return copyFile(entry.m_key, destPath);
+        }
+        case TreeValue::Type::Folder: {
+            auto sourceFolder = entry.m_value.toValue<Folder>();
+            auto dfolder = m_destFs.makeSubFolder(destPath);
+            return dfolder ? copyFolder(sourceFolder, *dfolder) + 1 : 0;
+        }
+        default:
+            return m_destFs.addAttribute(destPath, entry.m_value);
+        }
+    }
+
     bool copyFile(Path sourcePath, Path destPath)
     {
         auto readHandle = m_sourceFs.readFile(sourcePath);
@@ -70,17 +88,72 @@ struct CopyProcessor
 
     size_t copyFolder(Folder sourceFolder, Folder destFolder)
     {
+        constexpr size_t MaxEntries = 64;
         size_t numItems = 0;
+        std::vector<TreeEntry> treeEntries;
+        treeEntries.reserve(MaxEntries);
+
         auto sourceCursor = m_sourceFs.begin(Path(sourceFolder, ""));
-        for (; sourceCursor; sourceCursor = m_sourceFs.next(sourceCursor))
+        while (sourceCursor)
         {
-            Path destPath(destFolder, sourceCursor.key().second);
-            numItems += copyType(sourceCursor, destPath);
+            for (int i = 0; sourceCursor && i < MaxEntries; sourceCursor = m_sourceFs.next(sourceCursor), i++)
+                treeEntries.push_back({ sourceCursor.key(), sourceCursor.value() });
+
+            assert(treeEntries.size() <= MaxEntries);
+            assert(treeEntries.size() > 0);
+
+            for (const auto& entry: treeEntries)
+                numItems += copyType(entry, destFolder);
+
+            sourceCursor = m_sourceFs.find(treeEntries.back().m_key);
+
+            if (sourceCursor)
+                sourceCursor = m_sourceFs.next(sourceCursor);
+            else
+                sourceCursor = m_sourceFs.begin(treeEntries.back().m_key);
+            treeEntries.clear();
         }
 
         return numItems;
     }
 };
+}
+
+namespace TxFs
+{
+class TreeVisitor
+{
+    FileSystem& m_fs;
+
+public:
+    TreeVisitor(FileSystem& fs)
+        : m_fs(fs)
+    {
+    }
+
+    template<typename TVisitor>
+    void visit(Path path, TVisitor& visitor)
+    {
+        auto cursor = m_fs.find(path);
+        if (!cursor)
+            return;
+
+        TreeEntry entry { cursor.key(), cursor.value() };
+        visitor(entry);
+        if (entry.m_value.getType() == TreeValue::Type::Folder)
+        {
+            std::vector<TreeEntry> treeEntries;
+            cursor = m_fs.find(Path(entry.m_value.toValue<Folder>(), ""));
+            for (; cursor; cursor = m_fs.next(cursor))
+                treeEntries.push_back({ cursor.key(), cursor.value() });
+            {
+
+            }
+            entry = TreeEntry{ cursor.key(), cursor.value() };
+        }
+    }
+};
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -93,7 +166,7 @@ size_t TxFs::copy(FileSystem& sourceFs, Path sourcePath, FileSystem& destFs, Pat
         auto destFolder = destFs.makeSubFolder(destPath);
         if (!destFolder)
             return 0;
-            
+
         return cp.copyFolder(sourcePath.m_root, destPath.m_root);
     }
 
