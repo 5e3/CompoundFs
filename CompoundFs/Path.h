@@ -12,17 +12,17 @@ public:
 
     constexpr Path(std::string_view absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_root(AbsoluteRoot)
+        , m_parent(AbsoluteRoot)
     {}
 
     constexpr Path(const char* absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_root(AbsoluteRoot)
+        , m_parent(AbsoluteRoot)
     {}
 
     constexpr Path(Folder root, std::string_view relativePath) noexcept
         : m_relativePath(relativePath)
-        , m_root(root)
+        , m_parent(root)
     {}
 
     bool create(DirectoryStructure* ds);
@@ -30,18 +30,20 @@ public:
 
     constexpr bool operator==(Path rhs) const noexcept
     {
-        return std::tie(m_root, m_relativePath) == std::tie(rhs.m_root, rhs.m_relativePath);
+        return std::tie(m_parent, m_relativePath) == std::tie(rhs.m_parent, rhs.m_relativePath);
     }
 
     constexpr bool operator!=(Path rhs) const noexcept { return !(*this == rhs); }
 
 public:
     std::string_view m_relativePath;
-    Folder m_root;
+    Folder m_parent;
 
 private:
     template <typename TFunc>
     bool subFolderWalk(TFunc&& func);
 };
+
+constexpr Path RootFolder { "" };
 
 }

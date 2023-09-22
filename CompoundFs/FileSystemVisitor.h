@@ -31,9 +31,9 @@ public:
     FileSystem::Cursor prepareVisit(Path path, TVisitor& visitor)
     {
         // There is no root entry - handle it...
-        if (path == Path(""))
+        if (path == RootFolder)
         {
-            visitor(path, TreeValue { Folder { path.m_root } });
+            visitor(path, TreeValue { Folder { path.m_parent } });
             return m_fs.begin(path);
         }
 

@@ -18,7 +18,7 @@ bool Path::subFolderWalk(TFunc&& func)
 {
     auto pos = m_relativePath.find('/');
     auto relativePath = m_relativePath;
-    auto root = m_root;
+    auto root = m_parent;
 
     while (pos != std::string_view::npos)
     {
@@ -33,6 +33,6 @@ bool Path::subFolderWalk(TFunc&& func)
     }
 
     m_relativePath = relativePath;
-    m_root = root;
+    m_parent = root;
     return true;
 }
