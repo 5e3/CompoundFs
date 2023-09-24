@@ -33,7 +33,7 @@ public:
         // There is no root entry - handle it...
         if (path == RootFolder)
         {
-            visitor(path, TreeValue { Folder { path.m_parent } });
+            visitor(path, TreeValue { Folder { path.AbsoluteRoot } });
             return m_fs.begin(path);
         }
 
@@ -56,15 +56,14 @@ public:
         while (cursor)
         {
             visitor(Path(cursor.key().first, cursor.key().second), cursor.value());
+            auto type = cursor.value().getType();
+            cursor = m_fs.next(cursor);
 
-            if (cursor.value().getType() == TreeValue::Type::Folder)
+            if (type == TreeValue::Type::Folder)
             {  
-                cursor = m_fs.next(cursor);
                 stack.push_back(cursor);
                 cursor = m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
             }
-            else
-                cursor = m_fs.next(cursor);
 
            while (!cursor && !stack.empty())
             {
