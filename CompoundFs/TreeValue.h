@@ -40,8 +40,8 @@ struct Version
 
 class TreeValue final 
 {
-    struct Unknown
-    {};
+    struct Unknown{};
+    friend bool operator==(const Unknown&, const Unknown&) { return false; }
     using Variant = std::variant<FileDescriptor, Folder, Version, double, uint64_t, uint32_t, std::string, Unknown>;
 
     template <typename T>
@@ -60,6 +60,13 @@ public:
         : m_variant(val)
     {}
 
+    bool operator==(const TreeValue& lhs) const
+    { 
+        return m_variant == lhs.m_variant;
+    }
+
+    bool operator!=(const TreeValue& lhs) const { return !(*this == lhs); }
+
     std::string_view getTypeName() const;
     Type getType() const { return static_cast<Type>(m_variant.index()); }
 
@@ -67,6 +74,12 @@ public:
     T toValue() const
     {
         return std::get<T>(m_variant);
+    }
+
+    template <typename TVisitor>
+    auto visit(TVisitor&& visitor) const
+    {
+        return std::visit(std::forward(visitor), m_variant);
     }
 
     void toStream(ByteStringStream& bss) const;

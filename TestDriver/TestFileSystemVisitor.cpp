@@ -34,9 +34,10 @@ void createFile(Path path, FileSystem& fs)
 struct TestVisitor
 {
     std::vector<std::string> m_names;
-    void operator()(Path p, const TreeValue&) 
+    VisitorControl operator()(Path p, const TreeValue&) 
     { 
-        m_names.push_back(std::string(p.m_relativePath)); 
+        m_names.push_back(std::string(p.m_relativePath));
+        return VisitorControl::Continue;
     }
 };
 
