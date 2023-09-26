@@ -47,7 +47,7 @@ std::optional<WriteHandle> FileSystem::appendFile(Path path)
 
 std::optional<ReadHandle> FileSystem::readFile(Path path)
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return std::nullopt;
 
     auto fileDescriptor = m_directoryStructure.openFile(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -64,7 +64,7 @@ std::optional<ReadHandle> FileSystem::readFile(Path path)
 
 std::optional<uint64_t> FileSystem::fileSize(Path path) const
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return std::nullopt;
 
     auto fileDescriptor = m_directoryStructure.openFile(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -127,7 +127,7 @@ std::optional<Folder> FileSystem::makeSubFolder(Path path)
 
 std::optional<Folder> FileSystem::subFolder(Path path) const
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return std::nullopt;
 
     return m_directoryStructure.subFolder(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -143,7 +143,7 @@ bool FileSystem::addAttribute(Path path, const TreeValue& attribute)
 
 std::optional<TreeValue> FileSystem::getAttribute(Path path) const
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return std::nullopt;
 
     return m_directoryStructure.getAttribute(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -151,7 +151,7 @@ std::optional<TreeValue> FileSystem::getAttribute(Path path) const
 
 bool FileSystem::rename(Path oldPath, Path newPath)
 {
-    if (!oldPath.reduce(&m_directoryStructure))
+    if (!oldPath.normalize(&m_directoryStructure))
         return false;
     DirectoryKey oldKey(oldPath.m_parent, oldPath.m_relativePath);
 
@@ -164,7 +164,7 @@ bool FileSystem::rename(Path oldPath, Path newPath)
 
 size_t FileSystem::remove(Path path)
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return 0;
 
     return m_directoryStructure.remove(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -172,7 +172,7 @@ size_t FileSystem::remove(Path path)
 
 FileSystem::Cursor FileSystem::find(Path path) const
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return Cursor();
 
     return m_directoryStructure.find(DirectoryKey(path.m_parent, path.m_relativePath));
@@ -180,7 +180,7 @@ FileSystem::Cursor FileSystem::find(Path path) const
 
 FileSystem::Cursor FileSystem::begin(Path path) const
 {
-    if (!path.reduce(&m_directoryStructure))
+    if (!path.normalize(&m_directoryStructure))
         return Cursor();
 
     return m_directoryStructure.begin(DirectoryKey(path.m_parent, path.m_relativePath));

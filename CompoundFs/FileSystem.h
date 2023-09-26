@@ -87,7 +87,7 @@ inline FileSystem::Startup FileSystem::initialize(const std::shared_ptr<CacheMan
 
 inline bool FileSystem::reducePath(Path& path) const
 {
-    return path.reduce(&m_directoryStructure);
+    return path.normalize(&m_directoryStructure);
 }
 
 inline bool FileSystem::createPath(Path& path)

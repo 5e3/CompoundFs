@@ -28,27 +28,6 @@ public:
     }
 
     template <typename TVisitor>
-    FileSystem::Cursor prepareVisit(Path path, TVisitor& visitor)
-    {
-        // There is no root entry - handle it...
-        if (path == RootFolder)
-        {
-            auto control = visitor(path, TreeValue { Folder { path.AbsoluteRoot } });
-            return control == VisitorControl::Continue ? m_fs.begin(path) : FileSystem::Cursor();
-        }
-
-        FileSystem::Cursor cursor = m_fs.find(path);
-        if (!cursor)
-            return cursor;
-
-        auto control = visitor(Path(cursor.key().first, cursor.key().second), cursor.value());
-        if (control == VisitorControl::Continue && cursor.value().getType() == TreeValue::Type::Folder)
-            return m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
-
-        return FileSystem::Cursor();
-    }
-
-    template <typename TVisitor>
     void visit(Path path, TVisitor& visitor)
     {
         FileSystem::Cursor cursor = prepareVisit(path, visitor);
@@ -73,6 +52,28 @@ public:
                 stack.pop_back();
             }
         }
+    }
+
+private:
+    template <typename TVisitor>
+    FileSystem::Cursor prepareVisit(Path path, TVisitor& visitor)
+    {
+        // There is no root entry - handle it...
+        if (path == RootFolder)
+        {
+            auto control = visitor(path, TreeValue { Folder { path.Root } });
+            return control == VisitorControl::Continue ? m_fs.begin(path) : FileSystem::Cursor();
+        }
+
+        FileSystem::Cursor cursor = m_fs.find(path);
+        if (!cursor)
+            return cursor;
+
+        auto control = visitor(Path(cursor.key().first, cursor.key().second), cursor.value());
+        if (control == VisitorControl::Continue && cursor.value().getType() == TreeValue::Type::Folder)
+            return m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
+
+        return FileSystem::Cursor();
     }
 };
 
@@ -118,6 +119,8 @@ struct FsCompareVisitor
     };
     Result m_result;
     SmallBufferStack<std::pair<Folder, Folder>, 10> m_stack;
+    std::vector<char> m_buffer;
+
 
     FsCompareVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
         : m_sourceFs(sourceFs)
@@ -131,64 +134,112 @@ struct FsCompareVisitor
 
     }
 
+    Path getDestPath(Path sourcePath)
+    {
+        if (m_stack.empty())
+            return Path(m_folder, m_name);
+        else
+        {
+            while (m_stack.back().first != sourcePath.m_parent)
+                m_stack.pop_back();
+            return Path(m_stack.back().second, sourcePath.m_relativePath);
+        }
+    }
+
     VisitorControl operator()(Path path, const TreeValue& value)
     {
         if (m_result != Result::Equal)
             return VisitorControl::Break;
+                        
+        Path destPath = getDestPath(path);
 
-        std::string_view name = m_stack.empty() ? m_name : std::string(path.m_relativePath);
-        while (!m_stack.empty() && m_stack.back().first != path.m_parent)
-            m_stack.pop_back();
+        return dispatch(path, value, destPath);
+    }
 
-        auto sourceCursor = m_sourceFs.find(path);
-        assert(sourceCursor);
-        auto destCursor = m_destFs.find(Path(m_folder, name));
+    std::optional<TreeValue> getDestValue(Path destPath)
+    {
+        if (destPath == RootFolder)
+            return TreeValue { Folder { Path::Root } };    
+
+        auto destCursor = m_destFs.find(destPath);
         if (!destCursor)
+        {
+                m_result = Result::NotFound;
+                return std::nullopt;
+        }
+        return destCursor.value();
+    }
+
+    VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath)
+    {
+        auto destValue = getDestValue(destPath);        
+        if (!destValue)
         {
             m_result = Result::NotFound;
             return VisitorControl::Break;
         }
 
-        return dispatchOnCursorValue(sourceCursor, destCursor);
-    }
-
-    VisitorControl dispatchOnCursorValue(FileSystem::Cursor sourceCursor, FileSystem::Cursor destCursor)
-    {
-        if (sourceCursor.value().getType() != destCursor.value().getType())
+        auto sourceType = sourceValue.getType();
+        auto destType = destValue->getType();
+        if (sourceType != destType)
         {
             m_result = Result::NotEqual;
             return VisitorControl::Break;
         }
 
-        auto type = sourceCursor.value().getType();
-        if (type == TreeValue::Type::Folder)
-            m_stack.push_back(
-                std::pair { sourceCursor.value().toValue<Folder>(), destCursor.value().toValue<Folder>() });
-        else if (type == TreeValue::Type::File)
-            return compareFiles(...);
+        if (sourceType == TreeValue::Type::Folder)
+        {
+            auto sourceFolder = sourceValue.toValue<Folder>();
+            auto destFolder = destValue->toValue<Folder>();
+            m_stack.push_back(std::pair { sourceFolder, destFolder});
+        }
+        else if (sourceType == TreeValue::Type::File)
+            return compareFiles(sourcePath, destPath);
         else
         {
-            if (sourceCursor.value() != destCursor.value())
+            if (sourceValue != *destValue)
             {
                 m_result = Result::NotEqual;
                 return VisitorControl::Break;
             }
         }
         return VisitorControl::Continue;
+    }
 
-        cursor.value().getType()
-        if (value.getType() == TreeValue::Type::Folder)
+    VisitorControl compareFiles(Path sourcePath, Path destPath)
+    {
+        auto sourceHandle = *m_sourceFs.readFile(sourcePath);
+        auto destHandle = *m_destFs.readFile(destPath);
+
+        if (m_sourceFs.fileSize(sourceHandle) != m_destFs.fileSize(destHandle))
         {
-            auto folder = m_fs.subFolder(Path(m_folder, name));
-            if (!folder)
+            m_result = Result::NotEqual;
+            return VisitorControl::Break;
+        }
+
+        return compareFiles(sourceHandle, destHandle);
+    }
+        
+    VisitorControl compareFiles(ReadHandle sourceHandle, ReadHandle destHandle)
+    {
+        m_buffer.reserve(32 * 4096); // 128K
+        m_buffer.resize(1);
+        auto data = m_buffer.data();
+
+        size_t fsize = m_sourceFs.fileSize(sourceHandle);
+        size_t blockSize = std::min(fsize, m_buffer.capacity() / 2);
+        for (size_t i = 0; i < fsize; i += blockSize)
+        {
+            m_sourceFs.read(sourceHandle, data, blockSize);
+            auto readSize = m_destFs.read(destHandle, data+blockSize, blockSize);
+            if (!std::equal(data, data + readSize, data + blockSize, data + blockSize+ readSize))
             {
-                m_result = Result::NotFound;
+                m_result = Result::NotEqual;
                 return VisitorControl::Break;
             }
-            m_stack.push_back(std::pair { value.toValue<Folder>(), *folder });
-        }
-        else
 
+        }
+        return VisitorControl::Continue;
     }
 };
 

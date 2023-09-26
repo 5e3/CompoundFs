@@ -8,7 +8,7 @@ bool Path::create(DirectoryStructure* ds)
     return subFolderWalk([ds = ds](const auto& dkey) { return ds->makeSubFolder(dkey); });
 }
 
-bool Path::reduce(const DirectoryStructure* ds)
+bool Path::normalize(const DirectoryStructure* ds)
 {
     return subFolderWalk([ds = ds](const auto& dkey) { return ds->subFolder(dkey); });
 }

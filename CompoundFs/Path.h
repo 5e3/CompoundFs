@@ -8,16 +8,16 @@ namespace TxFs
 class Path final
 {
 public:
-    static constexpr Folder AbsoluteRoot = DirectoryKey::Root;
+    static constexpr Folder Root = DirectoryKey::Root;
 
     constexpr Path(std::string_view absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(AbsoluteRoot)
+        , m_parent(Root)
     {}
 
     constexpr Path(const char* absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(AbsoluteRoot)
+        , m_parent(Root)
     {}
 
     constexpr Path(Folder root, std::string_view relativePath) noexcept
@@ -26,7 +26,7 @@ public:
     {}
 
     bool create(DirectoryStructure* ds);
-    bool reduce(const DirectoryStructure* ds);
+    bool normalize(const DirectoryStructure* ds);
 
     constexpr bool operator==(Path rhs) const noexcept
     {
