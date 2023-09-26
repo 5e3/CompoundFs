@@ -38,13 +38,16 @@ public:
                 return;
 
             auto type = cursor.value().getType();
-            cursor = m_fs.next(cursor);
+            //cursor = m_fs.next(cursor);
 
             if (type == TreeValue::Type::Folder)
             {
-                stack.push_back(cursor);
+                stack.push_back(m_fs.next(cursor));
                 cursor = m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
             }
+            else
+                cursor = m_fs.next(cursor);
+
 
             while (!cursor && !stack.empty())
             {
@@ -129,11 +132,16 @@ struct FsCompareVisitor
         , m_name{path.m_relativePath}
         , m_result(Result::Equal)
     {
-        if (!m_destFs.reducePath(path))
-            m_result = Result::NotFound;
-
     }
 
+    VisitorControl operator()(Path path, const TreeValue& value)
+    {
+        Path destPath = getDestPath(path);
+
+        return dispatch(path, value, destPath);
+    }
+
+private:
     Path getDestPath(Path sourcePath)
     {
         if (m_stack.empty())
@@ -146,20 +154,10 @@ struct FsCompareVisitor
         }
     }
 
-    VisitorControl operator()(Path path, const TreeValue& value)
-    {
-        if (m_result != Result::Equal)
-            return VisitorControl::Break;
-                        
-        Path destPath = getDestPath(path);
-
-        return dispatch(path, value, destPath);
-    }
-
     std::optional<TreeValue> getDestValue(Path destPath)
     {
         if (destPath == RootFolder)
-            return TreeValue { Folder { Path::Root } };    
+            return TreeValue { Path::Root };    
 
         auto destCursor = m_destFs.find(destPath);
         if (!destCursor)

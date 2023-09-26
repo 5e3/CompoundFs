@@ -123,6 +123,24 @@ TEST(FileSystemVisitor, VisitSubFolder)
     ASSERT_EQ(visitor1.m_names.size(), 2);
 }
 
+TEST(FileSystemVisitor, ComplexFs)
+{
+    auto fs = makeFileSystem();
+    createFile("folder1/a.file", fs);
+    createFile("folder1/subFolder1/subFolder2/1.file", fs);
+    createFile("folder1/x.file", fs);
+
+    TestVisitor visitor0;
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder1", visitor0);
+    ASSERT_EQ(visitor0.m_names.size(), 6);
+
+    TestVisitor visitor1;
+    fsvisitor.visit("", visitor1);
+    ASSERT_EQ(visitor1.m_names.size(), 7);
+}
+
+
 TEST(FsCompareVisitor, EmptyRootsAreEqual)
 {
     auto fs = makeFileSystem();
@@ -162,6 +180,20 @@ TEST(FsCompareVisitor, NonEmptyFoldersAreEqual)
     ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
 }
 
+TEST(FsCompareVisitor, NonEmptySubFoldersAreEqual)
+{
+    auto fs = makeFileSystem();
+    createFile("folder1/subFolder/file1", fs);
+
+    auto fs2 = makeFileSystem();
+    createFile("folder2/subFolder/file1", fs2);
+
+    FsCompareVisitor fscv(fs, fs2, "folder2/subFolder");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder1/subFolder", fscv);
+    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+}
+
 TEST(FsCompareVisitor, BigFilesAreEqual)
 {
     auto fs = makeFileSystem();
@@ -191,4 +223,50 @@ TEST(FsCompareVisitor, BigFilesAreNotEqual)
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
     ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+}
+
+TEST(FsCompareVisitor, ComplexFsIsEqual)
+{
+    auto fs = makeFileSystem();
+    createFile("folder/a.file", fs);
+    createFile("folder/subFolder1/subFolder2/1.file", fs);
+    createFile("folder/x.file", fs);
+
+    auto fs2 = makeFileSystem();
+    createFile("folder/a.file", fs2);
+    createFile("folder/subFolder1/subFolder2/1.file", fs2);
+    createFile("folder/x.file", fs2);
+
+    FsCompareVisitor fscv(fs, fs2, "folder");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder", fscv);
+    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+
+    FsCompareVisitor fscv2(fs, fs2, "");
+    FileSystemVisitor fsvisitor2(fs);
+    fsvisitor2.visit("", fscv2);
+    ASSERT_EQ(fscv2.m_result, FsCompareVisitor::Result::Equal);
+}
+
+TEST(FsCompareVisitor, ComplexFsIsNotEqual)
+{
+    auto fs = makeFileSystem();
+    createFile("folder/a.file", fs);
+    createFile("folder/subFolder1/subFolder2/1.file", fs);
+    createFile("folder/x.file", fs);
+
+    auto fs2 = makeFileSystem();
+    createFile("folder/a.file", fs2);
+    createFile("folder/subFolder1/subFolder2/1.file", fs2, "tesT");
+    createFile("folder/x.file", fs2);
+
+    FsCompareVisitor fscv(fs, fs2, "folder");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder", fscv);
+    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::NotEqual);
+
+    FsCompareVisitor fscv2(fs, fs2, "");
+    FileSystemVisitor fsvisitor2(fs);
+    fsvisitor2.visit("", fscv2);
+    ASSERT_EQ(fscv2.m_result, FsCompareVisitor::Result::NotEqual);
 }
