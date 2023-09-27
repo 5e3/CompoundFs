@@ -11,6 +11,7 @@ set (Sources
 		DirectoryStructure.cpp
 		FileSystem.cpp
 		FileSystemHelper.cpp
+		FileSystemVisitor.cpp
 		Hasher.cpp
 		MemoryFile.cpp
 		PageAllocator.cpp

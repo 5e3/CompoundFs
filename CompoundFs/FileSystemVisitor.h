@@ -9,9 +9,6 @@
 #include <string>
 #include <string_view>
 
-namespace
-{}
-
 namespace TxFs
 {
 
@@ -108,23 +105,21 @@ struct TreeEntry
 
 //////////////////////////////////////////////////////////////////////////
 
-struct FsCompareVisitor
+class FsCompareVisitor
 {
+public:
+    enum class Result { NotFound, NotEqual, Equal };
+
+private:
     FileSystem& m_sourceFs;
     FileSystem& m_destFs;
     Folder m_folder;
     std::string m_name;
-    enum class Result
-    {
-        NotFound,
-        NotEqual,
-        Equal                                                   
-    };
     Result m_result;
     SmallBufferStack<std::pair<Folder, Folder>, 10> m_stack;
     std::vector<char> m_buffer;
 
-
+public:
     FsCompareVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
         : m_sourceFs(sourceFs)
         , m_destFs(destFs)
@@ -134,111 +129,17 @@ struct FsCompareVisitor
     {
     }
 
-    VisitorControl operator()(Path path, const TreeValue& value)
-    {
-        Path destPath = getDestPath(path);
+    VisitorControl operator()(Path path, const TreeValue& value);
 
-        return dispatch(path, value, destPath);
-    }
+    Result result() const { return m_result; }
 
 private:
-    Path getDestPath(Path sourcePath)
-    {
-        if (m_stack.empty())
-            return Path(m_folder, m_name);
-        else
-        {
-            while (m_stack.back().first != sourcePath.m_parent)
-                m_stack.pop_back();
-            return Path(m_stack.back().second, sourcePath.m_relativePath);
-        }
-    }
-
-    std::optional<TreeValue> getDestValue(Path destPath)
-    {
-        if (destPath == RootFolder)
-            return TreeValue { Path::Root };    
-
-        auto destCursor = m_destFs.find(destPath);
-        if (!destCursor)
-        {
-                m_result = Result::NotFound;
-                return std::nullopt;
-        }
-        return destCursor.value();
-    }
-
-    VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath)
-    {
-        auto destValue = getDestValue(destPath);        
-        if (!destValue)
-        {
-            m_result = Result::NotFound;
-            return VisitorControl::Break;
-        }
-
-        auto sourceType = sourceValue.getType();
-        auto destType = destValue->getType();
-        if (sourceType != destType)
-        {
-            m_result = Result::NotEqual;
-            return VisitorControl::Break;
-        }
-
-        if (sourceType == TreeValue::Type::Folder)
-        {
-            auto sourceFolder = sourceValue.toValue<Folder>();
-            auto destFolder = destValue->toValue<Folder>();
-            m_stack.push_back(std::pair { sourceFolder, destFolder});
-        }
-        else if (sourceType == TreeValue::Type::File)
-            return compareFiles(sourcePath, destPath);
-        else
-        {
-            if (sourceValue != *destValue)
-            {
-                m_result = Result::NotEqual;
-                return VisitorControl::Break;
-            }
-        }
-        return VisitorControl::Continue;
-    }
-
-    VisitorControl compareFiles(Path sourcePath, Path destPath)
-    {
-        auto sourceHandle = *m_sourceFs.readFile(sourcePath);
-        auto destHandle = *m_destFs.readFile(destPath);
-
-        if (m_sourceFs.fileSize(sourceHandle) != m_destFs.fileSize(destHandle))
-        {
-            m_result = Result::NotEqual;
-            return VisitorControl::Break;
-        }
-
-        return compareFiles(sourceHandle, destHandle);
-    }
-        
-    VisitorControl compareFiles(ReadHandle sourceHandle, ReadHandle destHandle)
-    {
-        m_buffer.reserve(32 * 4096); // 128K
-        m_buffer.resize(1);
-        auto data = m_buffer.data();
-
-        size_t fsize = m_sourceFs.fileSize(sourceHandle);
-        size_t blockSize = std::min(fsize, m_buffer.capacity() / 2);
-        for (size_t i = 0; i < fsize; i += blockSize)
-        {
-            m_sourceFs.read(sourceHandle, data, blockSize);
-            auto readSize = m_destFs.read(destHandle, data+blockSize, blockSize);
-            if (!std::equal(data, data + readSize, data + blockSize, data + blockSize+ readSize))
-            {
-                m_result = Result::NotEqual;
-                return VisitorControl::Break;
-            }
-
-        }
-        return VisitorControl::Continue;
-    }
+    Path getDestPath(Path sourcePath);
+    std::optional<TreeValue> getDestValue(Path destPath);
+    VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath);
+    VisitorControl compareFiles(Path sourcePath, Path destPath);
+    char* getMemoryBuffer(size_t size);    
+    VisitorControl compareFiles(ReadHandle sourceHandle, ReadHandle destHandle);
 };
 
 }

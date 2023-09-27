@@ -149,7 +149,7 @@ TEST(FsCompareVisitor, EmptyRootsAreEqual)
 
     FsCompareVisitor fscv(fs, fs2, "");
     fsvisitor.visit("", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, EmptyFoldersAreEqual)
@@ -163,7 +163,7 @@ TEST(FsCompareVisitor, EmptyFoldersAreEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, NonEmptyFoldersAreEqual)
@@ -177,7 +177,7 @@ TEST(FsCompareVisitor, NonEmptyFoldersAreEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, NonEmptySubFoldersAreEqual)
@@ -191,7 +191,7 @@ TEST(FsCompareVisitor, NonEmptySubFoldersAreEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2/subFolder");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1/subFolder", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, SameAttributesReportEqual)
@@ -203,7 +203,7 @@ TEST(FsCompareVisitor, SameAttributesReportEqual)
     FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, UnequalAttributeValueReportsNotEqual)
@@ -215,7 +215,7 @@ TEST(FsCompareVisitor, UnequalAttributeValueReportsNotEqual)
     FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
-    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_NE(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, UnequalAttributeTypeReportsNotEqual)
@@ -227,11 +227,11 @@ TEST(FsCompareVisitor, UnequalAttributeTypeReportsNotEqual)
     FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
-    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_NE(fscv.result(), FsCompareVisitor::Result::Equal);
 
     createFile("folder2/subFolder/subFolder2/file", fs);
     fsvisitor.visit("folder2/subFolder/subFolder2/file", fscv);
-    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_NE(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, BigFilesAreEqual)
@@ -246,7 +246,7 @@ TEST(FsCompareVisitor, BigFilesAreEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, BigFilesAreNotEqual)
@@ -262,7 +262,7 @@ TEST(FsCompareVisitor, BigFilesAreNotEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::NotEqual);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::NotEqual);
 }
 
 TEST(FsCompareVisitor, ComplexFsIsEqual)
@@ -280,12 +280,12 @@ TEST(FsCompareVisitor, ComplexFsIsEqual)
     FsCompareVisitor fscv(fs, fs2, "folder");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::Equal);
 
     FsCompareVisitor fscv2(fs, fs2, "");
     FileSystemVisitor fsvisitor2(fs);
     fsvisitor2.visit("", fscv2);
-    ASSERT_EQ(fscv2.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv2.result(), FsCompareVisitor::Result::Equal);
 }
 
 TEST(FsCompareVisitor, ComplexFsIsNotEqual)
@@ -303,10 +303,10 @@ TEST(FsCompareVisitor, ComplexFsIsNotEqual)
     FsCompareVisitor fscv(fs, fs2, "folder");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder", fscv);
-    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::NotEqual);
+    ASSERT_EQ(fscv.result(), FsCompareVisitor::Result::NotEqual);
 
     FsCompareVisitor fscv2(fs, fs2, "");
     FileSystemVisitor fsvisitor2(fs);
     fsvisitor2.visit("", fscv2);
-    ASSERT_EQ(fscv2.m_result, FsCompareVisitor::Result::NotEqual);
+    ASSERT_EQ(fscv2.result(), FsCompareVisitor::Result::NotEqual);
 }
