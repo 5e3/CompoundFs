@@ -155,10 +155,10 @@ TEST(FsCompareVisitor, EmptyRootsAreEqual)
 TEST(FsCompareVisitor, EmptyFoldersAreEqual)
 {
     auto fs = makeFileSystem();
-    fs.createPath(Path("folder1"));
+    fs.makeSubFolder("folder1");
 
     auto fs2 = makeFileSystem();
-    fs2.createPath(Path("folder2"));
+    fs2.makeSubFolder("folder2");
 
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
@@ -194,6 +194,46 @@ TEST(FsCompareVisitor, NonEmptySubFoldersAreEqual)
     ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
 }
 
+TEST(FsCompareVisitor, SameAttributesReportEqual)
+{
+    auto fs = makeFileSystem();
+    fs.addAttribute("folder1/subFolder/attrib1", "test");
+    fs.addAttribute("folder2/subFolder/subFolder2/attrib1", "test");
+
+    FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
+    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::Equal);
+}
+
+TEST(FsCompareVisitor, UnequalAttributeValueReportsNotEqual)
+{
+    auto fs = makeFileSystem();
+    fs.addAttribute("folder1/subFolder/attrib1", "test");
+    fs.addAttribute("folder2/subFolder/subFolder2/attrib1", "Test");
+
+    FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
+    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+}
+
+TEST(FsCompareVisitor, UnequalAttributeTypeReportsNotEqual)
+{
+    auto fs = makeFileSystem();
+    fs.addAttribute("folder1/subFolder/attrib1", "test");
+    fs.addAttribute("folder2/subFolder/subFolder2/attrib1", 1.1);
+
+    FsCompareVisitor fscv(fs, fs, "folder1/subFolder/attrib1");
+    FileSystemVisitor fsvisitor(fs);
+    fsvisitor.visit("folder2/subFolder/subFolder2/attrib1", fscv);
+    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+
+    createFile("folder2/subFolder/subFolder2/file", fs);
+    fsvisitor.visit("folder2/subFolder/subFolder2/file", fscv);
+    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+}
+
 TEST(FsCompareVisitor, BigFilesAreEqual)
 {
     auto fs = makeFileSystem();
@@ -222,7 +262,7 @@ TEST(FsCompareVisitor, BigFilesAreNotEqual)
     FsCompareVisitor fscv(fs, fs2, "folder2");
     FileSystemVisitor fsvisitor(fs);
     fsvisitor.visit("folder1", fscv);
-    ASSERT_NE(fscv.m_result, FsCompareVisitor::Result::Equal);
+    ASSERT_EQ(fscv.m_result, FsCompareVisitor::Result::NotEqual);
 }
 
 TEST(FsCompareVisitor, ComplexFsIsEqual)
