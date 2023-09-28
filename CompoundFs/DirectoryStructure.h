@@ -19,12 +19,12 @@ struct CommitBlock;
 class DirectoryKey final
 {
 public:
-    static constexpr Folder Root { 0 };
+    static constexpr Folder RootFolder { 0 };
 
 public:
     DirectoryKey(ByteStringView name)
     {
-        m_key.push(Root);
+        m_key.push(RootFolder);
         m_key.push(name); 
     }
 

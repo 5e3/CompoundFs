@@ -23,8 +23,8 @@ Path FsCompareVisitor::getDestPath(Path sourcePath)
 
 std::optional<TreeValue> FsCompareVisitor::getDestValue(Path destPath)
 {
-    if (destPath == RootFolder)
-        return TreeValue { Path::Root };
+    if (destPath == RootPath)
+        return TreeValue { Path::RootFolder };
 
     auto destCursor = m_destFs.find(destPath);
     if (!destCursor)
@@ -85,19 +85,19 @@ VisitorControl FsCompareVisitor::compareFiles(Path sourcePath, Path destPath)
     return compareFiles(sourceHandle, destHandle);
 }
 
-char* FsCompareVisitor::getMemoryBuffer(size_t size)
+char* FsCompareVisitor::getLazyMemoryBuffer()
 {
-    m_buffer.reserve(size);
-    m_buffer.resize(1);
-    return m_buffer.data();
+    if (!m_buffer)
+        m_buffer = std::make_unique<char[]>(BufferSize);
+    return m_buffer.get();
 }
 
 VisitorControl FsCompareVisitor::compareFiles(ReadHandle sourceHandle, ReadHandle destHandle)
 {
-    auto data = getMemoryBuffer(32 * 4096); // 128K
+    auto data = getLazyMemoryBuffer(); 
 
     size_t fsize = m_sourceFs.fileSize(sourceHandle);
-    size_t blockSize = std::min(fsize, m_buffer.capacity() / 2);
+    size_t blockSize = std::min(fsize, BufferSize / 2);
     for (size_t i = 0; i < fsize; i += blockSize)
     {
         m_sourceFs.read(sourceHandle, data, blockSize);

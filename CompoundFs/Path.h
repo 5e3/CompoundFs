@@ -8,16 +8,16 @@ namespace TxFs
 class Path final
 {
 public:
-    static constexpr Folder Root = DirectoryKey::Root;
+    static constexpr Folder RootFolder = DirectoryKey::RootFolder;
 
     constexpr Path(std::string_view absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(Root)
+        , m_parent(RootFolder)
     {}
 
     constexpr Path(const char* absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(Root)
+        , m_parent(RootFolder)
     {}
 
     constexpr Path(Folder root, std::string_view relativePath) noexcept
@@ -44,6 +44,6 @@ private:
     bool subFolderWalk(TFunc&& func);
 };
 
-constexpr Path RootFolder { "" };
+constexpr Path RootPath { "" };
 
 }

@@ -26,7 +26,7 @@ TEST(Path, noSubFolderDoesNotChangePath)
     Path p2 = p;
 
     ASSERT_TRUE(p.create(&ds));
-    ASSERT_EQ(p.m_parent , Path::Root);
+    ASSERT_EQ(p.m_parent , Path::RootFolder);
     ASSERT_EQ(p.m_relativePath , "test");
     ASSERT_EQ(p , p2);
 }
@@ -38,7 +38,7 @@ TEST(Path, createCreatesSubFolders)
     Path p2 = p;
 
     ASSERT_TRUE(p.create(&ds));
-    ASSERT_NE(p.m_parent , Path::Root);
+    ASSERT_NE(p.m_parent , Path::RootFolder);
     ASSERT_EQ(p.m_relativePath , "folder2");
     ASSERT_TRUE(ds.subFolder(DirectoryKey("folder")));
     ASSERT_NE(p , p2);
@@ -74,7 +74,7 @@ TEST(Path, reduceFindsSubFolders)
 
     ASSERT_EQ(p , p2);
     ASSERT_EQ(p , p3);
-    ASSERT_NE(p.m_parent , Path::Root);
+    ASSERT_NE(p.m_parent , Path::RootFolder);
     ASSERT_EQ(p.m_relativePath , "file.file");
 }
 

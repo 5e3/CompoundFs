@@ -161,7 +161,7 @@ public:
 size_t TxFs::copy(FileSystem& sourceFs, Path sourcePath, FileSystem& destFs, Path destPath)
 {
     CopyProcessor cp(sourceFs, destFs);
-    if (sourcePath == RootFolder)
+    if (sourcePath == RootPath)
     {
         auto destFolder = destFs.makeSubFolder(destPath);
         if (!destFolder)

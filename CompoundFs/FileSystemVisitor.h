@@ -59,9 +59,9 @@ private:
     FileSystem::Cursor prepareVisit(Path path, TVisitor& visitor)
     {
         // There is no root entry - handle it...
-        if (path == RootFolder)
+        if (path == RootPath)
         {
-            auto control = visitor(path, TreeValue { Folder { path.Root } });
+            auto control = visitor(path, TreeValue { Folder { path.RootFolder } });
             return control == VisitorControl::Continue ? m_fs.begin(path) : FileSystem::Cursor();
         }
 
@@ -117,7 +117,8 @@ private:
     std::string m_name;
     Result m_result;
     SmallBufferStack<std::pair<Folder, Folder>, 10> m_stack;
-    std::vector<char> m_buffer;
+    std::unique_ptr<char[]> m_buffer;
+    static constexpr size_t BufferSize = 32 * 4096;
 
 public:
     FsCompareVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
@@ -138,10 +139,13 @@ private:
     std::optional<TreeValue> getDestValue(Path destPath);
     VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath);
     VisitorControl compareFiles(Path sourcePath, Path destPath);
-    char* getMemoryBuffer(size_t size);    
+    char* getLazyMemoryBuffer();    
     VisitorControl compareFiles(ReadHandle sourceHandle, ReadHandle destHandle);
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
+
+
 }
 
-///////////////////////////////////////////////////////////////////////////////

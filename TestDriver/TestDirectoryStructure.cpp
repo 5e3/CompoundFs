@@ -49,7 +49,7 @@ TEST(DirectoryStructure, makeRootFolder)
 
     auto res = ds.makeSubFolder(DirectoryKey(""));
     ASSERT_TRUE(res);
-    ASSERT_EQ(*res, DirectoryKey::Root);
+    ASSERT_EQ(*res, DirectoryKey::RootFolder);
 }
 
 TEST(DirectoryStructure, subFolderLookupRootFolder)
@@ -58,7 +58,7 @@ TEST(DirectoryStructure, subFolderLookupRootFolder)
 
     auto res = ds.subFolder(DirectoryKey(""));
     ASSERT_TRUE(res);
-    ASSERT_EQ(*res, DirectoryKey::Root);
+    ASSERT_EQ(*res, DirectoryKey::RootFolder);
 }
 
 TEST(DirectoryStructure, makeSubFolder)
@@ -253,7 +253,7 @@ TEST(Cursor, creation)
     ASSERT_TRUE(cur3);
     ASSERT_NE(cur3 , cur2);
     auto res = cur3.key();
-    ASSERT_EQ(res.first , DirectoryKey::Root);
+    ASSERT_EQ(res.first , DirectoryKey::RootFolder);
     ASSERT_EQ(res.second , "attrib");
     auto attrib = cur3.value();
     ASSERT_EQ(attrib.toValue<std::string>() , "test");
