@@ -146,7 +146,6 @@ std::shared_ptr<const InnerNode> BTree::handleUnderflow([[maybe_unused]] PageDef
 std::optional<ByteString> BTree::remove(ByteStringView key)
 {
     InnerNodeStack stack;
-    stack.reserve(5);
 
     auto leafDef = findLeaf(key, stack);
     auto it = leafDef.m_page->find(key);
@@ -163,7 +162,7 @@ std::optional<ByteString> BTree::remove(ByteStringView key)
     m_freePages.push_back(leafDef.m_index);
     while (!stack.empty())
     {
-        auto inner = m_cacheManager.makePageWritable(stack.back());
+        auto inner = m_cacheManager.makePageWritable(stack.top());
         auto innerPage = inner.m_page;
         innerPage->remove(key);
 
@@ -187,7 +186,7 @@ std::optional<ByteString> BTree::remove(ByteStringView key)
             return beforeValue;
 
         key = freePage->getKey(freePage->beginTable());
-        stack.pop_back();
+        stack.pop();
     }
 
     return beforeValue;
@@ -201,8 +200,8 @@ ConstPageDef<Leaf> BTree::findLeaf(ByteStringView key, InnerNodeStack& stack) co
         auto nodeDef = m_cacheManager.loadPage<Node>(id);
         if (nodeDef.m_page->m_type == NodeType::Leaf)
             return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(std::move(nodeDef.m_page)), id);
-        stack.emplace_back(std::static_pointer_cast<const InnerNode>(std::move(nodeDef.m_page)), id);
-        id = stack.back().m_page->findPage(key);
+        stack.emplace(std::static_pointer_cast<const InnerNode>(std::move(nodeDef.m_page)), id);
+        id = stack.top().m_page->findPage(key);
     }
 }
 
@@ -212,7 +211,7 @@ void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageInd
     bool leftRightIsLeaf = stack.empty();
     while (!stack.empty())
     {
-        auto inner = m_cacheManager.makePageWritable(stack.back());
+        auto inner = m_cacheManager.makePageWritable(stack.top());
         if (inner.m_page->hasSpace(key))
         {
             inner.m_page->insert(key, right);
@@ -223,7 +222,7 @@ void BTree::propagate(InnerNodeStack& stack, ByteStringView keyToInsert, PageInd
         key = inner.m_page->split(rightInner.m_page.get(), key, right);
         left = inner.m_index;
         right = rightInner.m_index;
-        stack.pop_back();
+        stack.pop();
     }
 
     growTree(key, leftRightIsLeaf, left, right);
@@ -247,9 +246,6 @@ void TxFs::BTree::growTree(ByteStringView key, bool leftRightIsLeaf, PageIndex l
     auto leftDef = m_cacheManager.makePageWritable(m_cacheManager.loadPage<InnerNode>(left));
     *pageDef.m_page = *leftDef.m_page;
     [[maybe_unused]] auto root = new (leftDef.m_page.get()) InnerNode(key, pageDef.m_index, right);
-
-
-
 }
 
 BTree::RenameResult BTree::rename(ByteStringView oldKey, ByteStringView newKey)
@@ -272,7 +268,6 @@ BTree::RenameResult BTree::rename(ByteStringView oldKey, ByteStringView newKey)
 BTree::Cursor BTree::find(ByteStringView key) const
 {
     InnerNodeStack stack;
-    stack.reserve(5);
 
     auto leafDef = findLeaf(key, stack);
     auto it = leafDef.m_page->find(key);
@@ -284,7 +279,6 @@ BTree::Cursor BTree::find(ByteStringView key) const
 BTree::Cursor BTree::begin(ByteStringView key) const
 {
     InnerNodeStack stack;
-    stack.reserve(5);
 
     auto leafDef = findLeaf(key, stack);
     auto it = leafDef.m_page->lowerBound(key);

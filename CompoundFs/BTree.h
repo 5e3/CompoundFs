@@ -23,7 +23,6 @@ template <typename, size_t> class SmallBufferStack;
 
 class BTree final
 {
-    // using InnerNodeStack = std::vector<ConstPageDef<InnerNode>>;
     using InnerNodeStack = SmallBufferStack<ConstPageDef<InnerNode>, 5>;
     struct KeyInserter;
 

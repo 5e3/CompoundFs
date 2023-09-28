@@ -15,9 +15,9 @@ Path FsCompareVisitor::getDestPath(Path sourcePath)
         return Path(m_folder, m_name);
     else
     {
-        while (m_stack.back().first != sourcePath.m_parent)
-            m_stack.pop_back();
-        return Path(m_stack.back().second, sourcePath.m_relativePath);
+        while (m_stack.top().first != sourcePath.m_parent)
+            m_stack.pop();
+        return Path(m_stack.top().second, sourcePath.m_relativePath);
     }
 }
 
@@ -56,7 +56,7 @@ VisitorControl FsCompareVisitor::dispatch(Path sourcePath, const TreeValue& sour
     {
         auto sourceFolder = sourceValue.toValue<Folder>();
         auto destFolder = destValue->toValue<Folder>();
-        m_stack.push_back(std::pair { sourceFolder, destFolder });
+        m_stack.push(std::pair { sourceFolder, destFolder });
     }
     else if (sourceType == TreeValue::Type::File)
         return compareFiles(sourcePath, destPath);

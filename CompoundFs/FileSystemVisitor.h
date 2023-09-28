@@ -35,21 +35,19 @@ public:
                 return;
 
             auto type = cursor.value().getType();
-            //cursor = m_fs.next(cursor);
 
             if (type == TreeValue::Type::Folder)
             {
-                stack.push_back(m_fs.next(cursor));
+                stack.push(m_fs.next(cursor));
                 cursor = m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
             }
             else
                 cursor = m_fs.next(cursor);
 
-
             while (!cursor && !stack.empty())
             {
-                cursor = stack.back();
-                stack.pop_back();
+                cursor = stack.top();
+                stack.pop();
             }
         }
     }

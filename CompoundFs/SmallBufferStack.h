@@ -33,7 +33,7 @@ public:
     {
         clear();
         for (auto it = std::make_move_iterator(other.begin()); it != std::make_move_iterator(other.end()); ++it)
-            emplace_back(std::move(*it));
+            emplace(std::move(*it));
     }
 
     FixedStack& operator=(const FixedStack& other)
@@ -52,7 +52,7 @@ public:
             return *this;
         clear();
         for (auto it = std::make_move_iterator(other.begin()); it != std::make_move_iterator(other.end()); ++it)
-            emplace_back(std::move(*it));
+            emplace(std::move(*it));
         return *this;
     }
 
@@ -116,26 +116,26 @@ class SmallBufferStack final
     }
 
 public:
-    void push_back(const T& value)
+    void push(const T& value)
     {
         switchToVectorOnOverflow();
         std::visit([value](auto& stack) { stack.push_back(value); }, m_stack);
     }
 
-    void push_back(T&& value)
+    void push(T&& value)
     {
         switchToVectorOnOverflow();
         std::visit([&value](auto& stack) { stack.push_back(std::move(value)); }, m_stack);
     }
 
     template <class... Args>
-    void emplace_back(Args&&... args)
+    void emplace(Args&&... args)
     {
         switchToVectorOnOverflow();
         std::visit([&args...](auto&& stack) { stack.emplace_back(std::forward<Args>(args)...); }, m_stack);
     }
 
-    void pop_back()
+    void pop()
     {
         std::visit([](auto&& stack) { stack.pop_back(); }, m_stack);
     }
@@ -150,12 +150,12 @@ public:
         return std::visit([](auto&& stack) { return stack.size(); }, m_stack);
     }
 
-    T& back()
+    T& top()
     {
         return std::visit([](auto&& stack) -> T& { return stack.back(); }, m_stack);
     }
 
-    const T& back() const
+    const T& top() const
     {
         return std::visit([](auto&& stack) -> const T& { return stack.back(); }, m_stack);
     }
