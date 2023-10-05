@@ -39,7 +39,7 @@ struct TestVisitor
         return VisitorControl::Continue;
     }
 
-    template <typename TIterator = nullptr_t>
+    template <typename TIterator = std::nullptr_t>
     void done(TIterator begin = nullptr, TIterator end = nullptr)
     {
         if constexpr (!std::is_null_pointer_v<TIterator>)
