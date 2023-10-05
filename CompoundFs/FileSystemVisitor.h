@@ -50,6 +50,8 @@ public:
                 stack.pop();
             }
         }
+
+        visitor.done();
     }
 
 private:
@@ -89,8 +91,19 @@ public:
     {
     }
 
+    explicit FolderKey(Path path)
+        : m_folder(path.m_parent)
+        , m_name(path.m_relativePath)
+    {
+    }
+
     operator Path() const { return Path(m_folder, m_name); }
     std::string_view name() const { return m_name; }
+
+    bool operator==(const FolderKey& lhs) const
+    {
+        return std::tie(m_folder, m_name) == std::tie(lhs.m_folder, lhs.m_name);
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -99,6 +112,11 @@ struct TreeEntry
 {
     FolderKey m_key;
     TreeValue m_value;
+
+    bool operator==(const TreeEntry& lhs) const
+    { 
+        return std::tie(m_key, m_value) == std::tie(lhs.m_key, lhs.m_value);
+    }
 };
 
 //////////////////////////////////////////////////////////////////////////
@@ -130,6 +148,15 @@ public:
 
     VisitorControl operator()(Path path, const TreeValue& value);
 
+    template <typename TIterator=nullptr_t>
+    void done(TIterator begin = nullptr, TIterator end = nullptr)
+    {
+        if constexpr (!std::is_null_pointer_v<TIterator>)
+            for (; begin != end; ++begin)
+                operator()(begin->m_key, begin->m_value);
+    }
+
+
     Result result() const { return m_result; }
 
 private:
@@ -143,7 +170,101 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+template <typename TSink>
+class FsBufferSink
+{
+    std::vector<TreeEntry> m_buffer;
+    TSink m_chainedSink;
 
+public:
+    template <typename... TArgs> //, typename = decltype(TSink(std::declval<Args>()...))>
+    FsBufferSink(size_t size, TArgs&&... args)
+        : m_chainedSink(std::forward<TArgs>(args)...)
+    {
+        m_buffer.reserve(size);
+    }
+
+    VisitorControl operator()(Path path, const TreeValue& value)
+    {
+        m_buffer.push_back({ FolderKey { path }, value });
+        if (m_buffer.size() == m_buffer.capacity())
+        {
+            for (auto& e: m_buffer)
+                m_chainedSink(e.m_key, e.m_value);
+            m_buffer.clear();
+        }
+        return VisitorControl::Continue;
+    }
+
+    template <typename TIterator = nullptr_t>
+    void done(TIterator begin = nullptr, TIterator end = nullptr)
+    {
+        if constexpr (!std::is_null_pointer_v<TIterator>)
+            for (; begin != end; ++begin)
+                operator()(begin->m_key, begin->m_value);
+
+        m_chainedSink.done(m_buffer.begin(), m_buffer.end());
+    }
+
+    const TSink& getChainedSink() const { return m_chainedSink; }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+
+class TempFileBuffer
+{
+    struct Impl;
+    std::unique_ptr<Impl> m_impl;
+
+public:
+    TempFileBuffer();
+    ~TempFileBuffer();
+    void write(Path path, const TreeValue& value);
+    std::optional<TreeEntry> startReading();
+    std::optional<TreeEntry> read();
+    size_t getBufferSize() const;
+    size_t getFileSize() const;
+
+};
+
+template <typename TSink>
+class FsFileBufferSink
+{
+    TempFileBuffer m_tempFileBuffer;
+    TSink m_chainedSink;
+
+public:
+    template <typename... TArgs> //, typename = decltype(TSink(std::declval<Args>()...))>
+    FsFileBufferSink(TArgs&&... args)
+        : m_chainedSink(std::forward<TArgs>(args)...)
+    {
+    }
+
+    VisitorControl operator()(Path path, const TreeValue& value)
+    {
+        m_tempFileBuffer.write(path, value);
+        return VisitorControl::Continue;
+    }
+
+    template <typename TIterator = nullptr_t>
+    void done(TIterator begin = nullptr, TIterator end = nullptr)
+    {
+        auto entry = m_tempFileBuffer.startReading();
+        while (entry)
+        {
+            m_chainedSink(entry->m_key, entry->m_value);
+            entry = m_tempFileBuffer.read();
+        }
+
+        if constexpr (!std::is_null_pointer_v<TIterator>)
+            for (; begin != end; ++begin)
+                m_chainedSink(begin->m_key, begin->m_value);
+
+        m_chainedSink.done();
+    }
+
+    const TSink& getChainedSink() const { return m_chainedSink; }
+};
 
 }
 

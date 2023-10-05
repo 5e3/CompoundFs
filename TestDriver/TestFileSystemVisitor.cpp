@@ -38,6 +38,14 @@ struct TestVisitor
         m_names.push_back(std::string(p.m_relativePath));
         return VisitorControl::Continue;
     }
+
+    template <typename TIterator = nullptr_t>
+    void done(TIterator begin = nullptr, TIterator end = nullptr)
+    {
+        if constexpr (!std::is_null_pointer_v<TIterator>)
+            for (; begin != end; ++begin)
+                operator()(begin->m_key, begin->m_value);
+    }
 };
 
 }
@@ -139,6 +147,39 @@ TEST(FileSystemVisitor, ComplexFs)
     fsvisitor.visit("", visitor1);
     ASSERT_EQ(visitor1.m_names.size(), 7);
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST(FsBufferSink, flushesInDefinedPortions)
+{
+    FsBufferSink<TestVisitor> fbs(5);
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 0);
+
+    for (int i = 0; i < 7; i++)
+        fbs(Path("test"), TreeValue());
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 5);
+
+    for (int i = 0; i < 7; i++)
+        fbs(Path("test"), TreeValue());
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 10);
+
+    fbs(Path("test"), TreeValue());
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 15);
+}
+
+TEST(FsBufferSink, doneFlushesAll)
+{
+    FsBufferSink<TestVisitor> fbs(5);
+    fbs(Path("test0"), TreeValue());
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 0);
+
+    std::vector<TreeEntry> entries(15, TreeEntry({ FolderKey { "test1" }, TreeValue() }));
+    fbs.done(entries.begin(), entries.end());
+    ASSERT_EQ(fbs.getChainedSink().m_names.size(), 16);
+    ASSERT_EQ(fbs.getChainedSink().m_names[0], "test0");
+    ASSERT_EQ(fbs.getChainedSink().m_names[1], "test1");
+}
+///////////////////////////////////////////////////////////////////////////////
 
 
 TEST(FsCompareVisitor, EmptyRootsAreEqual)
@@ -309,4 +350,128 @@ TEST(FsCompareVisitor, ComplexFsIsNotEqual)
     FileSystemVisitor fsvisitor2(fs);
     fsvisitor2.visit("", fscv2);
     ASSERT_EQ(fscv2.result(), FsCompareVisitor::Result::NotEqual);
+}
+
+TEST(TempFileBuffer, EmptyFileBufferReturnsEmptyOptional)
+{
+    TempFileBuffer tfb;
+
+    ASSERT_FALSE(tfb.startReading());
+    ASSERT_FALSE(tfb.read());
+}
+
+TEST(TempFileBuffer, writeOneReadOneBack)
+{
+    TempFileBuffer tfb;
+
+    tfb.write("test", "test");
+    auto res = tfb.startReading();
+    ASSERT_TRUE(res);
+    ASSERT_EQ(res->m_key, FolderKey (Path("test" )));
+    ASSERT_EQ(res->m_value, TreeValue("test"));
+}
+
+TEST(TempFileBuffer, writeOneSecondReadIsEmpty)
+{
+    TempFileBuffer tfb;
+    tfb.write("test", "test");
+    auto res = tfb.startReading();
+    ASSERT_TRUE(res);
+    res = tfb.read();
+    ASSERT_FALSE(res);
+}
+
+TEST(TempFileBuffer, writeManyReadMany)
+{
+    TempFileBuffer tfb;
+    std::vector<TreeEntry> entries;
+    for (int i = 0; i < 10; i++)
+    {
+        auto str = std::to_string(i);
+        tfb.write(str.c_str(), str);
+        entries.push_back(TreeEntry { FolderKey{ Path(str.c_str()) }, str });
+    }
+
+    std::vector<TreeEntry> entries2;
+    auto entry = tfb.startReading();
+    while (entry)
+    {
+        entries2.push_back(*entry);
+        entry = tfb.read();
+    }
+
+    ASSERT_EQ(entries, entries2);
+}
+
+TEST(TempFileBuffer, fileSizeIsBufferSize)
+{
+    TempFileBuffer tfb;
+    std::vector<std::string> entries;
+
+    int i = 1000;
+    auto str = std::to_string(i++);
+    tfb.write(str.c_str(), std::string(""));
+    entries.push_back(str);
+
+    auto minSize = tfb.getFileSize();
+    while (tfb.getFileSize() < tfb.getBufferSize() - 100)
+    {
+        str = std::to_string(i++);
+        tfb.write(str.c_str(), "");
+        entries.push_back(str);
+    }
+
+    str = std::to_string(i++);
+    tfb.write(str.c_str(), std::string(tfb.getBufferSize() - tfb.getFileSize() - minSize, ' ').c_str());
+    entries.push_back(str);
+    ASSERT_EQ(tfb.getFileSize(), tfb.getBufferSize());
+
+    std::vector<std::string> entries2;
+    auto entry = tfb.startReading();
+    while (entry)
+    {
+        entries2.emplace_back(entry->m_key.name());
+        entry = tfb.read();
+    }
+
+    ASSERT_EQ(entries, entries2);
+}
+
+TEST(TempFileBuffer, fileSizeIsMoreThanBufferSize)
+{
+    TempFileBuffer tfb;
+    std::vector<std::string> entries;
+
+    int i = 1000;
+    auto str = std::to_string(i++);
+    tfb.write(str.c_str(), std::string(""));
+    entries.push_back(str);
+
+    auto minSize = tfb.getFileSize();
+    while (tfb.getFileSize() < 2*tfb.getBufferSize() - 100)
+    {
+        str = std::to_string(i++);
+        tfb.write(str.c_str(), "");
+        entries.push_back(str);
+    }
+
+    str = std::to_string(i++);
+    tfb.write(str.c_str(), std::string(2*tfb.getBufferSize() - tfb.getFileSize() - minSize+1, ' ').c_str());
+    entries.push_back(str);
+    ASSERT_EQ(tfb.getFileSize(), 2*tfb.getBufferSize()+1);
+
+    std::vector<std::string> entries2;
+    auto entry = tfb.startReading();
+    while (entry)
+    {
+        entries2.emplace_back(entry->m_key.name());
+        entry = tfb.read();
+    }
+
+    i = 0;
+    for (auto& e: entries)
+        if (e != entries2[i++])
+            break;
+
+    ASSERT_EQ(entries, entries2);
 }
