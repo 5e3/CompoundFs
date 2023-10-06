@@ -25,7 +25,7 @@ Path FsCompareVisitor::getDestPath(Path sourcePath)
 std::optional<TreeValue> FsCompareVisitor::getDestValue(Path destPath)
 {
     if (destPath == RootPath)
-        return TreeValue { Path::RootFolder };
+        return TreeValue { Folder::Root };
 
     auto destCursor = m_destFs.find(destPath);
     if (!destCursor)

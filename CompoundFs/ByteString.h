@@ -56,6 +56,7 @@ public:
     ByteString& operator=(TStr&& str);
     operator ByteStringView() const noexcept;
     size_t size() const noexcept; 
+    static constexpr size_t maxSize() noexcept { return std::numeric_limits<uint8_t>::max(); }
 
 private:
     std::vector<uint8_t> m_buffer;
@@ -82,7 +83,7 @@ public:
     static ByteStringView pop(T& val, ByteStringView bsv);
 
 private:
-    uint8_t m_buffer[255];
+    uint8_t m_buffer[ByteString::maxSize()];
     uint8_t* m_pos;
 };
 
@@ -102,7 +103,7 @@ template <typename TStr, typename>
 inline ByteStringView::ByteStringView(TStr&& str)
 {
     std::string_view sv { str };
-    if (sv.size() > std::numeric_limits<uint8_t>::max())
+    if (sv.size() > ByteString::maxSize())
         throw std::runtime_error("ByteStringView: size too big");
 
     m_data = reinterpret_cast<const uint8_t*>(sv.data());

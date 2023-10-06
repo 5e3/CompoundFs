@@ -11,7 +11,7 @@
 namespace TxFs
 {
 
-enum class Folder : uint32_t;
+enum class Folder : uint32_t {Root=0};
 struct CommitBlock;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -19,12 +19,9 @@ struct CommitBlock;
 class DirectoryKey final
 {
 public:
-    static constexpr Folder RootFolder { 0 };
-
-public:
     DirectoryKey(ByteStringView name)
     {
-        m_key.push(RootFolder);
+        m_key.push(Folder::Root);
         m_key.push(name); 
     }
 
@@ -43,6 +40,8 @@ public:
         ByteStringStream::pop(folder, m_key);
         return folder;
     }
+
+    constexpr size_t maxSize() const noexcept { return ByteString::maxSize() - sizeof(Folder); }
 
 private:
     ByteStringStream m_key;

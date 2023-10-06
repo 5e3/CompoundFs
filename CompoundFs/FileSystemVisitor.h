@@ -61,7 +61,7 @@ private:
         // There is no root entry - handle it...
         if (path == RootPath)
         {
-            auto control = visitor(path, TreeValue { Folder { path.RootFolder } });
+            auto control = visitor(path, TreeValue { Folder::Root });
             return control == VisitorControl::Continue ? m_fs.begin(path) : FileSystem::Cursor();
         }
 
@@ -94,6 +94,12 @@ public:
     explicit FolderKey(Path path)
         : m_folder(path.m_parent)
         , m_name(path.m_relativePath)
+    {
+    }
+
+    explicit FolderKey(const char* path)
+        : m_folder(Folder::Root)
+        , m_name(path)
     {
     }
 

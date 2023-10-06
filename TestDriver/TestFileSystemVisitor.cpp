@@ -48,39 +48,39 @@ struct TestVisitor
     }
 };
 
-}
-
-TEST(FileSystemVisitor, NonExistantMakesNoVisitation)
-{
-    auto fs = makeFileSystem();
-
-    FileSystemVisitor fsvisitor(fs);
-    TestVisitor visitor;
-    fsvisitor.visit("nonExistant", visitor);
-    ASSERT_TRUE(visitor.m_names.empty());
-
-    createFile("folder/file1", fs);
-    createFile("folder/file2", fs);
-    createFile("folder/subFolder/file3", fs);
-
-    fsvisitor.visit("nonExistant", visitor);
-    ASSERT_TRUE(visitor.m_names.empty());
-}
-
-TEST(FileSystemVisitor, VisitSingleItem)
+FileSystem createEnvironment()
 {
     auto fs = makeFileSystem();
 
     FileSystemVisitor fsvisitor(fs);
 
     createFile("file0", fs);
-    TestVisitor visitor0;
-    fsvisitor.visit("file0", visitor0);
-    ASSERT_EQ(visitor0.m_names[0], "file0");
-
     createFile("folder/file1", fs);
     createFile("folder/file2", fs);
     createFile("folder/subFolder/file3", fs);
+    return fs;
+}
+}
+
+TEST(FileSystemVisitor, NonExistantMakesNoVisitation)
+{
+    auto fs = createEnvironment();
+
+    FileSystemVisitor fsvisitor(fs);
+    TestVisitor visitor;
+    fsvisitor.visit("nonExistant", visitor);
+    ASSERT_TRUE(visitor.m_names.empty());
+}
+
+TEST(FileSystemVisitor, VisitSingleItem)
+{
+    auto fs = createEnvironment();
+
+    FileSystemVisitor fsvisitor(fs);
+
+    TestVisitor visitor0;
+    fsvisitor.visit("file0", visitor0);
+    ASSERT_EQ(visitor0.m_names[0], "file0");
 
     TestVisitor visitor1;
     fsvisitor.visit("folder/file1", visitor1);
@@ -97,15 +97,9 @@ TEST(FileSystemVisitor, VisitSingleItem)
 
 TEST(FileSystemVisitor, VisitRootFolder)
 {
-    auto fs = makeFileSystem();
+    auto fs = createEnvironment();
 
     FileSystemVisitor fsvisitor(fs);
-
-    createFile("file0", fs);
-    createFile("folder/file1", fs);
-    createFile("folder/file2", fs);
-    createFile("folder/subFolder/file3", fs);
-
     TestVisitor visitor0;
     fsvisitor.visit("", visitor0);
     ASSERT_EQ(visitor0.m_names.size(), 7);
@@ -113,14 +107,9 @@ TEST(FileSystemVisitor, VisitRootFolder)
 
 TEST(FileSystemVisitor, VisitSubFolder)
 {
-    auto fs = makeFileSystem();
+    auto fs = createEnvironment();
 
     FileSystemVisitor fsvisitor(fs);
-
-    createFile("file0", fs);
-    createFile("folder/file1", fs);
-    createFile("folder/file2", fs);
-    createFile("folder/subFolder/file3", fs);
 
     TestVisitor visitor0;
     fsvisitor.visit("folder", visitor0);
@@ -156,21 +145,21 @@ TEST(FsBufferSink, flushesInDefinedPortions)
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 0);
 
     for (int i = 0; i < 7; i++)
-        fbs(Path("test"), TreeValue());
+        fbs("test", TreeValue());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 5);
 
     for (int i = 0; i < 7; i++)
-        fbs(Path("test"), TreeValue());
+        fbs("test", TreeValue());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 10);
 
-    fbs(Path("test"), TreeValue());
+    fbs("test", TreeValue());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 15);
 }
 
 TEST(FsBufferSink, doneFlushesAll)
 {
     FsBufferSink<TestVisitor> fbs(5);
-    fbs(Path("test0"), TreeValue());
+    fbs("test0", TreeValue());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 0);
 
     std::vector<TreeEntry> entries(15, TreeEntry({ FolderKey { "test1" }, TreeValue() }));
@@ -179,8 +168,8 @@ TEST(FsBufferSink, doneFlushesAll)
     ASSERT_EQ(fbs.getChainedSink().m_names[0], "test0");
     ASSERT_EQ(fbs.getChainedSink().m_names[1], "test1");
 }
-///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
 
 TEST(FsCompareVisitor, EmptyRootsAreEqual)
 {
@@ -352,6 +341,8 @@ TEST(FsCompareVisitor, ComplexFsIsNotEqual)
     ASSERT_EQ(fscv2.result(), FsCompareVisitor::Result::NotEqual);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 TEST(TempFileBuffer, EmptyFileBufferReturnsEmptyOptional)
 {
     TempFileBuffer tfb;
@@ -367,7 +358,7 @@ TEST(TempFileBuffer, writeOneReadOneBack)
     tfb.write("test", "test");
     auto res = tfb.startReading();
     ASSERT_TRUE(res);
-    ASSERT_EQ(res->m_key, FolderKey (Path("test" )));
+    ASSERT_EQ(res->m_key, FolderKey ("test" ));
     ASSERT_EQ(res->m_value, TreeValue("test"));
 }
 
@@ -389,16 +380,12 @@ TEST(TempFileBuffer, writeManyReadMany)
     {
         auto str = std::to_string(i);
         tfb.write(str.c_str(), str);
-        entries.push_back(TreeEntry { FolderKey{ Path(str.c_str()) }, str });
+        entries.push_back(TreeEntry { FolderKey{ str.c_str() }, str });
     }
 
     std::vector<TreeEntry> entries2;
-    auto entry = tfb.startReading();
-    while (entry)
-    {
+    for (auto entry = tfb.startReading(); entry; entry = tfb.read())
         entries2.push_back(*entry);
-        entry = tfb.read();
-    }
 
     ASSERT_EQ(entries, entries2);
 }
@@ -427,12 +414,8 @@ TEST(TempFileBuffer, fileSizeIsBufferSize)
     ASSERT_EQ(tfb.getFileSize(), tfb.getBufferSize());
 
     std::vector<std::string> entries2;
-    auto entry = tfb.startReading();
-    while (entry)
-    {
+    for (auto entry = tfb.startReading(); entry; entry = tfb.read())
         entries2.emplace_back(entry->m_key.name());
-        entry = tfb.read();
-    }
 
     ASSERT_EQ(entries, entries2);
 }

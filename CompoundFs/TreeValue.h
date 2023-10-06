@@ -84,6 +84,8 @@ public:
 
     void toStream(ByteStringStream& bss) const;
     static TreeValue fromStream(ByteStringView bsv);
+    static constexpr size_t maxVariableSize() noexcept { return ByteString::maxSize() - sizeof(uint8_t); }
+
 
 private:
     Variant m_variant;
