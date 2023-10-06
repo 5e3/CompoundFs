@@ -73,7 +73,6 @@ class ByteStringStream final
 public:
     ByteStringStream() noexcept;
 
-    bool isPrefix(ByteStringView rhs) const noexcept;
     operator ByteStringView() const noexcept;
 
     void push(ByteStringView bsv);
@@ -199,12 +198,6 @@ inline size_t ByteString::size() const noexcept
 inline ByteStringStream::ByteStringStream() noexcept
     : m_pos(m_buffer)
 {}
-
-inline bool ByteStringStream::isPrefix(ByteStringView rhs) const noexcept
-{
-    const auto self = static_cast<ByteStringView>(*this);
-    return std::mismatch(self.data(), self.end(), rhs.data()).first == self.end();
-}
 
 inline ByteStringStream::operator ByteStringView() const noexcept
 {
