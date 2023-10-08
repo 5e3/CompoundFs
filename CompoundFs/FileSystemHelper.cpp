@@ -26,8 +26,7 @@ struct CopyProcessor
         switch (sourceCursor.value().getType())
         {
         case TreeValue::Type::File: {
-            auto [folder, name] = sourceCursor.key();
-            return copyFile(Path(folder, name), destPath);
+            return copyFile(sourceCursor.key(), destPath);
         }
         case TreeValue::Type::Folder: {
             auto sourceFolder = sourceCursor.value().toValue<Folder>();
@@ -97,7 +96,7 @@ struct CopyProcessor
         while (sourceCursor)
         {
             for (int i = 0; sourceCursor && i < MaxEntries; sourceCursor = m_sourceFs.next(sourceCursor), i++)
-                treeEntries.push_back({ sourceCursor.key(), sourceCursor.value() });
+                treeEntries.emplace_back( sourceCursor.key(), sourceCursor.value() );
 
             assert(treeEntries.size() <= MaxEntries);
             assert(treeEntries.size() > 0);
@@ -190,7 +189,7 @@ FolderContents TxFs::retrieveFolderContents(Path path, const FileSystem& fs)
     auto cursor = fs.begin(Path(*res, ""));
     for (; cursor; cursor = fs.next(cursor))
     {
-        FolderKey k = cursor.key();
+        auto k = PathHolder(cursor.key());
         auto v = cursor.value();
         fc.push_back(std::pair(k, v));
     }

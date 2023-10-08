@@ -78,3 +78,37 @@ TEST(Path, reduceFindsSubFolders)
     ASSERT_EQ(p.m_relativePath , "file.file");
 }
 
+TEST(PathHolder, defaultConstruct)
+{
+    PathHolder pv;
+
+    ASSERT_EQ(pv.operator TxFs::Path().m_relativePath.size(), 0);
+}
+
+TEST(PathHolder, CopyEtc)
+{
+    PathHolder pv(Folder { 5 }, "test");
+    ASSERT_EQ(Path(Folder { 5 }, "test"), pv);
+
+    Path p(Folder { 5 }, "test");
+    pv = p;
+    ASSERT_NE(pv.operator TxFs::Path().m_relativePath.data(), p.m_relativePath.data());
+
+}
+
+TEST(PathHolder, MoveEtc)
+{
+    Path p(Folder { 5 }, "test");
+    auto pv = PathHolder(p);
+
+    PathHolder pv2 = std::move(pv);
+    ASSERT_NE(p, pv);
+    ASSERT_EQ(p, pv2);
+
+    Path p2(Folder { 1 }, "test");
+    pv2 = p2;
+    pv = std::move(pv2);
+    ASSERT_EQ(p2, pv);
+    ASSERT_NE(p2, pv2);
+}
+

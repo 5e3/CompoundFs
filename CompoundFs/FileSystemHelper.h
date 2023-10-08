@@ -9,7 +9,7 @@
 namespace TxFs
 {
 
-using FolderContents = std::vector<std::pair<FolderKey, TreeValue>>;
+using FolderContents = std::vector<std::pair<PathHolder, TreeValue>>;
 
 //////////////////////////////////////////////////////////////////////////
 

@@ -358,7 +358,7 @@ TEST(TempFileBuffer, writeOneReadOneBack)
     tfb.write("test", "test");
     auto res = tfb.startReading();
     ASSERT_TRUE(res);
-    ASSERT_EQ(res->m_key, FolderKey ("test" ));
+    ASSERT_EQ(Path("test") , res->m_key);
     ASSERT_EQ(res->m_value, TreeValue("test"));
 }
 
@@ -415,7 +415,8 @@ TEST(TempFileBuffer, fileSizeIsBufferSize)
 
     std::vector<std::string> entries2;
     for (auto entry = tfb.startReading(); entry; entry = tfb.read())
-        entries2.emplace_back(entry->m_key.name());
+        entries2.emplace_back(entry->m_key.getPath().m_relativePath);
+        //entries2.emplace_back(entry->m_key.name());
 
     ASSERT_EQ(entries, entries2);
 }
@@ -447,7 +448,7 @@ TEST(TempFileBuffer, fileSizeIsMoreThanBufferSize)
     auto entry = tfb.startReading();
     while (entry)
     {
-        entries2.emplace_back(entry->m_key.name());
+        entries2.emplace_back(entry->m_key.getPath().m_relativePath);
         entry = tfb.read();
     }
 

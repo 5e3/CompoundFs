@@ -31,7 +31,7 @@ public:
         SmallBufferStack<FileSystem::Cursor, 10> stack;
         while (cursor)
         {
-            if (visitor(Path(cursor.key().first, cursor.key().second), cursor.value()) == VisitorControl::Break)
+            if (visitor(cursor.key(), cursor.value()) == VisitorControl::Break)
                 return;
 
             auto type = cursor.value().getType();
@@ -69,7 +69,7 @@ private:
         if (!cursor)
             return cursor;
 
-        auto control = visitor(Path(cursor.key().first, cursor.key().second), cursor.value());
+        auto control = visitor(cursor.key(), cursor.value());
         if (control == VisitorControl::Continue && cursor.value().getType() == TreeValue::Type::Folder)
             return m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
 
@@ -116,8 +116,14 @@ public:
 
 struct TreeEntry
 {
-    FolderKey m_key;
+    PathHolder m_key;
     TreeValue m_value;
+
+    TreeEntry(Path path, const TreeValue& value)
+        : m_key(path)
+        , m_value(value)
+    {
+    }
 
     bool operator==(const TreeEntry& lhs) const
     { 

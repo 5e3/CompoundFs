@@ -15,7 +15,7 @@ enum class ReadHandle : uint32_t;
 class FileSystem final
 {
 public:
-    using Cursor = DirectoryStructure::Cursor;
+    class Cursor;
     using Startup = DirectoryStructure::Startup;
 
 public:
@@ -75,9 +75,38 @@ private:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class FileSystem::Cursor final
+{
+    friend class FileSystem;
+
+public:
+    constexpr Cursor() noexcept = default;
+    Cursor(const DirectoryStructure::Cursor& cursor) noexcept
+        : m_cursor(cursor)
+    {
+    }
+
+    constexpr bool operator==(const Cursor& rhs) const noexcept { return m_cursor == rhs.m_cursor; }
+    constexpr bool operator!=(const Cursor& rhs) const noexcept { return !(m_cursor == rhs.m_cursor); }
+
+    Path key() const;
+    TreeValue value() const { return m_cursor.value(); }
+    constexpr explicit operator bool() const noexcept { return m_cursor.operator bool(); }
+
+private:
+    DirectoryStructure::Cursor m_cursor;
+};
+
+//////////////////////////////////////////////////////////////////////////
+
+inline Path FileSystem::Cursor::key() const
+{
+    return Path(m_cursor.key().first, m_cursor.key().second);
+}
+
 inline FileSystem::Cursor FileSystem::next(Cursor cursor) const
 {
-    return m_directoryStructure.next(cursor);
+    return m_directoryStructure.next(cursor.m_cursor);
 }
 
 inline FileSystem::Startup FileSystem::initialize(const std::shared_ptr<CacheManager>& cacheManager)
