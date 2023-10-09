@@ -162,7 +162,7 @@ TEST(FsBufferSink, doneFlushesAll)
     fbs("test0", TreeValue());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 0);
 
-    std::vector<TreeEntry> entries(15, TreeEntry({ FolderKey { "test1" }, TreeValue() }));
+    std::vector<TreeEntry> entries(15, TreeEntry({{ "test1" }, TreeValue() }));
     fbs.done(entries.begin(), entries.end());
     ASSERT_EQ(fbs.getChainedSink().m_names.size(), 16);
     ASSERT_EQ(fbs.getChainedSink().m_names[0], "test0");
@@ -380,7 +380,7 @@ TEST(TempFileBuffer, writeManyReadMany)
     {
         auto str = std::to_string(i);
         tfb.write(str.c_str(), str);
-        entries.push_back(TreeEntry { FolderKey{ str.c_str() }, str });
+        entries.emplace_back(str.c_str() , str );
     }
 
     std::vector<TreeEntry> entries2;
@@ -416,7 +416,6 @@ TEST(TempFileBuffer, fileSizeIsBufferSize)
     std::vector<std::string> entries2;
     for (auto entry = tfb.startReading(); entry; entry = tfb.read())
         entries2.emplace_back(entry->m_key.getPath().m_relativePath);
-        //entries2.emplace_back(entry->m_key.name());
 
     ASSERT_EQ(entries, entries2);
 }

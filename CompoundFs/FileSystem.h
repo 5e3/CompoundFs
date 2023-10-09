@@ -57,12 +57,12 @@ public:
 
 private:
     void closeAllFiles();
+    FileWriter& addOpenWriter(Path path);
 
 private:
     struct OpenWriter
     {
-        Folder m_folder;
-        std::string m_name;
+        PathHolder m_path;
         FileWriter m_fileWriter;
     };
 

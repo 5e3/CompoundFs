@@ -180,7 +180,7 @@ struct TempFileBuffer::Impl
         m_bufferPos = pos - m_buffer.get();
         TreeValue tv = TreeValue::fromStream(bsv);
 
-        auto ret = TreeEntry { FolderKey { path }, tv };
+        auto ret = TreeEntry { path , tv };
         reload();
 
         return ret;

@@ -115,7 +115,7 @@ PYBIND11_MODULE(py_txfs, m)
         .def("dir",
              [](FileSystem& fs, std::string_view& path) { 
                  for (auto cur = fs.begin(path); cur; cur = fs.next(cur))
-                     py::print(cur.key().second, cur.value());
+                     py::print(cur.key().m_relativePath, cur.value());
             })
         .def("commit", &FileSystem::commit)
         .def("rollback", &FileSystem::rollback)

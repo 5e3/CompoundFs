@@ -17,11 +17,7 @@ std::optional<WriteHandle> FileSystem::createFile(Path path)
     if (!m_directoryStructure.createFile(DirectoryKey(path.m_parent, path.m_relativePath)))
         return std::nullopt;
 
-    auto res = m_openWriters.try_emplace(
-        WriteHandle { m_nextHandle },
-        OpenWriter { path.m_parent, std::string(path.m_relativePath), FileWriter { m_cacheManager } });
-
-    assert(res.second);
+    addOpenWriter(path);
     return WriteHandle { m_nextHandle++ };
 }
 
@@ -35,13 +31,9 @@ std::optional<WriteHandle> FileSystem::appendFile(Path path)
     if (!fileDescriptor)
         return std::nullopt;
 
-    auto res = m_openWriters.try_emplace(
-        WriteHandle { m_nextHandle },
-        OpenWriter { path.m_parent, std::string(path.m_relativePath), FileWriter { m_cacheManager } });
-
-    assert(res.second);
+    auto& fileWriter = addOpenWriter(path);
     if (*fileDescriptor != FileDescriptor())
-        res.first->second.m_fileWriter.openAppend(*fileDescriptor);
+        fileWriter.openAppend(*fileDescriptor);
     return WriteHandle { m_nextHandle++ };
 }
 
@@ -95,7 +87,8 @@ void FileSystem::close(WriteHandle file)
 {
     auto& openFile = m_openWriters.at(file);
     auto fileDescriptor = openFile.m_fileWriter.close();
-    m_directoryStructure.updateFile(DirectoryKey(openFile.m_folder, openFile.m_name), fileDescriptor);
+    Path path = openFile.m_path;
+    m_directoryStructure.updateFile(DirectoryKey(path.m_parent, path.m_relativePath), fileDescriptor);
     m_openWriters.erase(file);
 }
 
@@ -203,10 +196,21 @@ void FileSystem::closeAllFiles()
     for (auto& [key, openFile]: m_openWriters)
     {
         auto fileDescriptor = openFile.m_fileWriter.close();
-        m_directoryStructure.updateFile(DirectoryKey(openFile.m_folder, openFile.m_name), fileDescriptor);
+        Path path = openFile.m_path;
+        m_directoryStructure.updateFile(DirectoryKey(path.m_parent, path.m_relativePath), fileDescriptor);
     }
     m_openWriters.clear();
     m_openReaders.clear();
+}
+
+FileWriter& TxFs::FileSystem::addOpenWriter(Path path)
+{
+    auto res = m_openWriters.try_emplace(WriteHandle { m_nextHandle },
+                                         OpenWriter { PathHolder { path }, FileWriter { m_cacheManager } });
+
+    assert(res.second);
+    auto& openWriter = res.first->second;
+    return openWriter.m_fileWriter;
 }
 
 

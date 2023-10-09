@@ -61,7 +61,7 @@ private:
         // There is no root entry - handle it...
         if (path == RootPath)
         {
-            auto control = visitor(path, TreeValue { Folder::Root });
+            auto control = visitor(path, Folder::Root);
             return control == VisitorControl::Continue ? m_fs.begin(path) : FileSystem::Cursor();
         }
 
@@ -77,40 +77,6 @@ private:
     }
 };
 
-///////////////////////////////////////////////////////////////////////////////
-
-class FolderKey
-{
-    Folder m_folder;
-    std::string m_name;
-
-public:
-    FolderKey(std::pair<Folder, std::string_view> key)
-        : m_folder(key.first)
-        , m_name(key.second)
-    {
-    }
-
-    explicit FolderKey(Path path)
-        : m_folder(path.m_parent)
-        , m_name(path.m_relativePath)
-    {
-    }
-
-    explicit FolderKey(const char* path)
-        : m_folder(Folder::Root)
-        , m_name(path)
-    {
-    }
-
-    operator Path() const { return Path(m_folder, m_name); }
-    std::string_view name() const { return m_name; }
-
-    bool operator==(const FolderKey& lhs) const
-    {
-        return std::tie(m_folder, m_name) == std::tie(lhs.m_folder, lhs.m_name);
-    }
-};
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -198,7 +164,7 @@ public:
 
     VisitorControl operator()(Path path, const TreeValue& value)
     {
-        m_buffer.push_back({ FolderKey { path }, value });
+        m_buffer.emplace_back( path , value );
         if (m_buffer.size() == m_buffer.capacity())
         {
             for (auto& e: m_buffer)
