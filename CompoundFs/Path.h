@@ -10,17 +10,17 @@ class Path final
 public:
     constexpr Path(std::string_view absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(Folder::Root)
+        , m_parentFolder(Folder::Root)
     {}
 
     constexpr Path(const char* absolutePath) noexcept
         : m_relativePath(absolutePath)
-        , m_parent(Folder::Root)
+        , m_parentFolder(Folder::Root)
     {}
 
     constexpr Path(Folder root, std::string_view relativePath) noexcept
         : m_relativePath(relativePath)
-        , m_parent(root)
+        , m_parentFolder(root)
     {}
 
     bool create(DirectoryStructure* ds);
@@ -28,14 +28,14 @@ public:
 
     constexpr bool operator==(Path rhs) const noexcept
     {
-        return std::tie(m_parent, m_relativePath) == std::tie(rhs.m_parent, rhs.m_relativePath);
+        return std::tie(m_parentFolder, m_relativePath) == std::tie(rhs.m_parentFolder, rhs.m_relativePath);
     }
 
     constexpr bool operator!=(Path rhs) const noexcept { return !(*this == rhs); }
 
 public:
     std::string_view m_relativePath;
-    Folder m_parent;
+    Folder m_parentFolder;
 
 private:
     template <typename TFunc>
@@ -63,20 +63,20 @@ public:
 
     PathHolder(const PathHolder& other)
         : m_value(other.m_value)
-        , m_path(other.m_path.m_parent, m_value)
+        , m_path(other.m_path.m_parentFolder, m_value)
     {
     }
 
     PathHolder(PathHolder&& other) noexcept
         : m_value(std::move(other.m_value))
-        , m_path(other.m_path.m_parent, m_value)
+        , m_path(other.m_path.m_parentFolder, m_value)
     {
         other.m_path = "";
     }
 
     explicit PathHolder(Path path)
         : m_value(path.m_relativePath)
-        , m_path(path.m_parent, m_value)
+        , m_path(path.m_parentFolder, m_value)
     {
     }
 
@@ -86,7 +86,7 @@ public:
             return *this;
 
         m_value = other.m_value;
-        m_path = Path(other.m_path.m_parent, m_value);
+        m_path = Path(other.m_path.m_parentFolder, m_value);
         return *this;
     }
 
@@ -102,7 +102,7 @@ public:
         if (&other == this)
             return *this;
         m_value = std::move(other.m_value);
-        m_path = Path(other.m_path.m_parent, m_value);
+        m_path = Path(other.m_path.m_parentFolder, m_value);
         other.m_path = "";
         return *this;
     }

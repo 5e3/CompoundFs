@@ -16,7 +16,7 @@ Path FsCompareVisitor::getDestPath(Path sourcePath)
         return Path(m_folder, m_name);
     else
     {
-        while (m_stack.top().first != sourcePath.m_parent)
+        while (m_stack.top().first != sourcePath.m_parentFolder)
             m_stack.pop();
         return Path(m_stack.top().second, sourcePath.m_relativePath);
     }
@@ -147,7 +147,7 @@ struct TempFileBuffer::Impl
 
     void write(Path path, const TreeValue& value)
     {
-        DirectoryKey key(path.m_parent, path.m_relativePath);
+        DirectoryKey key(path.m_parentFolder, path.m_relativePath);
         auto pos = toStream(key, m_buffer.get());
 
         ByteStringStream bss;

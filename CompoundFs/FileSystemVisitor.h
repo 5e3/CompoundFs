@@ -118,7 +118,7 @@ public:
     FsCompareVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
         : m_sourceFs(sourceFs)
         , m_destFs(destFs)
-        , m_folder { path.m_parent}
+        , m_folder { path.m_parentFolder}
         , m_name{path.m_relativePath}
         , m_result(Result::Equal)
     {

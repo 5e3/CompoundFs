@@ -166,7 +166,7 @@ size_t TxFs::copy(FileSystem& sourceFs, Path sourcePath, FileSystem& destFs, Pat
         if (!destFolder)
             return 0;
 
-        return cp.copyFolder(sourcePath.m_parent, destPath.m_parent);
+        return cp.copyFolder(sourcePath.m_parentFolder, destPath.m_parentFolder);
     }
 
     auto sourceCursor = sourceFs.find(sourcePath);
