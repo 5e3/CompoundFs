@@ -119,20 +119,22 @@ struct TempFileBuffer::Impl
     std::filesystem::path m_path;
     FILE* m_file;
     std::unique_ptr<uint8_t[]> m_buffer;
-    static constexpr size_t BufferSize = 4096;
     size_t m_bufferPos;
     size_t m_bufferEnd;
+    size_t m_bufferSize;
 
     static std::filesystem::path createTempFilePath()
     {
         return std::filesystem::temp_directory_path() / std::tmpnam(nullptr);
     }
 
-    Impl()
+    Impl(size_t bufferSize)
         : m_path(createTempFilePath())
         , m_file(fopen(m_path.string().c_str(), "w+"))
-        , m_buffer(std::make_unique < uint8_t[]>(BufferSize))
+        , m_buffer(std::make_unique < uint8_t[]>(bufferSize))
         , m_bufferPos(0)
+        , m_bufferEnd(bufferSize)
+        , m_bufferSize(bufferSize)
     {
         if (!m_file)
             throw std::system_error(EDOM, std::system_category());
@@ -158,7 +160,7 @@ struct TempFileBuffer::Impl
     std::optional<TreeEntry> startReading()
     {
         fseek(m_file, 0, SEEK_SET);
-        m_bufferEnd = fread(m_buffer.get(), 1, BufferSize, m_file);
+        m_bufferEnd = fread(m_buffer.get(), 1, m_bufferSize, m_file);
         return read();
     }
 
@@ -188,10 +190,10 @@ struct TempFileBuffer::Impl
 
     void reload()
     {
-        if (m_bufferEnd < BufferSize)
+        if (m_bufferEnd < m_bufferSize)
             return;
 
-        if (BufferSize - m_bufferPos >= 512)
+        if (m_bufferSize - m_bufferPos >= 512)
             return;
 
         auto pos = std::copy(m_buffer.get() + m_bufferPos, m_buffer.get() + m_bufferEnd, m_buffer.get());
@@ -201,13 +203,17 @@ struct TempFileBuffer::Impl
     }
 };
 
-TxFs::TempFileBuffer::TempFileBuffer() = default;
+TxFs::TempFileBuffer::TempFileBuffer(size_t bufferSize)
+    : m_bufferSize(bufferSize)
+{
+}
+
 TxFs::TempFileBuffer::~TempFileBuffer() = default;
 
 void TxFs::TempFileBuffer::write(Path path, const TreeValue& value)
 {
     if (!m_impl)
-        m_impl = std::make_unique<Impl>();
+        m_impl = std::make_unique<Impl>(m_bufferSize);
 
     m_impl->write(path, value);
 }
@@ -230,11 +236,13 @@ std::optional<TreeEntry> TxFs::TempFileBuffer::read()
 
 size_t TxFs::TempFileBuffer::getBufferSize() const
 {
-    return Impl::BufferSize;
+    return m_bufferSize;
 }
 
 size_t TxFs::TempFileBuffer::getFileSize() const
 {
+    if (!m_impl)
+        return 0;
     return size_t(ftell(m_impl->m_file));
 }
 

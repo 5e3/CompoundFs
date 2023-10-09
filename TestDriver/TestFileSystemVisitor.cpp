@@ -458,3 +458,26 @@ TEST(TempFileBuffer, fileSizeIsMoreThanBufferSize)
 
     ASSERT_EQ(entries, entries2);
 }
+
+TEST(TempFileBuffer, fillFileWithMaxSizedObjects)
+{
+    TempFileBuffer tfb;
+    std::vector<TreeEntry> entries;
+    int i = 0;
+    while (tfb.getFileSize() < 10 * tfb.getBufferSize())
+    {
+        auto key = std::to_string(i++) + std::string(512, ' ');
+        Path path(std::string_view(key.data(), DirectoryKey::maxSize()));
+        TreeValue tv(std::string(key.data(), TreeValue::maxVariableSize()));
+        entries.emplace_back(path, tv);
+        tfb.write(path, tv);
+        ASSERT_EQ(tfb.getFileSize() % 512, 0);
+    }
+
+    std::vector<TreeEntry> entries2;
+    for (auto e = tfb.startReading(); e; e = tfb.read())
+        entries2.push_back(*e);
+
+    ASSERT_EQ(entries, entries2);
+
+}

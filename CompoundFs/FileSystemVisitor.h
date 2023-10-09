@@ -193,9 +193,10 @@ class TempFileBuffer
 {
     struct Impl;
     std::unique_ptr<Impl> m_impl;
+    size_t m_bufferSize;
 
 public:
-    TempFileBuffer();
+    explicit TempFileBuffer(size_t bufferSize=4096);
     ~TempFileBuffer();
     void write(Path path, const TreeValue& value);
     std::optional<TreeEntry> startReading();
@@ -205,6 +206,8 @@ public:
 
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
 template <typename TSink>
 class FsFileBufferSink
 {
@@ -213,8 +216,9 @@ class FsFileBufferSink
 
 public:
     template <typename... TArgs> //, typename = decltype(TSink(std::declval<Args>()...))>
-    FsFileBufferSink(TArgs&&... args)
-        : m_chainedSink(std::forward<TArgs>(args)...)
+    FsFileBufferSink(size_t bufferSize, TArgs&&... args)
+        : m_tempFileBuffer(bufferSize)
+        , m_chainedSink(std::forward<TArgs>(args)...)
     {
     }
 
@@ -227,12 +231,8 @@ public:
     template <typename TIterator = std::nullptr_t>
     void done(TIterator begin = nullptr, TIterator end = nullptr)
     {
-        auto entry = m_tempFileBuffer.startReading();
-        while (entry)
-        {
+        for (auto entry = m_tempFileBuffer.startReading(); entry; entry = m_tempFileBuffer.read())
             m_chainedSink(entry->m_key, entry->m_value);
-            entry = m_tempFileBuffer.read();
-        }
 
         if constexpr (!std::is_null_pointer_v<TIterator>)
             for (; begin != end; ++begin)

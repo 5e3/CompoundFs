@@ -41,7 +41,7 @@ public:
         return folder;
     }
 
-    constexpr size_t maxSize() const noexcept { return ByteString::maxSize() - sizeof(Folder); }
+    static constexpr size_t maxSize() noexcept { return ByteString::maxSize() - sizeof(Folder); }
 
 private:
     ByteStringStream m_key;
