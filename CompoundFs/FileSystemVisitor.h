@@ -189,29 +189,31 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class TempFileBuffer
+namespace Private
 {
-    struct Impl;
-    std::unique_ptr<Impl> m_impl;
-    size_t m_bufferSize;
+    class TempFileBuffer
+    {
+        struct Impl;
+        std::unique_ptr<Impl> m_impl;
+        size_t m_bufferSize;
 
-public:
-    explicit TempFileBuffer(size_t bufferSize=4096);
-    ~TempFileBuffer();
-    void write(Path path, const TreeValue& value);
-    std::optional<TreeEntry> startReading();
-    std::optional<TreeEntry> read();
-    size_t getBufferSize() const;
-    size_t getFileSize() const;
-
-};
+    public:
+        explicit TempFileBuffer(size_t bufferSize = 4096);
+        ~TempFileBuffer();
+        void write(Path path, const TreeValue& value);
+        std::optional<TreeEntry> startReading();
+        std::optional<TreeEntry> read();
+        size_t getBufferSize() const;
+        size_t getFileSize() const;
+    };
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename TSink>
 class FsFileBufferSink
 {
-    TempFileBuffer m_tempFileBuffer;
+    Private::TempFileBuffer m_tempFileBuffer;
     TSink m_chainedSink;
 
 public:

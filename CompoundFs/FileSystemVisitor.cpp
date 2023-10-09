@@ -2,6 +2,7 @@
 #include <filesystem>
 
 using namespace TxFs;
+using namespace TxFs::Private;
 
 VisitorControl FsCompareVisitor::operator()(Path path, const TreeValue& value)
 {
@@ -114,7 +115,7 @@ VisitorControl FsCompareVisitor::compareFiles(ReadHandle sourceHandle, ReadHandl
 
 ///////////////////////////////////////////////////////////////////////////////
 
-struct TempFileBuffer::Impl
+struct Private::TempFileBuffer::Impl
 {
     std::filesystem::path m_path;
     FILE* m_file;
@@ -203,14 +204,14 @@ struct TempFileBuffer::Impl
     }
 };
 
-TxFs::TempFileBuffer::TempFileBuffer(size_t bufferSize)
+TempFileBuffer::TempFileBuffer(size_t bufferSize)
     : m_bufferSize(bufferSize)
 {
 }
 
-TxFs::TempFileBuffer::~TempFileBuffer() = default;
+TempFileBuffer::~TempFileBuffer() = default;
 
-void TxFs::TempFileBuffer::write(Path path, const TreeValue& value)
+void TempFileBuffer::write(Path path, const TreeValue& value)
 {
     if (!m_impl)
         m_impl = std::make_unique<Impl>(m_bufferSize);
@@ -218,7 +219,7 @@ void TxFs::TempFileBuffer::write(Path path, const TreeValue& value)
     m_impl->write(path, value);
 }
 
-std::optional<TreeEntry> TxFs::TempFileBuffer::startReading()
+std::optional<TreeEntry> TempFileBuffer::startReading()
 {
     if (!m_impl)
         return std::nullopt;
@@ -226,7 +227,7 @@ std::optional<TreeEntry> TxFs::TempFileBuffer::startReading()
     return m_impl->startReading();
 }
 
-std::optional<TreeEntry> TxFs::TempFileBuffer::read()
+std::optional<TreeEntry> TempFileBuffer::read()
 {
     if (!m_impl)
         return std::nullopt;
@@ -234,12 +235,12 @@ std::optional<TreeEntry> TxFs::TempFileBuffer::read()
     return m_impl->read();
 }
 
-size_t TxFs::TempFileBuffer::getBufferSize() const
+size_t TempFileBuffer::getBufferSize() const
 {
     return m_bufferSize;
 }
 
-size_t TxFs::TempFileBuffer::getFileSize() const
+size_t TempFileBuffer::getFileSize() const
 {
     if (!m_impl)
         return 0;

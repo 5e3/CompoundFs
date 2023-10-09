@@ -345,7 +345,7 @@ TEST(FsCompareVisitor, ComplexFsIsNotEqual)
 
 TEST(TempFileBuffer, EmptyFileBufferReturnsEmptyOptional)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
 
     ASSERT_FALSE(tfb.startReading());
     ASSERT_FALSE(tfb.read());
@@ -353,7 +353,7 @@ TEST(TempFileBuffer, EmptyFileBufferReturnsEmptyOptional)
 
 TEST(TempFileBuffer, writeOneReadOneBack)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
 
     tfb.write("test", "test");
     auto res = tfb.startReading();
@@ -364,7 +364,7 @@ TEST(TempFileBuffer, writeOneReadOneBack)
 
 TEST(TempFileBuffer, writeOneSecondReadIsEmpty)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
     tfb.write("test", "test");
     auto res = tfb.startReading();
     ASSERT_TRUE(res);
@@ -374,7 +374,7 @@ TEST(TempFileBuffer, writeOneSecondReadIsEmpty)
 
 TEST(TempFileBuffer, writeManyReadMany)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
     std::vector<TreeEntry> entries;
     for (int i = 0; i < 10; i++)
     {
@@ -392,7 +392,7 @@ TEST(TempFileBuffer, writeManyReadMany)
 
 TEST(TempFileBuffer, fileSizeIsBufferSize)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
     std::vector<std::string> entries;
 
     int i = 1000;
@@ -422,7 +422,7 @@ TEST(TempFileBuffer, fileSizeIsBufferSize)
 
 TEST(TempFileBuffer, fileSizeIsMoreThanBufferSize)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
     std::vector<std::string> entries;
 
     int i = 1000;
@@ -461,7 +461,7 @@ TEST(TempFileBuffer, fileSizeIsMoreThanBufferSize)
 
 TEST(TempFileBuffer, fillFileWithMaxSizedObjects)
 {
-    TempFileBuffer tfb;
+    Private::TempFileBuffer tfb;
     std::vector<TreeEntry> entries;
     int i = 0;
     while (tfb.getFileSize() < 10 * tfb.getBufferSize())
