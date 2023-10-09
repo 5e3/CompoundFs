@@ -62,11 +62,11 @@ TYPED_TEST(TreeValueTester, streamInOfStreamOutIsEqual)
     tv.toStream(bss);
 
     TreeValue tv2 = TreeValue::fromStream(bss);
-    ASSERT_EQ(this->m_value, tv2.toValue<TypeParam>());
+    ASSERT_EQ(this->m_value, tv2.get<TypeParam>());
 }
 
 TYPED_TEST(TreeValueTester, toValueWithWrongTypeThrows)
 {
     TreeValue tv;
-    ASSERT_THROW(tv.toValue<TypeParam>(), std::exception);
+    ASSERT_THROW(tv.get<TypeParam>(), std::exception);
 }

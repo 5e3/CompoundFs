@@ -90,7 +90,7 @@ std::optional<Folder> DirectoryStructure::makeSubFolder(const DirectoryKey& dkey
     if (origValue.getType() != TreeValue::Type::Folder)
         return std::nullopt;
 
-    return origValue.toValue<Folder>();
+    return origValue.get<Folder>();
 }
 
 std::optional<Folder> DirectoryStructure::subFolder(const DirectoryKey& dkey) const
@@ -106,7 +106,7 @@ std::optional<Folder> DirectoryStructure::subFolder(const DirectoryKey& dkey) co
     if (treeValue.getType() != TreeValue::Type::Folder)
         return std::nullopt;
 
-    return treeValue.toValue<Folder>();
+    return treeValue.get<Folder>();
 }
 
 bool DirectoryStructure::addAttribute(const DirectoryKey& dkey, const TreeValue& attribute)
@@ -160,10 +160,10 @@ size_t DirectoryStructure::remove(ByteStringView key)
     switch (deletedValue.getType())
     {
     case TreeValue::Type::Folder:
-        return remove(deletedValue.toValue<Folder>()) + 1;
+        return remove(deletedValue.get<Folder>()) + 1;
 
     case TreeValue::Type::File:
-        m_freeStore.deleteFile(deletedValue.toValue<FileDescriptor>());
+        m_freeStore.deleteFile(deletedValue.get<FileDescriptor>());
         return 1;
 
     default:
@@ -181,7 +181,7 @@ std::optional<FileDescriptor> DirectoryStructure::openFile(const DirectoryKey& d
     if (treeValue.getType() != TreeValue::Type::File)
         return std::nullopt;
 
-    return treeValue.toValue<FileDescriptor>();
+    return treeValue.get<FileDescriptor>();
 }
 
 bool DirectoryStructure::createFile(const DirectoryKey& dkey)
@@ -198,7 +198,7 @@ bool DirectoryStructure::createFile(const DirectoryKey& dkey)
         return true;
 
     auto beforeFile = TreeValue::fromStream(replaced->m_beforeValue);
-    m_freeStore.deleteFile(beforeFile.toValue<FileDescriptor>());
+    m_freeStore.deleteFile(beforeFile.get<FileDescriptor>());
     return true;
 }
 
@@ -215,7 +215,7 @@ std::optional<FileDescriptor> DirectoryStructure::appendFile(const DirectoryKey&
     if (currentValue.getType() != TreeValue::Type::File)
         return std::nullopt;
 
-    return currentValue.toValue<FileDescriptor>();
+    return currentValue.get<FileDescriptor>();
 }
 
 bool DirectoryStructure::updateFile(const DirectoryKey& dkey, FileDescriptor desc)
@@ -283,7 +283,7 @@ void DirectoryStructure::storeCommitBlock(const CommitBlock& cb)
 
 CommitBlock DirectoryStructure::retrieveCommitBlock() const
 {
-    auto str = getAttribute(DirectoryKey(SystemFolder, CommitBlockAttributeName))->toValue<std::string>();
+    auto str = getAttribute(DirectoryKey(SystemFolder, CommitBlockAttributeName))->get<std::string>();
     return CommitBlock::fromString(str);
 }
 

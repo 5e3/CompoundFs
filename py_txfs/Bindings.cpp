@@ -25,22 +25,22 @@ std::string valueToString(const TreeValue& tv)
     switch (tv.getType())
     {
     case TreeValue::Type::Double:
-        ss << tv.toValue<double>();
+        ss << tv.get<double>();
         break;
     case TreeValue::Type::File:
-        ss << tv.toValue<FileDescriptor>().m_fileSize;
+        ss << tv.get<FileDescriptor>().m_fileSize;
         break;
     case TreeValue::Type::Int32:
-        ss << tv.toValue<uint32_t>();
+        ss << tv.get<uint32_t>();
         break;
     case TreeValue::Type::Int64:
-        ss << tv.toValue<uint64_t>();
+        ss << tv.get<uint64_t>();
         break;
     case TreeValue::Type::String:
-        ss << tv.toValue<std::string>();
+        ss << tv.get<std::string>();
         break;
     case TreeValue::Type::Version: {
-        auto v = tv.toValue<Version>();
+        auto v = tv.get<Version>();
         ss << v.m_major << "." << v.m_minor << "." << v.m_minor;
         break;
     }

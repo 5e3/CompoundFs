@@ -32,7 +32,7 @@ TEST(Composite, canReopenFile)
     }
 
     auto fsys = Composite::open<WrappedFile>(file);
-    ASSERT_EQ(fsys.getAttribute("test")->toValue<std::string>(), "test");
+    ASSERT_EQ(fsys.getAttribute("test")->get<std::string>(), "test");
 }
 
 TEST(Composite, openDoesRollback)

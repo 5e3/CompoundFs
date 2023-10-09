@@ -138,7 +138,7 @@ TEST(FileSystem, attribute)
 
     auto attribute = fs.getAttribute("folder/attribute");
     ASSERT_TRUE(attribute);
-    ASSERT_EQ(attribute->toValue<double>(), 42.42);
+    ASSERT_EQ(attribute->get<double>(), 42.42);
 }
 
 TEST(FileSystem, remove)
@@ -159,7 +159,7 @@ TEST(FileSystem, Cursor)
     auto cur = fs.find("folder/folder/attrib");
     ASSERT_TRUE(cur);
     auto attrib = cur.value();
-    ASSERT_EQ(attrib.toValue<double>(), 5.5);
+    ASSERT_EQ(attrib.get<double>(), 5.5);
 }
 
 TEST(FileSystem, commitClosesAllFileHandles)

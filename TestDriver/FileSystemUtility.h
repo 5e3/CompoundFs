@@ -60,7 +60,7 @@ struct FileSystemUtility
     void checkFileSystem(FileSystem& fileSystem)
     {
         auto attribute = fileSystem.getAttribute("test/attribute").value();
-        ASSERT_EQ(attribute.toValue<std::string>(), "test");
+        ASSERT_EQ(attribute.get<std::string>(), "test");
 
         auto handle = fileSystem.readFile("test/file1.txt").value();
         auto data = readFile(fileSystem, handle);

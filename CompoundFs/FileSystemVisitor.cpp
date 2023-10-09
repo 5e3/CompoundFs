@@ -55,8 +55,8 @@ VisitorControl FsCompareVisitor::dispatch(Path sourcePath, const TreeValue& sour
 
     if (sourceType == TreeValue::Type::Folder)
     {
-        auto sourceFolder = sourceValue.toValue<Folder>();
-        auto destFolder = destValue->toValue<Folder>();
+        auto sourceFolder = sourceValue.get<Folder>();
+        auto destFolder = destValue->get<Folder>();
         m_stack.push(std::pair { sourceFolder, destFolder });
     }
     else if (sourceType == TreeValue::Type::File)

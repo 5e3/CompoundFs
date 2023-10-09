@@ -29,7 +29,7 @@ struct CopyProcessor
             return copyFile(sourceCursor.key(), destPath);
         }
         case TreeValue::Type::Folder: {
-            auto sourceFolder = sourceCursor.value().toValue<Folder>();
+            auto sourceFolder = sourceCursor.value().get<Folder>();
             auto destFolder = m_destFs.makeSubFolder(destPath);
             return destFolder ? copyFolder(sourceFolder, *destFolder) + 1 : 0;
         }
@@ -47,7 +47,7 @@ struct CopyProcessor
             return copyFile(entry.m_key, destPath);
         }
         case TreeValue::Type::Folder: {
-            auto sourceFolder = entry.m_value.toValue<Folder>();
+            auto sourceFolder = entry.m_value.get<Folder>();
             auto dfolder = m_destFs.makeSubFolder(destPath);
             return dfolder ? copyFolder(sourceFolder, *dfolder) + 1 : 0;
         }
@@ -142,7 +142,7 @@ public:
         if (entry.m_value.getType() == TreeValue::Type::Folder)
         {
             std::vector<TreeEntry> treeEntries;
-            cursor = m_fs.find(Path(entry.m_value.toValue<Folder>(), ""));
+            cursor = m_fs.find(Path(entry.m_value.get<Folder>(), ""));
             for (; cursor; cursor = m_fs.next(cursor))
                 treeEntries.push_back({ cursor.key(), cursor.value() });
             {

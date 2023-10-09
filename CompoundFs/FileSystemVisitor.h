@@ -39,7 +39,7 @@ public:
             if (type == TreeValue::Type::Folder)
             {
                 stack.push(m_fs.next(cursor));
-                cursor = m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
+                cursor = m_fs.begin(Path(cursor.value().get<Folder>(), ""));
             }
             else
                 cursor = m_fs.next(cursor);
@@ -71,7 +71,7 @@ private:
 
         auto control = visitor(cursor.key(), cursor.value());
         if (control == VisitorControl::Continue && cursor.value().getType() == TreeValue::Type::Folder)
-            return m_fs.begin(Path(cursor.value().toValue<Folder>(), ""));
+            return m_fs.begin(Path(cursor.value().get<Folder>(), ""));
 
         return FileSystem::Cursor();
     }
@@ -155,7 +155,7 @@ class FsBufferSink
     TSink m_chainedSink;
 
 public:
-    template <typename... TArgs> //, typename = decltype(TSink(std::declval<Args>()...))>
+    template <typename... TArgs> 
     FsBufferSink(size_t size, TArgs&&... args)
         : m_chainedSink(std::forward<TArgs>(args)...)
     {
@@ -215,7 +215,7 @@ class FsFileBufferSink
     TSink m_chainedSink;
 
 public:
-    template <typename... TArgs> //, typename = decltype(TSink(std::declval<Args>()...))>
+    template <typename... TArgs> 
     FsFileBufferSink(size_t bufferSize, TArgs&&... args)
         : m_tempFileBuffer(bufferSize)
         , m_chainedSink(std::forward<TArgs>(args)...)

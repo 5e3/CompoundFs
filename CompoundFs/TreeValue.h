@@ -71,7 +71,7 @@ public:
     Type getType() const { return static_cast<Type>(m_variant.index()); }
 
     template <typename T>
-    T toValue() const
+    T get() const
     {
         return std::get<T>(m_variant);
     }

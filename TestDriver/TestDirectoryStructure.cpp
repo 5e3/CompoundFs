@@ -142,12 +142,12 @@ TEST(DirectoryStructure, addGetAttribute)
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), "test"));
     auto res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(res->toValue<std::string>(), "test");
+    ASSERT_EQ(res->get<std::string>(), "test");
 
     ASSERT_TRUE(ds.addAttribute(DirectoryKey("attrib"), 42.42));
     res = ds.getAttribute(DirectoryKey("attrib"));
     ASSERT_TRUE(res);
-    ASSERT_EQ(res->toValue<double>(), 42.42);
+    ASSERT_EQ(res->get<double>(), 42.42);
 }
 
 TEST(DirectoryStructure, attributesDoNotReplaceFolders)
@@ -256,7 +256,7 @@ TEST(Cursor, creation)
     ASSERT_EQ(res.first , Folder::Root);
     ASSERT_EQ(res.second , "attrib");
     auto attrib = cur3.value();
-    ASSERT_EQ(attrib.toValue<std::string>() , "test");
+    ASSERT_EQ(attrib.get<std::string>() , "test");
     ASSERT_EQ(attrib.getType(), TreeValue::Type::String);
     ASSERT_EQ(attrib.getTypeName(), "String");
 
@@ -287,13 +287,13 @@ TEST(Cursor, iteratesOverFolder)
 
     auto cur = ds.begin(DirectoryKey(folder));
     ASSERT_EQ(cur.key().second, "0Test2");
-    ASSERT_EQ(cur.value().toValue<uint64_t>(), 0ULL);
+    ASSERT_EQ(cur.value().get<uint64_t>(), 0ULL);
 
     std::set<uint64_t> iset;
     for (; cur; cur = ds.next(cur))
     {
         ASSERT_EQ(cur.key().first, folder);
-        iset.insert(cur.value().toValue<uint64_t>());
+        iset.insert(cur.value().get<uint64_t>());
     }
     ASSERT_EQ(iset.size(), 50);
 }
