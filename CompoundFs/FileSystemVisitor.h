@@ -105,11 +105,18 @@ public:
     enum class Result { NotFound, NotEqual, Equal };
 
 private:
+    struct SourceDestFolder
+    {
+        Folder m_sourceFolder;
+        Folder m_destFolder;
+    };
+
+private:
     FileSystem& m_sourceFs;
     FileSystem& m_destFs;
     PathHolder m_destPath;
     Result m_result;
-    SmallBufferStack<std::pair<Folder, Folder>, 10> m_stack;
+    SmallBufferStack<SourceDestFolder, 10> m_stack;
     std::unique_ptr<char[]> m_buffer;
     static constexpr size_t BufferSize = 32 * 4096;
 
