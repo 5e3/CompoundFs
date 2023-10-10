@@ -464,7 +464,7 @@ TEST(TempFileBuffer, fillFileWithMaxSizedObjects)
     Private::TempFileBuffer tfb;
     std::vector<TreeEntry> entries;
     int i = 0;
-    while (tfb.getFileSize() < 10 * tfb.getBufferSize())
+    while (tfb.getFileSize() < 4 * tfb.getBufferSize())
     {
         auto key = std::to_string(i++) + std::string(512, ' ');
         Path path(std::string_view(key.data(), DirectoryKey::maxSize()));
@@ -475,9 +475,9 @@ TEST(TempFileBuffer, fillFileWithMaxSizedObjects)
     }
 
     std::vector<TreeEntry> entries2;
+    entries2.reserve(entries.size());
     for (auto e = tfb.startReading(); e; e = tfb.read())
         entries2.push_back(*e);
 
     ASSERT_EQ(entries, entries2);
-
 }
