@@ -107,8 +107,7 @@ public:
 private:
     FileSystem& m_sourceFs;
     FileSystem& m_destFs;
-    Folder m_folder;
-    std::string m_name;
+    PathHolder m_destPath;
     Result m_result;
     SmallBufferStack<std::pair<Folder, Folder>, 10> m_stack;
     std::unique_ptr<char[]> m_buffer;
@@ -118,8 +117,7 @@ public:
     FsCompareVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
         : m_sourceFs(sourceFs)
         , m_destFs(destFs)
-        , m_folder { path.m_parentFolder}
-        , m_name{path.m_relativePath}
+        , m_destPath(path)
         , m_result(Result::Equal)
     {
     }
@@ -138,7 +136,7 @@ public:
     Result result() const { return m_result; }
 
 private:
-    Path getDestPath(Path sourcePath);
+    Path currentDestPath(Path sourcePath);
     std::optional<TreeValue> getDestValue(Path destPath);
     VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath);
     VisitorControl compareFiles(Path sourcePath, Path destPath);
@@ -217,7 +215,7 @@ class FsFileBufferSink
     TSink m_chainedSink;
 
 public:
-    template <typename... TArgs> 
+    template <typename... TArgs>
     FsFileBufferSink(size_t bufferSize, TArgs&&... args)
         : m_tempFileBuffer(bufferSize)
         , m_chainedSink(std::forward<TArgs>(args)...)
@@ -245,6 +243,9 @@ public:
 
     const TSink& getChainedSink() const { return m_chainedSink; }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 }
 

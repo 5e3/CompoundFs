@@ -6,15 +6,15 @@ using namespace TxFs::Private;
 
 VisitorControl FsCompareVisitor::operator()(Path path, const TreeValue& value)
 {
-    Path destPath = getDestPath(path);
+    Path destPath = currentDestPath(path);
 
     return dispatch(path, value, destPath);
 }
 
-Path FsCompareVisitor::getDestPath(Path sourcePath)
+Path FsCompareVisitor::currentDestPath(Path sourcePath)
 {
     if (m_stack.empty())
-        return Path(m_folder, m_name);
+        return m_destPath;
     else
     {
         while (m_stack.top().first != sourcePath.m_parentFolder)
