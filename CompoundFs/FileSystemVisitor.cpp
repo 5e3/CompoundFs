@@ -1,3 +1,4 @@
+#pragma warning(disable : 4996)
 #include "FileSystemVisitor.h"
 #include <filesystem>
 
