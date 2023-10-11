@@ -248,3 +248,78 @@ size_t TempFileBuffer::getFileSize() const
     return size_t(ftell(m_impl->m_file));
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+VisitorControl FsCopyVisitor::operator()(Path path, const TreeValue& value)
+{
+    Path destPath = currentDestPath(path);
+
+    return dispatch(path, value, destPath);
+}
+
+Path FsCopyVisitor::currentDestPath(Path sourcePath)
+{
+    if (m_stack.empty())
+        return m_destPath;
+    else
+    {
+        while (m_stack.top().m_sourceFolder != sourcePath.m_parentFolder)
+            m_stack.pop();
+        return Path(m_stack.top().m_destFolder, sourcePath.m_relativePath);
+    }
+}
+
+VisitorControl FsCopyVisitor::dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath)
+{
+    auto sourceType = sourceValue.getType();
+    if (sourceType == TreeValue::Type::Folder)
+    {
+        auto sourceFolder = sourceValue.get<Folder>();
+        auto destFolder = m_destFs.makeSubFolder(destPath);
+        if (!destFolder)
+            return VisitorControl::Break;
+
+        m_stack.push({ sourceFolder, *destFolder });
+    }
+    else if (sourceType == TreeValue::Type::File)
+        return copyFile(sourcePath, destPath);
+    else
+        if (!m_destFs.addAttribute(destPath, sourceValue))
+            return VisitorControl::Break;
+    return VisitorControl::Continue;
+}
+
+VisitorControl FsCopyVisitor::copyFile(Path sourcePath, Path destPath)
+{
+    auto sourceHandle = *m_sourceFs.readFile(sourcePath);
+    auto destHandle = m_destFs.createFile(destPath);
+    if (!destHandle)
+        return VisitorControl::Break;
+
+    copyFile(sourceHandle, *destHandle);
+    return VisitorControl::Continue;
+}
+
+void FsCopyVisitor::copyFile(ReadHandle sourceHandle, WriteHandle destHandle)
+{
+    auto data = getLazyMemoryBuffer();
+
+    size_t fsize = m_sourceFs.fileSize(sourceHandle);
+    size_t blockSize = std::min(fsize, BufferSize);
+    for (size_t i = 0; i < fsize; i += blockSize)
+    {
+        m_sourceFs.read(sourceHandle, data, blockSize);
+        m_destFs.write(destHandle, data, blockSize);
+    }
+
+    m_sourceFs.close(sourceHandle);
+    m_destFs.close(destHandle);
+}
+
+char* FsCopyVisitor::getLazyMemoryBuffer()
+{
+    if (!m_buffer)
+        m_buffer = std::make_unique<char[]>(BufferSize);
+    return m_buffer.get();
+}
+

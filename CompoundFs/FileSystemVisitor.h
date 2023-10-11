@@ -253,6 +253,52 @@ public:
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class FsCopyVisitor
+{
+private:
+    struct SourceDestFolder
+    {
+        Folder m_sourceFolder;
+        Folder m_destFolder;
+    };
+
+private:
+    FileSystem& m_sourceFs;
+    FileSystem& m_destFs;
+    PathHolder m_destPath;
+    SmallBufferStack<SourceDestFolder, 10> m_stack;
+    std::unique_ptr<char[]> m_buffer;
+    static constexpr size_t BufferSize = 32 * 4096;
+
+public:
+    FsCopyVisitor(FileSystem& sourceFs, FileSystem& destFs, Path path)
+        : m_sourceFs(sourceFs)
+        , m_destFs(destFs)
+        , m_destPath(path)
+    {
+    }
+
+    VisitorControl operator()(Path path, const TreeValue& value);
+
+    template <typename TIterator = std::nullptr_t>
+    void done(TIterator begin = nullptr, TIterator end = nullptr)
+    {
+        if constexpr (!std::is_null_pointer_v<TIterator>)
+            for (; begin != end; ++begin)
+                operator()(begin->m_key, begin->m_value);
+    }
+
+
+private:
+    Path currentDestPath(Path sourcePath);
+    std::optional<TreeValue> getDestValue(Path destPath);
+    VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath);
+    VisitorControl copyFile(Path sourcePath, Path destPath);
+    void copyFile(ReadHandle sourceHandle, WriteHandle destHandle);
+    char* getLazyMemoryBuffer();
+};
+
+///////////////////////////////////////////////////////////////////////////////
 
 }
 
