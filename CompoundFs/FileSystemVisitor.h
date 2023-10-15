@@ -291,7 +291,6 @@ public:
 
 private:
     Path currentDestPath(Path sourcePath);
-    std::optional<TreeValue> getDestValue(Path destPath);
     VisitorControl dispatch(Path sourcePath, const TreeValue& sourceValue, Path destPath);
     VisitorControl copyFile(Path sourcePath, Path destPath);
     void copyFile(ReadHandle sourceHandle, WriteHandle destHandle);
