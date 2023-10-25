@@ -24,9 +24,12 @@ void RollbackHandler::rollback(size_t compositeSize)
     m_cache.m_newPageIds.clear();
     m_cache.m_divertedPageIds.clear();
     assert(compositeSize <= m_cache.file()->fileSizeInPages());
-    auto commitLock = m_cache.commitAccess();
-    m_cache.m_fileInterface->truncate(compositeSize);
-    m_cache.m_lock = commitLock.release();
+    if (compositeSize < m_cache.file()->fileSizeInPages())
+    {
+        auto commitLock = m_cache.commitAccess();
+        m_cache.m_fileInterface->truncate(compositeSize);
+        m_cache.m_lock = commitLock.release();
+    }
 }
 
 void RollbackHandler::virtualRevertPartialCommit()
