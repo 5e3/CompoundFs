@@ -40,15 +40,17 @@ struct Version
 
 class TreeValue final 
 {
-    struct Unknown{};
+public:
+    enum class Type { File, Folder, Version, Double, Int64, Int32, String, Unknown };
+    struct Unknown
+    {};
     friend bool operator==(const Unknown&, const Unknown&) { return false; }
+
+private:
     using Variant = std::variant<FileDescriptor, Folder, Version, double, uint64_t, uint32_t, std::string, Unknown>;
 
     template <typename T>
     using EnableVariantTypes = std::enable_if_t<std::is_convertible_v<T, Variant>>;
-
-public:
-    enum class Type { File, Folder, Version, Double, Int64, Int32, String, Unknown };
 
 public:
     TreeValue()
@@ -79,7 +81,7 @@ public:
     template <typename TVisitor>
     auto visit(TVisitor&& visitor) const
     {
-        return std::visit(std::forward(visitor), m_variant);
+        return std::visit(visitor, m_variant);
     }
 
     void toStream(ByteStringStream& bss) const;

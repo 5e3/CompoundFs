@@ -1,7 +1,9 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/functional.h>
 #include "CompoundFs/Composite.h"
+#include "CompoundFs/PosixFile.h"
 #include <CompoundFs/WindowsFile.h>
 #include <CompoundFs/Path.h>
 #include <sstream>
@@ -11,7 +13,7 @@ namespace py = pybind11;
 
 namespace
 {
-FileSystem openCompoundFile(const char* path, OpenMode mode)
+FileSystem openCompound(const char* path, OpenMode mode)
 {
     if (mode == OpenMode::ReadOnly)
         return Composite::openReadOnly<WindowsFile>(path, mode);
@@ -68,7 +70,76 @@ std::string reprImpl(const TreeValue& tv)
     return ss.str();
 }
 
+
+template <typename... Ts>
+struct overload : Ts...
+{
+    using Ts::operator()...;
+};
+template <class... Ts>
+overload(Ts...) -> overload<Ts...>;
+
+auto convertToVariant(const TreeValue& tv)
+{
+    using PyVariant = std::variant<uint64_t, uint32_t, double, Folder, py::tuple, py::str>;
+    return tv.visit(overload {
+        [](const auto& val) -> PyVariant { return val; }, 
+        [](FileDescriptor fd) -> PyVariant { return fd.m_fileSize; },
+        [](TreeValue::Unknown u) -> PyVariant { return "Unknown"; },
+        [](Version v) -> PyVariant { return py::make_tuple(v.m_major, v.m_minor, v.m_patch); } });
 }
+
+auto subFolder(FileSystem& fs, Folder folder)
+{
+    py::list l;
+    for (auto cursor = fs.begin(Path(folder, "")); cursor; cursor = fs.next(cursor))
+    {
+        auto key = cursor.key();
+        auto entry = py::make_tuple(key.m_parentFolder, key.m_relativePath, cursor.value());
+        l.append(entry);
+    }
+    return l;
+}
+
+
+void importFiles(std::string_view p, FileSystem& fs, const std::function<void(std::string_view)>& cb)
+{
+    using namespace std::filesystem;
+    std::vector<uint8_t> buffer;
+    const uint32_t BufferPages = 32;
+
+    for (const auto& e: recursive_directory_iterator(p, directory_options::skip_permission_denied))
+    {
+        path pe = e;
+        pe = pe.relative_path();
+        auto s = pe.u8string();
+        std::replace(s.begin(), s.end(), '\\', '/');
+        cb(s);
+        if (e.is_directory())
+            fs.createPath(Path(s));
+        else if (e.is_regular_file())
+        {
+            buffer.resize(BufferPages * 4096);
+            auto wh = fs.createFile(Path(s));
+            PosixFile rf(e, OpenMode::ReadOnly);
+            PageIndex fileSizeInPages = rf.fileSizeInPages();
+            Interval iv(0, 0 + BufferPages);
+            while (true)
+            {
+                iv.end() = std::min(iv.end(), fileSizeInPages);
+                auto end = rf.readPages(iv, buffer.data());
+                size_t size = end - buffer.data();
+                fs.write(*wh, buffer.data(), size);
+                if (size < buffer.size())
+                    break;
+                iv = Interval(iv.begin() + BufferPages, iv.begin() + 2*BufferPages);
+            }
+            fs.close(*wh);
+        }
+    }
+}
+
+} // namespace
 
 PYBIND11_MODULE(py_txfs, m)
 {
@@ -83,15 +154,37 @@ PYBIND11_MODULE(py_txfs, m)
         return ss.str();
     });
 
-    py::class_<TreeValue>(m, "Attribute").def("__str__", &strImpl).def("__repr__", &reprImpl);
+    py::class_<Folder>(m, "Folder")
+        .def_property_readonly_static("root", [](py::object /* self */) { return Folder::Root; })
+        .def("__repr__", [](Folder folder) {
+            std::ostringstream ss;
+            ss << "<Folder: " << int(folder) << '>';
+            return ss.str();
+    });
+
+    py::enum_<TreeValue::Type>(m, "TreeValueType")
+        .value("FILE", TreeValue::Type::File)
+        .value("FOLDER", TreeValue::Type::Folder)
+        .value("DOUBLE", TreeValue::Type::Double)
+        .value("STRING", TreeValue::Type::String)
+        .value("INT", TreeValue::Type::Int64)
+        .value("VERSION", TreeValue::Type::Version);
+
+
+    py::class_<TreeValue>(m, "Attribute")
+        .def("__str__", &strImpl)
+        .def("__repr__", &reprImpl)
+        .def("type_name", [](const TreeValue& tv) { return tv.getTypeName(); })
+        .def("as_variant", &convertToVariant)
+        .def("type", [](const TreeValue& tv) { return tv.getType(); });
 
     py::class_<FileSystem>(m, "FileSystem")
-        .def("createFile", [](FileSystem& fs, const char* path) { return fs.createFile(path); })
-        .def("appendFile", [](FileSystem& fs, const char* path) { return fs.appendFile(path); })
-        .def("readFile", [](FileSystem& fs, const char* path) { return fs.readFile(path); })
-        .def("fileSize", [](const FileSystem& fs, const char* path) { return fs.fileSize(path); })
-        .def("fileSize", [](const FileSystem& fs, WriteHandle h) { return fs.fileSize(h); })
-        .def("fileSize", [](const FileSystem& fs, ReadHandle h) { return fs.fileSize(h); })
+        .def("create_file", [](FileSystem& fs, const char* path) { return fs.createFile(path); })
+        .def("append_file", [](FileSystem& fs, const char* path) { return fs.appendFile(path); })
+        .def("read_file", [](FileSystem& fs, const char* path) { return fs.readFile(path); })
+        .def("file_size", [](const FileSystem& fs, const char* path) { return fs.fileSize(path); })
+        .def("file_size", [](const FileSystem& fs, WriteHandle h) { return fs.fileSize(h); })
+        .def("file_size", [](const FileSystem& fs, ReadHandle h) { return fs.fileSize(h); })
         .def("close", [](FileSystem& fs, WriteHandle h) { fs.close(h); })
         .def("close", [](FileSystem& fs, ReadHandle h) { fs.close(h); })
         .def("read",
@@ -105,29 +198,38 @@ PYBIND11_MODULE(py_txfs, m)
                  return res;
              })
         .def("write", [](FileSystem& fs, WriteHandle h, std::string_view sv) { fs.write(h, sv.data(), sv.size()); })
-        .def("addAttribute", [](FileSystem& fs, std::string_view& path, double val) { fs.addAttribute(path, val); })
-        .def("addAttribute",
+        .def("add_attribute", [](FileSystem& fs, std::string_view& path, double val) { fs.addAttribute(path, val); })
+        .def("add_attribute",
              [](FileSystem& fs, std::string_view& path, const std::string& val) { fs.addAttribute(path, val); })
-        .def("addAttribute", [](FileSystem& fs, std::string_view& path, uint32_t val) { fs.addAttribute(path, val); })
-        .def("addAttribute", [](FileSystem& fs, std::string_view& path, uint64_t val) { fs.addAttribute(path, val); })
-        .def("getAttribute", [](FileSystem& fs, std::string_view& path) { return fs.getAttribute(path); })
+        .def("add_attribute", [](FileSystem& fs, std::string_view& path, uint32_t val) { fs.addAttribute(path, val); })
+        .def("add_attribute", [](FileSystem& fs, std::string_view& path, uint64_t val) { fs.addAttribute(path, val); })
+        .def("get_attribute", [](FileSystem& fs, std::string_view& path) { return fs.getAttribute(path); })
         .def("remove", [](FileSystem& fs, std::string_view& path) { return fs.remove(path); })
         .def("dir",
-             [](FileSystem& fs, std::string_view& path) { 
+             [](FileSystem& fs, std::string_view& path) {
                  for (auto cur = fs.begin(path); cur; cur = fs.next(cur))
                      py::print(cur.key().m_relativePath, cur.value());
-            })
+             })
         .def("commit", &FileSystem::commit)
         .def("rollback", &FileSystem::rollback)
+        .def("sub_folder", subFolder)
 
-    ;
+        ;
 
     py::enum_<OpenMode>(m, "OpenMode")
-        .value("CreateNew", OpenMode::CreateNew)
-        .value("CreateAlways", OpenMode::CreateAlways)
-        .value("Open", OpenMode::Open)
-        .value("OpenExisting", OpenMode::OpenExisting)
-        .value("ReadOnly", OpenMode::ReadOnly);
+        .value("CREATE_NEW", OpenMode::CreateNew)
+        .value("CREATE_ALWAYS", OpenMode::CreateAlways)
+        .value("OPEN_ALWAYS", OpenMode::Open)
+        .value("OPEN_EXISTING", OpenMode::OpenExisting)
+        .value("READ_ONLY", OpenMode::ReadOnly);
 
-    m.def("openCompoundFile", &openCompoundFile, py::return_value_policy::take_ownership);
+    m.def("open_compound", &openCompound, py::return_value_policy::take_ownership);
+
+    m.def("get_folder", [](const TreeValue& val) -> std::variant<Folder, py::none> {
+        if (val.getType() == TreeValue::Type::Folder)
+            return val.get<Folder>();
+        return py::none();
+    });
+
+    m.def("import_files", &importFiles);
 }
