@@ -57,7 +57,10 @@ void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPag
 void CommitHandler::lockedWriteCachedPages()
 {
     if (m_cache.m_newPageIds.empty())
+    {
+        m_cache.m_pageCache.clear();
         return;
+    }
 
     auto commitLock = m_cache.m_fileInterface->commitAccess(std::move(m_cache.m_lock));
     writeCachedPages();
