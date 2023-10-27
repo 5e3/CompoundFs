@@ -266,10 +266,21 @@ void DirectoryStructure::commit()
 void DirectoryStructure::rollback()
 {
     auto commitBlock = retrieveCommitBlock();
-    m_maxFolderId = commitBlock.m_maxFolderId;
     auto compositeSize = static_cast<size_t>(commitBlock.m_compositSize);
     m_cacheManager->getRollbackHandler().rollback(compositeSize);
+    init(commitBlock);
 
+}
+
+void DirectoryStructure::init()
+{
+    auto commitBlock = retrieveCommitBlock();
+    init(commitBlock);
+}
+
+void DirectoryStructure::init(const CommitBlock& commitBlock)
+{
+    m_maxFolderId = commitBlock.m_maxFolderId;
     m_btree = BTree(m_cacheManager, m_rootIndex);
     m_freeStore = FreeStore(m_cacheManager, commitBlock.m_freeStoreDescriptor);
     connectFreeStore();

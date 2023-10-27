@@ -66,6 +66,7 @@ public:
     DirectoryStructure& operator=(DirectoryStructure&&) noexcept;
 
     static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
+    void init();
 
     std::optional<Folder> makeSubFolder(const DirectoryKey& dkey);
     std::optional<Folder> subFolder(const DirectoryKey& dkey) const;
@@ -94,6 +95,8 @@ public:
 
 private:
     void connectFreeStore();
+    void init(const CommitBlock& cb);
+
 
 private:
     std::shared_ptr<CacheManager> m_cacheManager;

@@ -37,6 +37,7 @@ FileSystem Composite::initializeReadOnly(std::unique_ptr<FileInterface> fileInte
 
     FileSystem::Startup startup { cacheManager, 1, 0 };
     auto fileSystem = FileSystem(startup);
+    fileSystem.init();
     return fileSystem;
 }
 

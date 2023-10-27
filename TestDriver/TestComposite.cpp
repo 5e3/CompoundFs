@@ -269,3 +269,10 @@ TEST_F(CompositeTester, ReadOnlyRollbackFromCrashedCommit)
     ASSERT_TRUE(fsys.getAttribute("test/attribute"));
     m_helper.checkFileSystem(fsys);
 }
+
+TEST_F(CompositeTester, ReadOnlyCommitDoesNotThrow)
+{
+    auto fsys = Composite::openReadOnly<WrappedFile>(m_file);
+    fsys.fileSize("folder/file.file");
+    ASSERT_NO_THROW(fsys.commit());
+}

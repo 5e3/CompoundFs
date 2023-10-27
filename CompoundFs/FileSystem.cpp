@@ -191,6 +191,11 @@ void FileSystem::rollback()
     m_directoryStructure.rollback();
 }
 
+void FileSystem::init()
+{
+    m_directoryStructure.init();
+}
+
 void FileSystem::closeAllFiles()
 {
     for (auto& [key, openFile]: m_openWriters)

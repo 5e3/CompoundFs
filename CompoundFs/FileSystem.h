@@ -22,6 +22,7 @@ public:
     FileSystem(const Startup& startup);
 
     static Startup initialize(const std::shared_ptr<CacheManager>& cacheManager);
+    void init();
 
     std::optional<WriteHandle> createFile(Path path);
     std::optional<WriteHandle> appendFile(Path path);
