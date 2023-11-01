@@ -102,27 +102,30 @@ auto subFolder(FileSystem& fs, Folder folder)
 }
 
 
-void importFiles(std::string_view p, FileSystem& fs, const std::function<void(std::string_view)>& cb)
+void importFiles(std::string_view source, FileSystem& fs, std::string_view destination, const std::function<void(std::string_view)>& cb)
 {
-    using namespace std::filesystem;
+    namespace sfs = std::filesystem;
     std::vector<uint8_t> buffer;
     const uint32_t BufferPages = 32;
 
-    for (const auto& e: recursive_directory_iterator(p, directory_options::skip_permission_denied))
+    for (const auto& e: sfs::recursive_directory_iterator(source, sfs::directory_options::skip_permission_denied))
     {
-        path pe = e;
-        pe = pe.relative_path();
-        auto s = pe.u8string();
-        std::replace(s.begin(), s.end(), '\\', '/');
-        cb(s);
+        auto s = e.path().generic_u8string();
+        auto rel = std::mismatch(source.begin(), source.end(), s.begin(), s.end()).second;
+        std::string dest { destination };
+        dest += std::string(rel, s.end());
+        cb(dest);
+
+        //continue;
+
         if (e.is_directory())
-            fs.createPath(Path(s));
+            fs.createPath(Path(dest));
         else if (e.is_regular_file())
         {
             buffer.resize(BufferPages * 4096);
-            auto wh = fs.createFile(Path(s));
+            auto wh = fs.createFile(Path(dest));
             PosixFile rf(e, OpenMode::ReadOnly);
-            PageIndex fileSizeInPages = rf.fileSizeInPages();
+            auto fileSizeInPages = (PageIndex) rf.fileSizeInPages();
             Interval iv(0, 0 + BufferPages);
             while (true)
             {
