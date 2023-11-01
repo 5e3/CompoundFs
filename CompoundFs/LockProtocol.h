@@ -6,6 +6,7 @@
 #include <variant>
 #include <mutex>
 #include <shared_mutex>
+#include <stdexcept>
 
 namespace TxFs
 {
