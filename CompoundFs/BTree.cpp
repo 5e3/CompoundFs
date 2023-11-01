@@ -199,8 +199,8 @@ ConstPageDef<Leaf> BTree::findLeaf(ByteStringView key, InnerNodeStack& stack) co
     {
         auto nodeDef = m_cacheManager.loadPage<Node>(id);
         if (nodeDef.m_page->m_type == NodeType::Leaf)
-            return ConstPageDef<Leaf>(std::static_pointer_cast<const Leaf>(std::move(nodeDef.m_page)), id);
-        stack.emplace(std::static_pointer_cast<const InnerNode>(std::move(nodeDef.m_page)), id);
+            return staticPageDefCast<Leaf>(std::move(nodeDef));
+        stack.emplace(staticPageDefCast<InnerNode>(std::move(nodeDef)));
         id = stack.top().m_page->findPage(key);
     }
 }
@@ -302,6 +302,61 @@ BTree::Cursor BTree::next(Cursor cursor) const
 
     const auto& nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
     return Cursor(nextLeaf, nextLeaf->beginTable());
+}
+
+struct BTree::NodeVisitor
+{
+    TypedCacheManager& m_cacheManager;
+    const TreeNodeVisitor& m_visitor;
+
+    NodeVisitor(TypedCacheManager& cm, const TreeNodeVisitor& visitor)
+        : m_cacheManager(cm)
+        , m_visitor(visitor)
+    {
+    }
+
+    bool visitInnerNode(ConstPageDef<Node>&& nodeDef)
+    {
+        auto innerNode = staticPageDefCast<InnerNode>(std::move(nodeDef));
+        if (!m_visitor(innerNode))
+            return false;
+
+        auto p = innerNode.m_page->beginTable();
+        auto nextIndex = innerNode.m_page->getLeft(p);
+        if (!visit(nextIndex))
+            return false;
+
+        for (; p != innerNode.m_page->endTable(); ++p)
+        {
+            nextIndex = innerNode.m_page->getRight(p);
+            if (!visit(nextIndex))
+                return false;
+        }
+
+        return true;
+    }
+
+    bool visit(PageIndex pageIndex)
+    {
+        assert(pageIndex != PageIdx::INVALID);
+        auto nodeDef = m_cacheManager.loadPage<Node>(pageIndex);
+        if (nodeDef.m_page->m_type == NodeType::Inner)
+            return visitInnerNode(std::move(nodeDef));
+        else
+        {
+            assert(nodeDef.m_page->m_type == NodeType::Leaf);
+            return m_visitor(staticPageDefCast<Leaf>(std::move(nodeDef)));
+        }
+
+        return false;
+    }
+
+};
+
+bool BTree::visitAllNodes(const TreeNodeVisitor& visitor)
+{
+    NodeVisitor nv(m_cacheManager, visitor);
+    return nv.visit(m_rootIndex);
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <variant>
+#include <functional>
 
 namespace TxFs
 {
@@ -25,6 +26,7 @@ class BTree final
 {
     using InnerNodeStack = SmallBufferStack<ConstPageDef<InnerNode>, 5>;
     struct KeyInserter;
+    struct NodeVisitor;
 
 public:
     class Cursor;
@@ -35,6 +37,8 @@ public:
     using InsertResult = std::variant<Inserted, Replaced, Unchanged>;
     using RenameResult = std::variant<NotFound, Inserted, Unchanged>;
     using ReplacePolicy = bool (*)(ByteStringView beforValue);
+    using TreeNode = std::variant<ConstPageDef<Leaf>, ConstPageDef<InnerNode>>;
+    using TreeNodeVisitor = std::function<bool (const TreeNode&)>;
 
 public:
     BTree(const std::shared_ptr<CacheManager>& cacheManager, PageIndex rootIndex = PageIdx::INVALID);
@@ -48,6 +52,7 @@ public:
     Cursor begin(ByteStringView key) const;
     Cursor next(Cursor cursor) const;
 
+    bool visitAllNodes(const TreeNodeVisitor&);
     const std::vector<PageIndex>& getFreePages() const noexcept { return m_freePages; }
 
 private:

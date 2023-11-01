@@ -63,4 +63,36 @@ struct PageDef final
     }
 };
 
+/////////////////////////////////////////////////////////
+
+template <typename TTo, typename TFrom>
+ConstPageDef<TTo> staticPageDefCast(const ConstPageDef<TFrom>& from)
+{
+    return ConstPageDef<TTo>(std::static_pointer_cast<const TTo>(from.m_page), from.m_index);
+}
+
+template <typename TTo, typename TFrom>
+ConstPageDef<TTo> staticPageDefCast(ConstPageDef<TFrom>&& from)
+{
+    PageIndex idx = PageIdx::INVALID;
+    std::swap(idx, from.m_index);
+    return ConstPageDef<TTo>(std::static_pointer_cast<const TTo>(std::move(from.m_page)), idx);
+}
+
+template <typename TTo, typename TFrom>
+PageDef<TTo> staticPageDefCast(const PageDef<TFrom>& from)
+{
+    return ConstPageDef<TTo>(std::static_pointer_cast<TTo>(from.m_page), from.m_index);
+}
+
+template <typename TTo, typename TFrom>
+PageDef<TTo> staticPageDefCast(PageDef<TFrom>&& from)
+{
+    PageIndex idx = PageIdx::INVALID;
+    std::swap(idx, from.m_index);
+    return ConstPageDef<TTo>(std::static_pointer_cast<TTo>(std::move(from.m_page)), idx);
+}
+
+/////////////////////////////////////////////////////////
+
 }

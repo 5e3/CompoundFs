@@ -466,3 +466,55 @@ TEST(BTree, renameCannotOverwriteExistingEntry)
     ASSERT_TRUE(std::holds_alternative<BTree::Inserted>(res));
 }
 
+TEST(BTree, visitEmptyRootPage)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+
+    size_t nodes = 0;
+    ASSERT_TRUE(bt.visitAllNodes([&](const BTree::TreeNode& tn) {
+        auto leaf = std::get<ConstPageDef<Leaf>>(tn); // throws if not possible
+        nodes++;
+        return true;
+    }));
+    ASSERT_EQ(nodes, 1);
+}
+
+TEST(BTree, visitSeveralPages)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+
+    // fill 100 pages worth of BTree
+    for (int i = 0; cm->getFileInterface()->fileSizeInPages() < 100; i++)
+    {
+        auto key = std::to_string(i);
+        bt.insert(key, key);
+    }
+
+    size_t nodes = 0;
+    ASSERT_TRUE(bt.visitAllNodes([&](const BTree::TreeNode& tn) {
+        nodes++;
+        return true;
+    }));
+    ASSERT_EQ(nodes, 100);
+}
+
+TEST(BTree, interruptedVisit)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    BTree bt(cm);
+
+    for (int i = 0; cm->getFileInterface()->fileSizeInPages() < 10; i++)
+    {
+        auto key = std::to_string(i);
+        bt.insert(key, key);
+    }
+
+    size_t nodes = 0;
+    ASSERT_FALSE(bt.visitAllNodes([&](const BTree::TreeNode& tn) {
+        nodes++;
+        return nodes < 5;
+    }));
+    ASSERT_EQ(nodes, 5);
+}
