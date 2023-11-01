@@ -37,7 +37,7 @@ public:
 
         // delayed loading of the first batch of Intervals
         if (!m_freeListHeadPage.m_page)
-            loadInitialIntervals();
+            loadInitialIntervalsOnce();
 
         // load as many PageTables necessary to potentially fulfill this request
         auto next = m_freeListHeadPage.m_page->getNext();
@@ -120,7 +120,7 @@ private:
         return is;
     }
 
-    void loadInitialIntervals()
+    void loadInitialIntervalsOnce()
     {
         if (!m_freeListHeadPage.m_page)
         {
@@ -147,20 +147,22 @@ private:
         // lets just keep the files with longer tables
         m_filesToDelete.erase(m_filesToDelete.begin(), pos);
 
-        // TODO: split function here
+        return is;
+    }
 
+    void addRemainingPagesToIntervalSequence(IntervalSequence& is)
+    {
         // add the freePageTables to the IntervalSequence so we can reuse it
         for (auto page: m_freeMetaDataPages)
             is.pushBack(Interval(page));
 
         // if by now we have anything add m_current intervals to the IntervalSequence
         if (!is.empty())
-            loadInitialIntervals();
+            loadInitialIntervalsOnce();        
         m_current.moveTo(is);
 
         // good chance that we can make this shorter by sorting
         is.sort();
-        return is;
     }
 
     /// Pushes the IntervalSequence back into FileTable pages. If more than one 
@@ -188,7 +190,7 @@ private:
 
             // rewire the next pointers in the singly linked list
             next.m_page->setNext(cur.m_page->getNext());
-            cur.m_page->setNext(pageId);
+            cur.m_page->setNext(pageId); // !!! pageId is wrong !!!
 
             cur = next;
             cur.m_page->transferFrom(is); // move as much as possible to the page
@@ -207,6 +209,7 @@ private:
             m_fileDescriptor.m_fileSize += fd.m_fileSize;
 
         auto is = onePageOptimization();
+        addRemainingPagesToIntervalSequence(is);
         m_fileDescriptor.m_fileSize += m_freeMetaDataPages.size() * 4096ULL;
 
         FileDescriptor cur = pushFileTables(is);
