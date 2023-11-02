@@ -1,14 +1,13 @@
 
 
 #include "TreeValue.h"
+#include "Overloaded.h"
 
 using namespace TxFs;
 
 namespace
 {
 
-template <typename... Ts> struct overload : Ts... { using Ts::operator()...; };
-template <class... Ts> overload(Ts...) -> overload<Ts...>;
 
 template<typename... Ts>
 void defaultCreate(size_t index, std::variant<Ts...>& var)
@@ -36,7 +35,7 @@ void TreeValue::toStream(ByteStringStream& bss) const
 
     auto index = static_cast<uint8_t>(m_variant.index());
     bss.push(index);
-    std::visit(overload
+    std::visit(Overloaded
     { 
         [bss = &bss](const std::string& val) { bss->push(ByteStringView(val)); },
         [bss = &bss](const auto& val) { bss->push(val); }
@@ -49,7 +48,7 @@ TreeValue TreeValue::fromStream(ByteStringView bsv)
     bsv = ByteStringStream::pop(index, bsv);
     TreeValue tv;
     defaultCreate(index, tv.m_variant);
-    std::visit(overload 
+    std::visit(Overloaded 
     { 
         [bsv](std::string& val) { val = std::string(bsv.data(), bsv.end()); }, 
         [bsv](auto& val) { ByteStringStream::pop(val, bsv); }

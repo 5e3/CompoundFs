@@ -65,6 +65,7 @@ set (Headers
 		LogPage.h
 		MemoryFile.h
 		Node.h
+		Overloaded.h
 		FileLockLinux.h
 		PageAllocator.h
 		PageDef.h

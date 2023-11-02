@@ -6,6 +6,7 @@
 #include "CompoundFs/PosixFile.h"
 #include <CompoundFs/WindowsFile.h>
 #include <CompoundFs/Path.h>
+#include <CompoundFs/Overloaded.h>
 #include <sstream>
 
 using namespace TxFs;
@@ -71,18 +72,10 @@ std::string reprImpl(const TreeValue& tv)
 }
 
 
-template <typename... Ts>
-struct overload : Ts...
-{
-    using Ts::operator()...;
-};
-template <class... Ts>
-overload(Ts...) -> overload<Ts...>;
-
 auto convertToVariant(const TreeValue& tv)
 {
     using PyVariant = std::variant<uint64_t, uint32_t, double, Folder, py::tuple, py::str>;
-    return tv.visit(overload {
+    return tv.visit(Overloaded {
         [](const auto& val) -> PyVariant { return val; }, 
         [](FileDescriptor fd) -> PyVariant { return fd.m_fileSize; },
         [](TreeValue::Unknown u) -> PyVariant { return "Unknown"; },
