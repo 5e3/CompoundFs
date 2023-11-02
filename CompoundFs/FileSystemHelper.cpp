@@ -95,7 +95,7 @@ struct CopyProcessor
         auto sourceCursor = m_sourceFs.begin(Path(sourceFolder, ""));
         while (sourceCursor)
         {
-            for (int i = 0; sourceCursor && i < MaxEntries; sourceCursor = m_sourceFs.next(sourceCursor), i++)
+            for (size_t i = 0; sourceCursor && i < MaxEntries; sourceCursor = m_sourceFs.next(sourceCursor), i++)
                 treeEntries.emplace_back( sourceCursor.key(), sourceCursor.value() );
 
             assert(treeEntries.size() <= MaxEntries);
