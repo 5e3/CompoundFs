@@ -108,9 +108,24 @@ public:
         return read((uint8_t*) &begin[0], (uint8_t*) &begin[end - begin]);
     }
 
+    using Visitor = std::function < bool(const ConstPageDef<FileTable>&)>;
+    bool visitAllFileTables(FileDescriptor fd, const Visitor& visitor) const 
+    { 
+        auto idx = fd.m_first;
+        while (idx != PageIdx::INVALID)
+        {
+            ConstPageDef<FileTable> ftp = m_cacheManager.loadPage<FileTable>(idx);
+            if (!visitor(ftp))
+                return false;
+            idx = ftp.m_page->getNext();
+            assert(idx != PageIdx::INVALID || ftp.m_index == fd.m_last);
+        }
+        return true;
+    }
+
 private:
+    mutable TypedCacheManager m_cacheManager;
     IntervalSequence m_pageSequence;
-    TypedCacheManager m_cacheManager;
 
     uint64_t m_curFilePos;
     uint64_t m_fileSize;

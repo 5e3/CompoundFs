@@ -580,3 +580,35 @@ TEST(FileReader, ReadFragmentedFile)
         ASSERT_EQ(res , v);
     }
 }
+
+TEST(FileReader, visitAllFileTables)
+{
+    std::vector<uint8_t> v = makeVector(2200 * 4097); // => 3 filetable pages
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    FileDescriptor fd = writeFragmentedFile(v, cacheManager);
+
+    FileReader fr(cacheManager);
+    int i = 0;
+    ASSERT_TRUE(fr.visitAllFileTables(fd, [&](const auto&) {
+        i++;
+        return true;
+    }));
+
+    ASSERT_EQ(i, 3);
+}
+
+TEST(FileReader, visitAllFileTablesInterruptsOnReturnFalse)
+{
+    std::vector<uint8_t> v = makeVector(2200 * 4097); // => 3 filetable pages
+    auto cacheManager = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    FileDescriptor fd = writeFragmentedFile(v, cacheManager);
+
+    FileReader fr(cacheManager);
+    int i = 0;
+    ASSERT_FALSE(fr.visitAllFileTables(fd, [&](const auto&) {
+        i++;
+        return i<2;
+    }));
+
+    ASSERT_EQ(i, 2);
+}
