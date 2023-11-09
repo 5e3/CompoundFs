@@ -24,6 +24,15 @@ public:
         return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
     }
 
+    template <typename TPage, class... Ts>
+    PageDef<TPage> asNewPage(PageIndex index, Ts&&... args)
+    {
+        static_assert(sizeof(TPage::m_checkSum) == sizeof(uint32_t)); // must have m_checkSum
+        auto pdef = m_cacheManager->asNewPage(index);
+        auto obj = new (pdef.m_page.get()) TPage(std::forward<Ts>(args)...);
+        return PageDef<TPage>(std::shared_ptr<TPage>(pdef.m_page, obj), pdef.m_index);
+    }
+
     template <typename TPage>
     ConstPageDef<TPage> loadPage(PageIndex index)
     {

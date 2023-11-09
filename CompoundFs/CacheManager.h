@@ -38,6 +38,8 @@ public:
     void setPageIntervalAllocator(TCallable&&);
 
     PageDef<uint8_t> newPage();
+    PageDef<uint8_t> asNewPage(PageIndex pageIndex);
+
     ConstPageDef<uint8_t> loadPage(PageIndex id);
     PageDef<uint8_t> repurpose(PageIndex index);
     template <typename TPage> PageDef<TPage> makePageWritable(const ConstPageDef<TPage>& loadedPage) noexcept;
@@ -51,7 +53,7 @@ public:
 
 private:
     void setPageDirty(PageIndex id) noexcept;
-    PageIndex newPageIndex() { return allocatePageInterval(1).begin(); }
+    PageIndex allocatePageFromFile() { return allocatePageInterval(1).begin(); }
     std::vector<PrioritizedPage> getUnpinnedPages() const;
 
     void trimCheck() noexcept;

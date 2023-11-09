@@ -190,6 +190,33 @@ TEST(CacheManager, dirtyPagesCanBeEvictedAndReadInAgain)
     }
 }
 
+TEST(CacheManager, asNewPageIsNotFollowingDirtyPageProtocol)
+{
+    std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();
+    {
+        CacheManager cm(std::move(file));
+        for (int i = 0; i < 2; i++)
+        {
+            auto p = cm.newPage().m_page;
+            *p = i + 1;
+        }
+        cm.trim(0);
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), 0), 1);  
+        ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), 1), 2); 
+        file = cm.handOverFile();
+    }
+
+    CacheManager cm(std::move(file));
+    *cm.makePageWritable(cm.loadPage(0)).m_page = 10; // diverted to pageId 2
+    *cm.asNewPage(1).m_page = 11;                     // written to pageId 1
+    cm.trim(0);
+
+    ASSERT_EQ(cm.getFileInterface()->fileSizeInPages(), 3);
+    ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), 0), 1);  // stays untouched
+    ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), 1), 11);  
+    ASSERT_EQ(readFirstByteFromPage(cm.getFileInterface(), 2), 10);
+}
+
 TEST(CacheManager, dirtyPagesCanBeEvictedTwiceAndReadInAgain)
 {
     std::unique_ptr<FileInterface> file = std::make_unique<MemoryFile>();

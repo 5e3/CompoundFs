@@ -28,17 +28,23 @@ CacheManager::CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages)
 /// PageDef<> is writable as it is expected that a new page was requested because you want to write to it.
 PageDef<uint8_t> CacheManager::newPage()
 {
-    auto page = m_pageMemoryAllocator.allocate();
-    auto id = newPageIndex();
-    m_cache.m_pageCache.emplace(id, CachedPage(page, PageClass::New));
-    m_cache.m_newPageIds.insert(id);
-    trimCheck();
-    return PageDef<uint8_t>(page, id);
+    auto pageIndex = allocatePageFromFile();
+    return asNewPage(pageIndex);
 }
 
-/// Loads the specified page. The page is loaded because previous transactions left state that is now being accessed.
-/// The return value can be transformed into something writable (makePageWritable()) which in turn makes this page
-/// subject to the dirty-page protocol.
+/// Treats the page pageIndex as if it is a newly allocated page. The caller has to guarantie that this makes sense.
+PageDef<uint8_t> CacheManager::asNewPage(PageIndex pageIndex)
+{
+    // assert(m_cache.m_pageCache.find(pageIndex) == m_cache.m_pageCache.end());
+    auto page = m_pageMemoryAllocator.allocate();
+    m_cache.m_pageCache.emplace(pageIndex, CachedPage(page, PageClass::New));
+    m_cache.m_newPageIds.insert(pageIndex);
+    trimCheck();
+    return PageDef<uint8_t>(page, pageIndex);
+}
+
+/// Loads the specified page. The page was written by a previous transactions. The return value can be transformed into
+/// something writable (makePageWritable()) which in turn makes this page subject to the dirty-page protocol.
 ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 {
     auto id = TxFs::divertPage(m_cache, origId);
@@ -58,8 +64,8 @@ ConstPageDef<uint8_t> CacheManager::loadPage(PageIndex origId)
 
 /// Reuses a page for new purposes. It works like loadPage() without physically loading the page, followed by
 /// setPageDirty(). The page is treated as PageClass::New if we find the page in the m_newPageIds otherwise it will
-/// be flagged as PageClass::Dirty. Note: Do not feed regular FreeStore pages to this API as they wrongly end up
-/// following the dirty-page protocol.
+/// be flagged as PageClass::Dirty. Note: Do not feed regular FreeStore pages to this API (only feed FreeStore
+/// MetaData pages) as they unnecessarily end up following the dirty-page protocol.
 PageDef<uint8_t> CacheManager::repurpose(PageIndex origId)
 {
     auto id = TxFs::divertPage(m_cache, origId);
@@ -148,7 +154,7 @@ void CacheManager::evictDirtyPages(std::vector<PrioritizedPage>::iterator begin,
         assert(it->m_pageClass == PageClass::Dirty);
         auto p = m_cache.m_pageCache.find(it->m_id);
         assert(p != m_cache.m_pageCache.end());
-        auto id = newPageIndex();
+        auto id = allocatePageFromFile();
         TxFs::writeSignedPage(m_cache.file(), id, p->second.m_page.get());
         m_cache.m_divertedPageIds[it->m_id] = id;
         m_cache.m_newPageIds.insert(id);
