@@ -4,8 +4,10 @@
 #include "CompoundFs/MemoryFile.h"
 #include "CompoundFs/FreeStore.h"
 #include "CompoundFs/FileWriter.h"
+#include "CompoundFs/FileReader.h"
 #include "CompoundFs/ByteString.h"
 #include "CompoundFs/TypedCacheManager.h"
+#include "CompoundFs/DirectoryStructure.h"
 
 #include <random>
 
@@ -148,7 +150,103 @@ TEST(FreeStore, deleteBigAndSmallFiles)
 
     fsfd = fs.close();
     auto is = readAllFreeStorePages(cm, fsfd.m_first);
-    ASSERT_EQ(fsfd.m_fileSize , is.totalLength() * 4096ULL);
+    ASSERT_EQ(fsfd.m_fileSize, is.totalLength() * 4096ULL);
+}
+
+TEST(FreeStore, deleteManyMetaDataPages)
+{
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    TypedCacheManager tcm(cm);
+    auto freeStorePage = tcm.newPage<FileTable>();
+
+    FileDescriptor fsfd(freeStorePage.m_index);
+    FreeStore fs(cm, fsfd);
+
+    // create 2 files with non-mergable intervals
+    std::vector<FileDescriptor> fileDescriptors = createFiles(cm, 2, 2200);
+
+    // feed one file to the FreeStore - not including the FileTable MetaData pages
+    std::set<PageIndex> pages;
+    FileReader freader(cm);
+    freader.visitAllFileTables(fileDescriptors[0], [&](const ConstPageDef<FileTable>& pd) {
+        IntervalSequence is;
+        pd.m_page->insertInto(is);
+        for (auto iv: is)
+        {
+            fs.deallocate(iv.begin());
+            pages.insert(iv.begin());
+        }
+        return true;
+        });
+
+    auto fsize = cm->getFileInterface()->fileSizeInPages();
+    fsfd = fs.close();
+    ASSERT_EQ(fsize, cm->getFileInterface()->fileSizeInPages());
+
+    // visit all FreeStore pages - including the MetaData pages
+    std::set<PageIndex> fspages;
+    IntervalSequence fsis;
+    freader.visitAllFileTables(fsfd, [&](const ConstPageDef<FileTable>& pd) {
+        IntervalSequence is;
+        pd.m_page->insertInto(is);
+        for (auto iv: is)
+        {
+            fspages.insert(iv.begin());
+        }
+        fspages.insert(pd.m_index);
+        return true;
+    });
+
+    pages.insert(0); // page 0 was not part of fileDescriptors[0] - just add it so we can compare
+
+    ASSERT_EQ(pages, fspages);
+}
+
+TEST(FreeStore, DivertedPagesDoNotGetUsedAsFileTables)
+{
+    struct TestPage
+    {
+        uint32_t m_value;
+        char m_filler[4096 - 8];
+        uint32_t m_checkSum;
+    };
+    std::vector<FileDescriptor> fileDescriptors;
+    auto cm = std::make_shared<CacheManager>(std::make_unique<MemoryFile>());
+    TypedCacheManager tcm(cm);
+    std::vector<PageIndex> pages;
+    {
+        auto startup = DirectoryStructure::initialize(cm);
+        auto ds = DirectoryStructure(startup);
+        for (int i = 0; i < 2200; i++)
+        {
+            auto pd = tcm.newPage<TestPage>();
+            pages.push_back(pd.m_index);
+            pd.m_page->m_value = pd.m_index;
+        }
+        ds.commit();
+    }
+
+    DirectoryStructure::Startup startup { cm, 1, 0 };
+    auto ds = DirectoryStructure(startup);
+    for (auto idx : pages)
+    {
+        auto pd = tcm.makePageWritable(tcm.loadPage<uint32_t>(idx));
+        tcm.newPage<TestPage>(); // make the diverted pages non-contiguous
+        *pd.m_page += 10000;
+        pd.m_page.reset();       // unpin the page
+        cm->trim(0);             // force to file
+    }
+
+    ds.commit();
+    for (auto idx: pages)
+    {
+        auto pd = tcm.loadPage<uint32_t>(idx);
+        ASSERT_EQ(*pd.m_page, idx + 10000);
+    }
+    IntervalSequence fsis = readAllFreeStorePages(cm, 1);
+    ASSERT_EQ(fsis.totalLength(), 2200);
+
+    
 }
 
 TEST(FreeStore, emptyFreeStoreReturnsEmptyInterval)

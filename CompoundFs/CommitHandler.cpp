@@ -128,6 +128,7 @@ void CommitHandler::updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds)
             m_cache.m_pageCache.erase(it);
         }
     }
+    m_cache.m_divertedPageIds.clear();
 }
 
 /// Pages that are still in the cache are written to the file.

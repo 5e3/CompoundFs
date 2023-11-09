@@ -247,7 +247,7 @@ void DirectoryStructure::commit()
 
     auto divertedPageIds = commitHandler.getDivertedPageIds();
     for (auto page: divertedPageIds)
-        m_freeStore.deallocate(page);
+        m_freeStore.deallocateStillInUse(page);
 
     CommitBlock cb;
     cb.m_freeStoreDescriptor = m_freeStore.close();

@@ -63,6 +63,7 @@ public:
 
     /// Return meta-data-pages to the FreeStore. These pages will be available in the next transaction.
     void deallocate(uint32_t page) { m_freeMetaDataPages.insert(page); }
+    void deallocateStillInUse(uint32_t page) { m_stillInUsePages.insert(page); }
 
     /// Defered file deletion. Upon commit-time when close() is called we will add these files to the FreeStore. The
     /// space of these files will be available in the next transaction.
@@ -93,6 +94,7 @@ public:
         std::swap(fd, m_fileDescriptor);
         // m_freeListHeadPage.reset(); TODO: ?
         m_freeMetaDataPages.clear();
+        m_stillInUsePages.clear();
         m_current.clear();
 
         return fd;
@@ -152,8 +154,12 @@ private:
 
     void addRemainingPagesToIntervalSequence(IntervalSequence& is)
     {
-        // add the freePageTables to the IntervalSequence so we can reuse it
+        // add the m_freeMetaDataPages to the IntervalSequence so we can reuse it
         for (auto page: m_freeMetaDataPages)
+            is.pushBack(Interval(page));
+
+        // same for the ones still in use
+        for (auto page: m_stillInUsePages)
             is.pushBack(Interval(page));
 
         // if by now we have anything add m_current intervals to the IntervalSequence
@@ -163,6 +169,16 @@ private:
 
         // good chance that we can make this shorter by sorting
         is.sort();
+    }
+
+    PageDef<FileTable> allocateFileTableFromIntervalSequence(IntervalSequence& is) const
+    {
+        if (m_stillInUsePages.count(is.front().begin()))
+            return m_cacheManager.newPage<FileTable>(); // cannot reuse - allocate new page
+
+        auto pageId = is.popFront(1).begin();
+        return m_freeMetaDataPages.count(pageId) ? m_cacheManager.repurpose<FileTable>(pageId)
+                                                 : m_cacheManager.asNewPage<FileTable>(pageId);
     }
 
     /// Pushes the IntervalSequence back into FileTable pages. If more than one 
@@ -182,15 +198,11 @@ private:
         cur.m_page->transferFrom(is);
         while (!is.empty())
         {
-            // let's try to reuse one of our own pages as a FileTable but only if the page is not
-            // a meta-data page form m_freeMetaDataPages. Fall back: allocate from m_cacheManager. 
-            auto pageId = is.front().begin();
-            auto next = m_freeMetaDataPages.count(pageId) ? m_cacheManager.newPage<FileTable>()
-                                                          : m_cacheManager.repurpose<FileTable>(is.popFront(1).begin());
+            auto next = allocateFileTableFromIntervalSequence(is);    
 
             // rewire the next pointers in the singly linked list
             next.m_page->setNext(cur.m_page->getNext());
-            cur.m_page->setNext(pageId); // !!! pageId is wrong !!!
+            cur.m_page->setNext(next.m_index); 
 
             cur = next;
             cur.m_page->transferFrom(is); // move as much as possible to the page
@@ -211,6 +223,7 @@ private:
         auto is = onePageOptimization();
         addRemainingPagesToIntervalSequence(is);
         m_fileDescriptor.m_fileSize += m_freeMetaDataPages.size() * 4096ULL;
+        m_fileDescriptor.m_fileSize += m_stillInUsePages.size() * 4096ULL;
 
         FileDescriptor cur = pushFileTables(is);
         for (const auto& fd: m_filesToDelete)
@@ -239,6 +252,7 @@ private:
     uint64_t m_currentFileSize;                 // tracks the space left before close()
     std::vector<FileDescriptor> m_filesToDelete;
     std::unordered_set<PageIndex> m_freeMetaDataPages;
+    std::unordered_set<PageIndex> m_stillInUsePages;
     IntervalSequence m_current;
     ConstPageDef<FileTable> m_freeListHeadPage; 
 };
