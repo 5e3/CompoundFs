@@ -109,13 +109,11 @@ void importFiles(std::string_view source, FileSystem& fs, std::string_view desti
         dest += std::string(rel, s.end());
         cb(dest);
 
-        //continue;
-
         if (e.is_directory())
             fs.createPath(Path(dest));
         else if (e.is_regular_file())
         {
-            buffer.resize(BufferPages * 4096);
+            buffer.resize(BufferPages * 4096ULL);
             auto wh = fs.createFile(Path(dest));
             PosixFile rf(e, OpenMode::ReadOnly);
             auto fileSizeInPages = (PageIndex) rf.fileSizeInPages();
