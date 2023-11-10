@@ -249,6 +249,7 @@ void DirectoryStructure::commit()
     for (auto page: divertedPageIds)
         m_freeStore.deallocateStillInUse(page);
 
+    m_cacheManager->setPageIntervalAllocator(std::function<Interval(size_t)>());
     CommitBlock cb;
     cb.m_freeStoreDescriptor = m_freeStore.close();
     cb.m_compositSize = commitHandler.getCompositeSize();
