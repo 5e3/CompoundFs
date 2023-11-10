@@ -40,18 +40,18 @@ void CommitHandler::commit()
         m_cache.m_fileInterface->flushFile();
     }
 
-    exclusiveLockedCommit(dirtyPageIds);
+    auto commitLock = exclusiveLockedCommit(dirtyPageIds);
     m_cache.m_fileInterface->flushFile();
     m_cache.m_fileInterface->truncate(fileSize);
+    m_cache.m_lock = commitLock.release();
 }
 
-void CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds)
+CommitLock CommitHandler::exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds)
 {
     auto commitLock = m_cache.m_fileInterface->commitAccess(std::move(m_cache.m_lock));
     updateDirtyPages(dirtyPageIds);
     writeCachedPages();
-
-    m_cache.m_lock = commitLock.release();
+    return commitLock;
 }
 
 void CommitHandler::lockedWriteCachedPages()

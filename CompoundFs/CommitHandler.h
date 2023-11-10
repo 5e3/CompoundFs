@@ -11,6 +11,7 @@
 
 namespace TxFs
 {
+class CommitLock;
 
 class CommitHandler final
 {
@@ -22,7 +23,7 @@ public:
     void writeLogs(const std::vector<std::pair<PageIndex, PageIndex>>& origToCopyPages);
     void updateDirtyPages(const std::vector<PageIndex>& dirtyPageIds);
     void writeCachedPages();
-    void exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds);
+    CommitLock exclusiveLockedCommit(const std::vector<PageIndex>& dirtyPageIds);
     void lockedWriteCachedPages();
 
     std::vector<PageIndex> getDivertedPageIds() const;
