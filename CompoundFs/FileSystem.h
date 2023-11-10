@@ -17,6 +17,7 @@ class FileSystem final
 public:
     class Cursor;
     using Startup = DirectoryStructure::Startup;
+    struct RollbackOnException;
 
 public:
     FileSystem(const Startup& startup);

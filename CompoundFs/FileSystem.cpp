@@ -4,6 +4,32 @@
 
 using namespace TxFs;
 
+struct FileSystem::RollbackOnException
+{
+    FileSystem& m_fileSystem;
+    int m_uncaughtExceptions;
+
+    RollbackOnException(FileSystem& fs)
+        : m_fileSystem(fs)
+        , m_uncaughtExceptions(std::uncaught_exceptions())
+    {
+    }
+
+    ~RollbackOnException() 
+    {
+        if (std::uncaught_exceptions() > m_uncaughtExceptions)
+        {
+            try
+            {
+                m_fileSystem.rollback();
+            }
+            catch (...)
+            {
+            }
+        }
+    }
+};
+
 FileSystem::FileSystem(const Startup& startup)
     : m_cacheManager(startup.m_cacheManager)
     , m_directoryStructure(startup)
@@ -11,6 +37,8 @@ FileSystem::FileSystem(const Startup& startup)
 
 std::optional<WriteHandle> FileSystem::createFile(Path path)
 {
+    RollbackOnException guard(*this);
+
     if (!path.create(&m_directoryStructure))
         return std::nullopt;
 
@@ -23,6 +51,8 @@ std::optional<WriteHandle> FileSystem::createFile(Path path)
 
 std::optional<WriteHandle> FileSystem::appendFile(Path path)
 {
+    RollbackOnException guard(*this);
+
     if (!path.create(&m_directoryStructure))
         return std::nullopt;
 
@@ -77,6 +107,8 @@ size_t FileSystem::read(ReadHandle file, void* ptr, size_t size)
 
 size_t FileSystem::write(WriteHandle file, const void* ptr, size_t size)
 {
+    RollbackOnException guard(*this);
+
     const uint8_t* begin = (const uint8_t*) ptr;
     const uint8_t* end = begin + size;
     m_openWriters.at(file).m_fileWriter.write(begin, end);
@@ -85,6 +117,8 @@ size_t FileSystem::write(WriteHandle file, const void* ptr, size_t size)
 
 void FileSystem::close(WriteHandle file)
 {
+    RollbackOnException guard(*this);
+
     auto& openFile = m_openWriters.at(file);
     auto fileDescriptor = openFile.m_fileWriter.close();
     Path path = openFile.m_path;
@@ -112,6 +146,8 @@ uint64_t FileSystem::fileSize(ReadHandle file) const
 
 std::optional<Folder> FileSystem::makeSubFolder(Path path)
 {
+    RollbackOnException guard(*this);
+
     if (!path.create(&m_directoryStructure))
         return std::nullopt;
 
@@ -128,6 +164,8 @@ std::optional<Folder> FileSystem::subFolder(Path path) const
 
 bool FileSystem::addAttribute(Path path, const TreeValue& attribute)
 {
+    RollbackOnException guard(*this);
+
     if (!path.create(&m_directoryStructure))
         return false;
 
@@ -144,6 +182,8 @@ std::optional<TreeValue> FileSystem::getAttribute(Path path) const
 
 bool FileSystem::rename(Path oldPath, Path newPath)
 {
+    RollbackOnException guard(*this);
+
     if (!oldPath.normalize(&m_directoryStructure))
         return false;
     DirectoryKey oldKey(oldPath.m_parentFolder, oldPath.m_relativePath);
@@ -157,6 +197,8 @@ bool FileSystem::rename(Path oldPath, Path newPath)
 
 size_t FileSystem::remove(Path path)
 {
+    RollbackOnException guard(*this);
+
     if (!path.normalize(&m_directoryStructure))
         return 0;
 
@@ -181,6 +223,8 @@ FileSystem::Cursor FileSystem::begin(Path path) const
 
 void FileSystem::commit()
 {
+    RollbackOnException guard(*this);
+
     closeAllFiles();
     m_directoryStructure.commit();
 }
@@ -210,6 +254,8 @@ void FileSystem::closeAllFiles()
 
 FileWriter& TxFs::FileSystem::addOpenWriter(Path path)
 {
+    RollbackOnException guard(*this);
+
     auto res = m_openWriters.try_emplace(WriteHandle { m_nextHandle },
                                          OpenWriter { PathHolder { path }, FileWriter { m_cacheManager } });
 
