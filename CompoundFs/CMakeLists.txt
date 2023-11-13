@@ -74,6 +74,7 @@ set (Headers
 		PosixFile.h
 		ReadOnlyFile.h
 		RollbackHandler.h
+		SharedLock.h
 		SmallBufferStack.h
 		TableKeyCompare.h
 		TempFile.h
