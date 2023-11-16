@@ -16,6 +16,7 @@ set (Sources
 		MemoryFile.cpp
 		PageAllocator.cpp
 		PosixFile.cpp
+		SharedLock.cpp
 		TempFile.cpp
 		TreeValue.cpp
 		Path.cpp

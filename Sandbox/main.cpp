@@ -113,17 +113,24 @@
 //}
 //
 
-#include "CompoundFs/Composite.h"
-//#include "CompoundFs/WindowsFile.h"
-#include "CompoundFs/Path.h"
-
-using namespace TxFs;
+//#include "CompoundFs/Composite.h"
+////#include "CompoundFs/WindowsFile.h"
+//#include "CompoundFs/Path.h"
+//
+//using namespace TxFs;
+//
+//int main()
+//{
+//    //auto fs = Composite::open<WindowsFile>("c:/CompoundFs/test.compound", OpenMode::Open);
+//    //auto fh = fs.appendFile(Path("autoexec.bat"));
+//    //auto data = ByteStringView("test");
+//    //fs.write(*fh, data.data(), data.size());
+//
+//}
 
 int main()
 {
-    //auto fs = Composite::open<WindowsFile>("c:/CompoundFs/test.compound", OpenMode::Open);
-    //auto fh = fs.appendFile(Path("autoexec.bat"));
-    //auto data = ByteStringView("test");
-    //fs.write(*fh, data.data(), data.size());
 
 }
+
+

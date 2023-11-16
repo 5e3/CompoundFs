@@ -65,12 +65,20 @@ TEST(Composite, openNonTxFsFileThrows)
 
 struct CompositeTester : ::testing::Test
 {
+    using MemoryFile = LockedMemoryFile<DebugSharedLock, DebugSharedLock>;
+    DebugSharedLock m_gateLock;
+    DebugSharedLock m_sharedLock;
+    DebugSharedLock m_writerLock;
     std::shared_ptr<FileInterface> m_file;
     FileSystemUtility m_helper;
 
     CompositeTester()
-        : m_file(std::make_shared<MemoryFile>())
     {
+        auto gate = m_gateLock;
+        auto shared = m_sharedLock;
+        auto writer = m_writerLock;
+        auto lp = std::make_unique<MemoryFile::TLockProtocol>(std::move(gate), std::move(shared), std::move(writer));
+        m_file = std::make_shared<MemoryFile>(std::move(lp));
         auto fsys = Composite::open<WrappedFile>(m_file);
         m_helper.fillFileSystem(fsys);
         fsys.commit();
