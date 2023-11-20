@@ -284,3 +284,19 @@ TEST_F(CompositeTester, ReadOnlyCommitDoesNotThrow)
     fsys.fileSize("folder/file.file");
     ASSERT_NO_THROW(fsys.commit());
 }
+
+TEST_F(CompositeTester, CommitUnlocksFileAfterTruncate)
+{
+    m_sharedLock.makeUnlockBlock();
+    auto fsys = Composite::open<WrappedFile>(m_file);
+    fsys.remove("test");
+    m_sharedLock.lock_shared();             // fsys cannot commit - blocks on commit lock
+    std::thread th([&]() { fsys.commit(); });
+    m_sharedLock.waitForWaiting(1);         // wait until it blocks
+    m_sharedLock.unlock_shared();           // let fsys commit
+    m_sharedLock.waitForWaiting(0);         // wait until it starts commiting
+    auto fsys2 = Composite::openReadOnly<WrappedFile>(m_file); // block until commit is over
+    ASSERT_FALSE(fsys2.getAttribute("test/attribute").has_value()); // check if commit realy happend
+    m_sharedLock.unlockRelease(); // release the thread
+    th.join();                    // wait until thread completed
+}
