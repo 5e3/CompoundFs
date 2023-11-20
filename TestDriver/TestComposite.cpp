@@ -12,6 +12,7 @@
 #include "CompoundFs/TempFile.h"
 
 #include <fstream>
+#include <thread>
 
 using namespace TxFs;
 
