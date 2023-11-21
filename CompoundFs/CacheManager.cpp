@@ -15,7 +15,7 @@
 
 using namespace TxFs;
 
-CacheManager::CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages) noexcept
+CacheManager::CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages)
     : m_pageMemoryAllocator(maxPages) 
     , m_cache { std::move(fi) }
     , m_maxCachedPages(maxPages)
@@ -97,7 +97,7 @@ void CacheManager::setPageDirty(PageIndex id) noexcept
 }
 
 /// Finds out if a trim operation needs to be performed and does it if necessary.
-void CacheManager::trimCheck() noexcept
+void CacheManager::trimCheck()
 {
     if (m_cache.m_pageCache.size() > m_maxCachedPages)
         trim(m_maxCachedPages / 4 * 3);
@@ -124,7 +124,7 @@ size_t CacheManager::trim(uint32_t maxPages)
 }
 
 /// Use installed allocation function or the rawFileInterface.
-Interval CacheManager::allocatePageInterval(size_t maxPages) noexcept
+Interval CacheManager::allocatePageInterval(size_t maxPages)
 {
     if (m_pageIntervalAllocator)
     {

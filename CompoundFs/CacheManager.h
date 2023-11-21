@@ -31,7 +31,7 @@ class RollbackHandler;
 class CacheManager final
 {
 public:
-    CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages = 256) noexcept;
+    CacheManager(std::unique_ptr<FileInterface> fi, uint32_t maxPages = 256);
     CacheManager(CacheManager&&) = default;
 
     template <typename TCallable>
@@ -43,7 +43,7 @@ public:
     ConstPageDef<uint8_t> loadPage(PageIndex id);
     PageDef<uint8_t> repurpose(PageIndex index);
     template <typename TPage> PageDef<TPage> makePageWritable(const ConstPageDef<TPage>& loadedPage) noexcept;
-    Interval allocatePageInterval(size_t maxPages) noexcept;
+    Interval allocatePageInterval(size_t maxPages);
     size_t trim(uint32_t maxPages);
 
     CommitHandler getCommitHandler();
@@ -56,7 +56,7 @@ private:
     PageIndex allocatePageFromFile() { return allocatePageInterval(1).begin(); }
     std::vector<PrioritizedPage> getUnpinnedPages() const;
 
-    void trimCheck() noexcept;
+    void trimCheck();
     void evictDirtyPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
     void evictNewPages(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
     void removeFromCache(std::vector<PrioritizedPage>::iterator begin, std::vector<PrioritizedPage>::iterator end);
