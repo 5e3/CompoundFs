@@ -15,8 +15,8 @@ namespace TxFs
     std::mutex m_mutex;
     std::condition_variable m_cv;
 
-    bool m_exclusive;
-    int m_shared;
+    bool m_exclusive = false;
+    int m_shared = 0;
 
 public:
     void lock();
