@@ -300,7 +300,7 @@ BTree::Cursor BTree::next(Cursor cursor) const
     if (leaf->getNext() == PageIdx::INVALID)
         return Cursor();
 
-    const auto& nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
+    auto nextLeaf = m_cacheManager.loadPage<Leaf>(leaf->getNext()).m_page;
     return Cursor(nextLeaf, nextLeaf->beginTable());
 }
 
