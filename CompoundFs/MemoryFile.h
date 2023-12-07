@@ -38,7 +38,6 @@ public:
     void truncate(size_t numberOfPages) override;
 
 private:
-    using MemLockProtocol = LockProtocol<std::shared_mutex, std::mutex>;
     PageAllocator m_allocator;
     std::vector<std::shared_ptr<uint8_t>> m_file;
 };

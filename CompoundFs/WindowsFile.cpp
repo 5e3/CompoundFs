@@ -29,16 +29,6 @@ void throwOnError(HANDLE handle)
         throw std::system_error(static_cast<int>(::GetLastError()), std::system_category(), "WindowsFile::OS_Call");
 }
 
-template <typename TRet, typename... TArgs>
-constexpr auto wrapOsCall(TRet(__stdcall func)(TArgs...))
-{
-    return [func](TArgs... args) -> TRet {
-        auto returnValue = func(args...);
-        throwOnError(returnValue);
-        return returnValue;
-    };
-}
-
 template<auto TFunc>
 struct WrapOsCall
 {

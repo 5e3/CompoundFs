@@ -12,7 +12,13 @@ set(INSTALL_GTEST OFF CACHE BOOL "Override option" FORCE)
 set(BUILD_GMOCK OFF CACHE BOOL "Override option" FORCE)
 #set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "Override option" FORCE)
 add_definitions ( -D_UNICODE )
-add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
+
+if(NDEBUG)
+	add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
+else()
+	add_definitions ( -D_ITERATOR_DEBUG_LEVEL=2 )
+	#add_definitions ( /fsanitize=address )
+endif()
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)
@@ -31,7 +37,7 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.10.0
+  GIT_TAG        v1.14.0
 )
 
 FetchContent_GetProperties(googletest)
@@ -45,7 +51,7 @@ if (WIN32)
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11
-  GIT_TAG        v2.10.4
+  GIT_TAG        v2.11.1
 )
 
 FetchContent_GetProperties(pybind11)

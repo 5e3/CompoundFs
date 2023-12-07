@@ -122,7 +122,7 @@ public:
     template <class TIter>
     void writeIterator(TIter begin, TIter end)
     {
-        write((uint8_t*) &begin[0], (uint8_t*) &begin[end - begin]);
+        write((uint8_t*) &begin[0], (uint8_t*) &begin[0] + (end - begin));
     }
 
     uint64_t size() const { return m_fileDescriptor.m_fileSize; }
