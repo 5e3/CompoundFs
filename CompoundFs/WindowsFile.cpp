@@ -39,27 +39,39 @@ constexpr auto wrapOsCall(TRet(__stdcall func)(TArgs...))
     };
 }
 
-constexpr auto GetFileSizeEx = wrapOsCall(::GetFileSizeEx);
-constexpr auto CreateFile = wrapOsCall(::CreateFile);
-constexpr auto SetFilePointerEx = wrapOsCall(::SetFilePointerEx);
-constexpr auto SetEndOfFile = wrapOsCall(::SetEndOfFile);
-constexpr auto WriteFile = wrapOsCall(::WriteFile);
-constexpr auto ReadFile = wrapOsCall(::ReadFile);
-constexpr auto FlushFileBuffers = wrapOsCall(::FlushFileBuffers);
-constexpr auto GetFinalPathNameByHandle = wrapOsCall(::GetFinalPathNameByHandle);
+template<auto TFunc>
+struct WrapOsCall
+{
+    template <typename... TArgs>
+    auto operator()(TArgs&&... args) const
+    {
+        auto ret = TFunc(std::forward<TArgs>(args)...);
+        throwOnError(ret);
+        return ret;
+    }
+};
+
+
+constexpr auto GetFileSizeEx = WrapOsCall<::GetFileSizeEx>();
+constexpr auto CreateFile = WrapOsCall<::CreateFile>();
+constexpr auto SetFilePointerEx = WrapOsCall <::SetFilePointerEx>();
+constexpr auto SetEndOfFile = WrapOsCall<::SetEndOfFile>();
+constexpr auto WriteFile = WrapOsCall<::WriteFile>();
+constexpr auto ReadFile = WrapOsCall<::ReadFile>();
+constexpr auto FlushFileBuffers = WrapOsCall<::FlushFileBuffers>();
+constexpr auto GetFinalPathNameByHandle = WrapOsCall<::GetFinalPathNameByHandle>();
 
 void Seek(HANDLE handle, uint64_t position)
 {
     LARGE_INTEGER pos;
     pos.QuadPart = position;
-    SetFilePointerEx(handle, pos, nullptr, FILE_BEGIN);
+    Win32::SetFilePointerEx(handle, pos, nullptr, FILE_BEGIN);
 }
 }
 
 namespace
 {
 constexpr uint64_t PageSize = 4096ULL;
-constexpr int64_t MaxEndOfFile = 0LL;
 constexpr uint32_t BlockSize = 16 * 1024 * 1024;
 }
 

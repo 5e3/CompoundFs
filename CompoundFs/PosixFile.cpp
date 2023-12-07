@@ -1,19 +1,15 @@
 
-#include <sys/types.h>
 #include "PosixFile.h"
 #include "FileLockPosition.h"
 #include "Lock.h"
+#include <sys/types.h>
 #include <fcntl.h>
-#include <array>
 
 #ifndef _WINDOWS
-#include <unistd.h>
+    #include <unistd.h>
 #else
-
-#pragma warning(disable : 4996) // disable "'open': The POSIX name for this item is deprecated."
-
-
-#include <io.h>
+    #pragma warning(disable : 4996) // disable "'open': The POSIX name for this item is deprecated."
+    #include <io.h>
 #endif
 
 using namespace TxFs;
@@ -21,68 +17,60 @@ using namespace TxFs;
 namespace posix
 {
 
-template <typename TInt>
-void throwOnError(TInt ret)
+template <auto TFunc>
+struct WrapOsCall
 {
-    if (ret == -1)
-        throw std::system_error(EDOM, std::system_category());
-}
-
-int open(const char* fname, int mode)
-{
-    int handle = ::open(fname, mode, 0666);
-    if (handle == -1)
-        throw std::system_error(EDOM, std::system_category());
-    return handle;
-}
-
-template <typename TRet, typename... TArgs>
-constexpr auto wrapOsCall(TRet (func)(int, TArgs...))
-{
-    return [func](int file, TArgs... args) -> TRet {
-        if (file < 0)
+    template <typename... TArgs>
+    auto operator()(int fh, TArgs&&... args) const
+    {
+        if(fh < 0)
             throw std::invalid_argument("PosixFile: invalid file handle");
+        return operator()<int, TArgs...>(std::forward<int>(fh), std::forward<TArgs>(args)...);
+    }
 
-        auto returnValue = func(file, args...);
-        throwOnError(returnValue);
-        return returnValue;
-    };
-}
+    template <typename... TArgs>
+    auto operator()(TArgs&&... args) const
+    {
+        auto ret = TFunc(std::forward<TArgs>(args)...);
+        if (ret < 0)
+            throw std::system_error(EDOM, std::system_category());
+        return ret;
+    }
+};
+
+
+constexpr auto open = WrapOsCall<::open>();
+constexpr auto write = WrapOsCall<::write>();
+constexpr auto read = WrapOsCall<::read>();
 
 
 #ifndef _WINDOWS
-#define O_BINARY 0
-constexpr auto write = wrapOsCall(::write);
-constexpr auto read = wrapOsCall(::read);
-constexpr auto lseek = wrapOsCall(::lseek);
-constexpr auto ftruncate = wrapOsCall(::ftruncate);
-constexpr auto fsync = wrapOsCall(::fsync);
 
-int fileHandleToLockHandle(int file)
-{
-    return file;
-}
+    #define O_BINARY 0
+    constexpr auto lseek = WrapOsCall<::lseek>();
+    constexpr auto fsync = WrapOsCall<::fsync>();
+    constexpr auto ftruncate = WrapOsCall<::ftruncate>();
+
+    int fileHandleToLockHandle(int file) { return file; }
 
 #else
-constexpr auto write = wrapOsCall(::_write);
-constexpr auto read = wrapOsCall(::_read);
-constexpr auto lseek = wrapOsCall(::_lseeki64);
-constexpr auto fsync = wrapOsCall(::_commit);
+    constexpr auto lseek = WrapOsCall<::_lseeki64>();
+    constexpr auto fsync = WrapOsCall<::_commit>();
 
-int ftruncate(int fd, int64_t size)
-{
-    if (fd < 0)
-        throw std::invalid_argument("PosixFile: invalid file handle");
-    auto ret = ::_chsize_s(fd, size);
-    if (ret != 0)
-        throw std::system_error(EDOM, std::system_category());
-    return 0;
-}
+    int ftruncate(int fd, int64_t size)
+    {
+        if (fd < 0)
+            throw std::invalid_argument("PosixFile: invalid file handle");
+        auto ret = ::_chsize_s(fd, size);
+        if (ret != 0) // different from WrapOsCall!
+            throw std::system_error(EDOM, std::system_category());
+        return 0;
+    }
 
-void* fileHandleToLockHandle(int file)
-{
-    return (void*) (file < 0 ? intptr_t (-1LL) : ::_get_osfhandle(file));
-}
+    void* fileHandleToLockHandle(int file)
+    {
+        return (void*) (file < 0 ? intptr_t (-1LL) : ::_get_osfhandle(file));
+    }
 #endif
 }
 
@@ -161,7 +149,7 @@ int mapToPosixFileModes(OpenMode mode)
 
 int PosixFile::open(std::filesystem::path path, OpenMode mode)
 {
-    return posix::open(path.string().c_str(), mapToPosixFileModes(mode));
+    return posix::open(path.string().c_str(), mapToPosixFileModes(mode), 0666);
 }
 
 PosixFile::PosixFile(int file, bool readOnly)
