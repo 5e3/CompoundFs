@@ -106,4 +106,5 @@ add_subdirectory(py_txfs)
 endif()
 
 add_test(NAME CompoundFsUnitTests COMMAND TestDriver)
+add_test(NAME RfxUnitTests COMMAND TestRfx)
 
