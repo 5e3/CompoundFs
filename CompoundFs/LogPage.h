@@ -44,7 +44,7 @@ public:
     {
         std::minstd_rand mt(pageIndex);
         uint32_t sig[4] = { (uint32_t) mt(), (uint32_t) mt(), (uint32_t) mt(), (uint32_t) mt() };
-        return std::equal(sig, sig + 4, m_signature, m_signature + 4);
+        return std::equal(sig, sig + 4, m_signature, m_signature + 4) && m_size <= MAX_ENTRIES;
     }
 
     std::vector<PageCopies> getPageCopies() const
