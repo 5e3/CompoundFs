@@ -162,7 +162,7 @@ inline void Blob::reserve(size_t capacity)
 {
     if (m_capacity < capacity)
     {
-        m_capacity = std::max(std::bit_ceil(capacity), 1024ULL);
+        m_capacity = std::max(std::bit_ceil(capacity), size_t(1024));
         auto storage = std::move(m_storage);
         m_storage = std::make_unique_for_overwrite<std::byte[]>(m_capacity);
         std::copy(storage.get(), storage.get() + m_size, begin());
