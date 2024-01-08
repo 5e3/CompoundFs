@@ -22,6 +22,8 @@ endif()
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)
+add_subdirectory(Rfx)
+add_subdirectory(TestRfx)
 add_subdirectory(Sandbox)
 
 source_group("" FILES 

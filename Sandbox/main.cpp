@@ -128,9 +128,105 @@
 //
 //}
 
-int main()
-{
+//void example0()
+//{
+//    auto file = txfs::openTxFile("test.tx");
+//    auto fh = file.openWriter("test.txt");
+//    file.write(*fh, "data data");
+//    file.setAttribute("someValue", 1.1);
+//    file.commit();
+//
+//    //file.write(*fh, "more data"); throws exception
+//}
+//
+//void example1()
+//{
+//    auto file = txfs::openTxFile("test.tx");
+//    txfs::transact(file, [](txfs::Transaction tx) {
+//        auto writer = tx.openWriter("test.txt");
+//        *writer.write("data data");
+//        tx.setAttribute("someValue", 1.1);
+//    });
+//
+//    txfs::commit(file);
+//}
+//
+//void example2()
+//{
+//    // transaction on more than one file
+//    auto file1 = txfs::openTxFile("test1.tx");
+//    auto file2 = txfs::openTxFile("test2.tx");
+//
+//    txfs::transact(file1, file2, [](txfs::Transaction tx1, txfs::Transaction tx2) {
+//        auto writer1 = tx1.openWriter("temp.txt");
+//        auto reader2 = tx2.openReader("test.txt");
+//        auto buf = reader2->read();
+//        writer1->write(buf);
+//
+//        auto writer2 = tx2.openWriter("temp.txt");
+//        auto reader1 = tx1.openReader("test.txt");
+//        auto buf2 = reader1->read();
+//        writer2->write(buf2);
+//
+//        tx1.remove("test.txt");
+//        tx1.rename("temp.txt, test.txt");
+//        tx2.remove("test.txt");
+//        tx2.rename("temp.txt, test.txt");
+//    });
+//
+//    txfs::commit(file1, file2);
+//}
 
+#include <variant>
+#include <array>
+
+struct Struct
+{
+    int m_i = 55;
+    float m_f = 3.14;
+};
+
+template <typename T, typename TVisitor>
+void visitAllMembers(T& composit, TVisitor&& visitor)
+    requires std::same_as<std::remove_const_t<T>, Struct>
+{
+    visitor(composit.m_i);
+    visitor(composit.m_f);
+}
+
+struct NochnStruct
+{
+    float m_f = 3.14;
+    std::string m_s = "hello";
+};
+
+template <typename T, typename TVisitor>
+void visitAllMembers(T& composit, TVisitor&& visitor)
+    requires std::same_as<std::remove_const_t<T>, NochnStruct>
+{
+    visitor(composit.m_f);
+    visitor(composit.m_s);
+}
+
+template <typename... Ts>
+std::variant<Ts...> defaultCreateVariant(size_t index)
+{
+    static constexpr std::array<std::variant<Ts...>(*)(), sizeof...(Ts)> defaultCreator
+        = { []() -> std::variant<Ts...> { return Ts {}; }...};
+    return defaultCreator.at(index)();
 }
 
 
+int main()
+{
+    std::variant<int, std::string> va = "hello";
+    auto va2 = defaultCreateVariant<int, std::string>(1);
+    auto va3 = defaultCreateVariant<float, std::string, int>(0);
+    auto va4 = defaultCreateVariant<float, std::string, int>(2);
+    // auto va5 = defaultCreateVariant<float, std::string, int>(3);
+
+    Struct s;
+    const NochnStruct cs;
+    visitAllMembers(s, [](auto val) { std::cout << val << "\n"; });
+    visitAllMembers(cs, [](auto val) { std::cout << val << "\n"; });
+}

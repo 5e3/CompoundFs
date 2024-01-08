@@ -2,6 +2,8 @@
 
 project(Sandbox)
 
+set(CMAKE_CXX_STANDARD 20)
+
 set (Sources 
 		main.cpp
 	)
