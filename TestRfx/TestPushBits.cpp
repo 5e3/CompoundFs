@@ -5,6 +5,7 @@
 #include <array>
 #include <deque>
 #include <list>
+#include <exception>
 
 using namespace Rfx;
 
