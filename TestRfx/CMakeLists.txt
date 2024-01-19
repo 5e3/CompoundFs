@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set (Sources
 	TestCompressedInteger.cpp
 	TestBlob.cpp
+	TestFixupTable.cpp
 	TestPushBits.cpp
 	TestStream.cpp
 	)

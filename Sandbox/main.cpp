@@ -177,56 +177,237 @@
 //    txfs::commit(file1, file2);
 //}
 
-#include <variant>
+//#include <variant>
+//#include <array>
+//
+//struct Struct
+//{
+//    int m_i = 55;
+//    float m_f = 3.14;
+//};
+//
+//template <typename T, typename TVisitor>
+//void visitAllMembers(T& composit, TVisitor&& visitor)
+//    requires std::same_as<std::remove_const_t<T>, Struct>
+//{
+//    visitor(composit.m_i);
+//    visitor(composit.m_f);
+//}
+//
+//struct NochnStruct
+//{
+//    float m_f = 3.14;
+//    std::string m_s = "hello";
+//};
+//
+//template <typename T, typename TVisitor>
+//void visitAllMembers(T& composit, TVisitor&& visitor)
+//    requires std::same_as<std::remove_const_t<T>, NochnStruct>
+//{
+//    visitor(composit.m_f);
+//    visitor(composit.m_s);
+//}
+//
+//template <typename... Ts>
+//std::variant<Ts...> defaultCreateVariant(size_t index)
+//{
+//    static constexpr std::array<std::variant<Ts...>(*)(), sizeof...(Ts)> defaultCreator
+//        = { []() -> std::variant<Ts...> { return Ts {}; }...};
+//    return defaultCreator.at(index)();
+//}
+//
+//
+//int main()
+//{
+//    std::variant<int, std::string> va = "hello";
+//    auto va2 = defaultCreateVariant<int, std::string>(1);
+//    auto va3 = defaultCreateVariant<float, std::string, int>(0);
+//    auto va4 = defaultCreateVariant<float, std::string, int>(2);
+//    // auto va5 = defaultCreateVariant<float, std::string, int>(3);
+//
+//    Struct s;
+//    const NochnStruct cs;
+//    visitAllMembers(s, [](auto val) { std::cout << val << "\n"; });
+//    visitAllMembers(cs, [](auto val) { std::cout << val << "\n"; });
+//}
+
+#include <ranges>
+#include <vector>
+
+namespace Rfx
+{
+template <typename T>
+constexpr bool canInsert = requires(T cont) { cont.insert(typename T::value_type {}); };
+
+template <typename T>
+constexpr bool canResize = requires(T cont) { cont.resize(size_t {}); };
+
+template <typename T>
+constexpr bool hasForEachMember = requires(T val) { forEachMember(val, [](T) {}); };
+
+template <typename T>
+concept Container = std::ranges::sized_range<T> && requires(T cont) {
+    typename T::value_type;
+    cont.clear();
+} && (canInsert<T> || canResize<T>);
+
+
+
+template <typename T>
+struct StreamRule;
+
+template <typename T>
+    requires hasForEachMember<T>
+struct StreamRule<T>
+{
+    static constexpr bool Versioned = true;
+
+    template <typename TVisitor>
+    static void write(const T& value, TVisitor&& visitor)
+    {
+        forEachMember((T&) value, std::forward<TVisitor>(visitor));
+    }
+
+    template <typename TVisitor>
+    static void read(T& value, TVisitor&& visitor)
+    {
+        forEachMember(value, std::forward<TVisitor>(visitor));
+    }
+};
+
+template <Container TCont>
+struct StreamRule<TCont>
+{
+    template <typename TStream>
+    static void write(const TCont& cont, TStream&& stream)
+    {
+        auto size = cont.size();
+        stream.write(size);
+        stream.writeRange(cont);
+    }
+
+    template <typename TStream>
+    static void read(TCont& cont, TStream&& stream)
+        requires canResize<TCont>
+    {
+        size_t size {};
+        stream.read(size);
+        cont.resize(size);
+        stream.readRange(cont);
+    }
+
+    template <typename TStream>
+    static void read(TCont& cont, TStream&& stream)
+        requires canInsert<TCont>
+    {
+        cont.clear();
+        size_t size {};
+        stream.read(size);
+        for (size_t i = 0; i < size; ++i)
+        {
+            typename TCont::value_type value {};
+            stream.read(value);
+            cont.insert(std::move(value));
+        }
+    }
+};
+
+#include <tuple>
+template<typename T>
+concept TupleLike =
+    requires(T val)
+{
+    std::tuple_size<T>::value;
+    std::get<0>(val);
+};
+
+template <TupleLike T>
+struct StreamRule<T>
+{
+    template <typename TStream>
+    static void write(const T& val, TStream&& stream)
+    {
+        std::apply([&stream](const auto&... telem) { ((stream.write(telem)), ...); }, val);
+    }
+
+    template <typename TStream>
+    static void read(T& val, TStream&& stream)
+    {
+        std::apply([&stream](auto&... telem) { ((stream.read(telem)), ...); }, val);
+    }
+};
+
+
+struct DummyStream
+{
+    template <typename T> void write(const T& value){}
+    template <typename T> void writeRange(const T& value){}
+    template <typename T> void read(T& value) {}
+    template <typename T> void readRange(T& value){}
+    template<typename T> void operator()(T value) {}
+};
+
+template <typename T>
+constexpr bool hasStreamRule = requires(T val) 
+{ 
+    StreamRule<T>::read(val, [](T) {});
+    StreamRule<T>::write(val, [](T) {});
+};
+
+
+
+}
+
+struct MyStruct
+{
+    int m_i = 42;
+};
+
+template<typename TVisitor>
+void forEachMember(MyStruct& ms, TVisitor&& visitor)
+{
+    visitor(ms.m_i);
+}
+
+struct MyOtherStruct {};
+
+
+using namespace Rfx;
+
+
+#include <string>
+#include <list>
+#include <set>
+#include <deque>
+#include <map>
+#include <unordered_map>
+#include <forward_list>
 #include <array>
 
-struct Struct
-{
-    int m_i = 55;
-    float m_f = 3.14;
-};
 
-template <typename T, typename TVisitor>
-void visitAllMembers(T& composit, TVisitor&& visitor)
-    requires std::same_as<std::remove_const_t<T>, Struct>
-{
-    visitor(composit.m_i);
-    visitor(composit.m_f);
-}
+static_assert(hasStreamRule<MyStruct>);
+static_assert(hasStreamRule<std::string>);
+static_assert(hasStreamRule<std::vector<int>>);
+static_assert(hasStreamRule<std::list<int>>);
+static_assert(hasStreamRule<std::deque<int>>);
+static_assert(hasStreamRule<std::set<int>>);
+static_assert(hasStreamRule<std::map<std::string, int>>);
+static_assert(hasStreamRule<std::tuple<std::string, int>>);
+static_assert(hasStreamRule<std::pair<std::string, int>>);
+static_assert(hasStreamRule<std::array<std::string, 5>>);
 
-struct NochnStruct
-{
-    float m_f = 3.14;
-    std::string m_s = "hello";
-};
 
-template <typename T, typename TVisitor>
-void visitAllMembers(T& composit, TVisitor&& visitor)
-    requires std::same_as<std::remove_const_t<T>, NochnStruct>
-{
-    visitor(composit.m_f);
-    visitor(composit.m_s);
-}
-
-template <typename... Ts>
-std::variant<Ts...> defaultCreateVariant(size_t index)
-{
-    static constexpr std::array<std::variant<Ts...>(*)(), sizeof...(Ts)> defaultCreator
-        = { []() -> std::variant<Ts...> { return Ts {}; }...};
-    return defaultCreator.at(index)();
-}
-
+static_assert(!hasStreamRule<MyOtherStruct>);
+static_assert(!hasStreamRule<std::forward_list<int>>);
 
 int main()
 {
-    std::variant<int, std::string> va = "hello";
-    auto va2 = defaultCreateVariant<int, std::string>(1);
-    auto va3 = defaultCreateVariant<float, std::string, int>(0);
-    auto va4 = defaultCreateVariant<float, std::string, int>(2);
-    // auto va5 = defaultCreateVariant<float, std::string, int>(3);
-
-    Struct s;
-    const NochnStruct cs;
-    visitAllMembers(s, [](auto val) { std::cout << val << "\n"; });
-    visitAllMembers(cs, [](auto val) { std::cout << val << "\n"; });
+    DummyStream stream;
+    using Cont = std::set<std::set<int>>;
+    Cont cont;
+    //auto cont = std::ranges::views::reverse(std::vector<int>());
+    //using Cont = decltype(cont);
+    
+    StreamRule<Cont>::write(cont, stream);
+    StreamRule<Cont>::read(cont, stream);
 }

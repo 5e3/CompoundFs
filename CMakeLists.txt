@@ -13,12 +13,6 @@ set(BUILD_GMOCK OFF CACHE BOOL "Override option" FORCE)
 #set(LZ4_BUILD_LEGACY_LZ4C OFF CACHE BOOL "Override option" FORCE)
 add_definitions ( -D_UNICODE )
 
-if(NDEBUG)
-	add_definitions ( -D_ITERATOR_DEBUG_LEVEL=0 )
-else()
-	add_definitions ( -D_ITERATOR_DEBUG_LEVEL=2 )
-	#add_definitions ( /fsanitize=address )
-endif()
 
 add_subdirectory(CompoundFs)
 add_subdirectory(TestDriver)

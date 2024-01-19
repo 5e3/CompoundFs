@@ -152,3 +152,38 @@ TEST(PushBits, pushBitsRange)
     SimpleRange<std::list<double>> sr = std::list<double>{ 1.111, 2.222, 3.333 };
     testPushBits(sr, sr.m_range.size());
 }
+
+TEST(PushBits, pushBitsValue)
+{
+    Blob b;
+    pushBits(1.1, b);
+    pushBits(5, b);
+    pushBits('a', b);
+
+    auto it = b.cbegin();
+    BlobRange br = b;
+    ASSERT_EQ(1.1, popBits<double>(br));
+    ASSERT_EQ(5, popBits<int>(br));
+    ASSERT_EQ('a', popBits<char>(br));
+}
+
+TEST(PushBits, popBitsThrowsOnOverflow)
+{
+    Blob b;
+    pushBits(42, b); // push an int (sizeof(42) == 4
+
+    double d {};
+    ASSERT_THROW(popBits(d, b), std::exception);  // sizeof(d) == 8
+}
+
+TEST(PushBits, pushAndPopRanges)
+{
+    std::vector<double> vecOut(42, 3.14);
+    std::vector<double> vecIn(42, 0);
+    ASSERT_NE(vecOut, vecIn);
+
+    Blob b;
+    pushBits(vecOut, b);
+    popBits(vecIn, b);
+    ASSERT_EQ(vecOut, vecIn);
+}

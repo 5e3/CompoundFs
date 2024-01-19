@@ -20,7 +20,9 @@ endif()
 set (Headers
 	Blob.h
 	CompressedInteger.h
+	FixupTable.h
 	Stream.h
+	StreamRule.h
 	PushBits.h
 	Rfx.natvis
 	)
