@@ -7,6 +7,7 @@
 #include <memory>
 #include <algorithm>
 #include <ranges>
+#include <stdexcept>
 #include "Blob.h"
 
 namespace Rfx

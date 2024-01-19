@@ -19,10 +19,18 @@ constexpr bool canResize = requires(T cont) { cont.resize(size_t {}); };
 template <typename T>
 constexpr bool hasForEachMember = requires(T val) { forEachMember(val, [](T) {}); };
 
+template <typename T>
+struct _isTuple : std::false_type {};
+template <typename... Ts>
+struct _isTuple<std::tuple<Ts...>> : std::true_type {};
+
+template <typename T>
+constexpr bool isStdTuple = _isTuple<T>::value;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
-concept Container = std::ranges::sized_range<T> && requires(T cont) {
+concept ContainerLike = std::ranges::sized_range<T> && requires(T cont) {
     typename T::value_type;
     cont.clear();
 } && (canInsert<T> || canResize<T>);
@@ -63,7 +71,7 @@ struct StreamRule<T>
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for STL-like containers.
-template <Container TCont>
+template <ContainerLike TCont>
 struct StreamRule<TCont>
 {
     template <typename TStream>
@@ -105,6 +113,8 @@ struct StreamRule<TCont>
 template <TupleLike T>
 struct StreamRule<T>
 {
+    static constexpr bool Versioned = isStdTuple<T>;
+
     template <typename TStream>
     static void write(const T& val, TStream&& stream)
     {
@@ -117,6 +127,17 @@ struct StreamRule<T>
         std::apply([&stream](auto&... telem) { ((stream.read(telem)), ...); }, val);
     }
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+constexpr bool isVersioned = []() {
+    if constexpr (requires { StreamRule<T>::Versioned; })
+        return StreamRule<T>::Versioned;
+    else
+        return false;
+}();
+
 
 
 

@@ -99,7 +99,7 @@ class StreamIn
     FixupTable::iterator advanceBy(FixupTable::iterator it, size_t steps) const
     {
         if (m_fixups.end() < (it + steps))
-            throw std::out_of_range("Fixup");
+            throw std::out_of_range("advanceBy()");
         return it + steps;
     }
 

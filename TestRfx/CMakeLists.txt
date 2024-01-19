@@ -10,6 +10,7 @@ set (Sources
 	TestFixupTable.cpp
 	TestPushBits.cpp
 	TestStream.cpp
+	TestStreamRule.cpp
 	)
 	
 if(WIN32)
