@@ -68,3 +68,11 @@ static_assert(isVersioned<std::tuple<int, int>>);
 
 static_assert(!isVersioned<std::pair<int, int>>);
 static_assert(!isVersioned<std::string>);
+
+
+void test()
+{
+    //std::pair<int, int> pii { 1, 2 };
+    //std::pair<const int, int> cpii { 1, 2 };
+    //cpii = pii;
+}

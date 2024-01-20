@@ -17,7 +17,7 @@ static_assert(compressedSize(0xffffffff) == 5);
 static_assert(compressedSize(std::numeric_limits<size_t>::max()) == 10);
 
 using CompInt = CompressedInteger<size_t>;
-using ForEachMem = ForEachMember<CompInt>;
+using SRule = StreamRule<CompInt>;
 
 
 namespace
@@ -44,12 +44,12 @@ void testReadWrite(size_t val)
 {
     CompInt ci { val };
     SimpleStreamOut out;
-    ForEachMem::write(ci, out);
+    SRule::write(ci, out);
     ASSERT_EQ(out.m_vector.size(), compressedSize(ci.m_value));
 
     SimpleStreamIn in { out.m_vector.cbegin() };
     CompInt ci2;
-    ForEachMem::read(ci2, in);
+    SRule::read(ci2, in);
 
     ASSERT_EQ(ci.m_value, ci2.m_value);
 }
@@ -76,7 +76,7 @@ TEST(CompressedInteger, readThrowsOnIlegalInput)
 
     SimpleStreamIn in { vec.cbegin() };
     CompInt ci;
-    ASSERT_THROW(ForEachMem::read(ci, in), std::exception);
+    ASSERT_THROW(SRule::read(ci, in), std::exception);
 }
 
 TEST(CompressedInteger, canHandleMaxInt)

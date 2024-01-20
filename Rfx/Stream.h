@@ -5,28 +5,13 @@
 #include "Blob.h"
 #include "FixupTable.h"
 #include "PushBits.h"
+#include "StreamRule.h"
 #include <type_traits>
 #include <ranges>
 #include <stdexcept>
 
 namespace Rfx
 {
-template <typename T>
-struct ForEachMember
-{
-    using Versioned = bool;
-};
-
-
-template<typename T>
-concept VersionedStructure = requires 
-{ 
-    typename ForEachMember<T>::Versioned;
-    requires std::is_class_v<T>;
-};
-
-template<typename T>
-concept FixedStructure = std::is_class_v<T> && !VersionedStructure<T>;
 
 class StreamOut
 {
@@ -34,26 +19,32 @@ class StreamOut
     FixupTable m_fixups;
 
 public:
+    using SizeType = CompressedInteger<size_t>;
+
+public:
     template<typename T>
     void write(const T& value)
     {
-        if constexpr (FixedStructure<T>)
-        {
-            ForEachMember<T>::write(value, *this);
-        }
-        else if constexpr (VersionedStructure<T>)
+        if constexpr (BitStreamable<T>)
+            pushBits(value, m_blob);
+        else if constexpr (isVersioned<T>)
         {
             size_t topIndex = m_fixups.size();
             auto fixup = m_fixups.nextFixup(m_blob.size());
-            forEachMember((T&) value, [this](const auto& val) { this->write(val); });
+            StreamRule<T>::write(value, *this);
             fixup(m_blob.size());
-            write(CompressedInteger<size_t> { m_fixups.size() - topIndex });
+            write(SizeType { m_fixups.size() - topIndex });
         }
         else
         {
-            static_assert(BitStreamable<T>);
-            pushBits(value, m_blob);
+            StreamRule<T>::write(value, *this);
         }
+    }
+
+    template <typename T>
+    void operator()(const T& value)
+    {
+        write(value);
     }
 
     template<typename TRange>
@@ -63,8 +54,8 @@ public:
             pushBits(range, m_blob);
         else
         {
-            for (auto it = range.begin(); it != range.end(); ++it)
-                write(*it);
+            for (const auto& val: range)
+                write(val);
         }
     }
 
@@ -104,6 +95,9 @@ class StreamIn
     }
 
 public:
+    using SizeType = CompressedInteger<size_t>;
+
+public:
     StreamIn(const Blob& blob)
         : m_first(blob.begin())
         , m_last(blob.end())
@@ -116,33 +110,28 @@ public:
     template<typename T>
     void read(T& value)
     {
-        if constexpr (FixedStructure<T>)
+        if constexpr (BitStreamable<T>)
         {
-            ForEachMember<T>::read(value, *this);
+            m_first = popBits(value, asRange());
         }
-        else if constexpr (VersionedStructure<T>)
+        else if constexpr (isVersioned<T>)
         {
             auto last = m_last;
             auto currentFixup = m_currentFixup;
             m_currentFixup = advanceBy(m_currentFixup, 1);
             m_last = m_first + *currentFixup;
             assert(m_last <= last);
-            forEachMember(value, [this](auto& val) 
-            {
-                if (this->m_first < this->m_last)
-                    this->read(val); 
-                });
+            StreamRule<T>::read(value, *this);
             assert(m_first <= m_last);
-            // m_first = m_last;
+            m_first = m_last;
             m_last = last;
-            CompressedInteger<size_t> advance {};
+            SizeType advance {};
             read(advance);
-            m_currentFixup = advanceBy(currentFixup, advance.m_value);
+            m_currentFixup = advanceBy(currentFixup, advance);
         }
         else
         {
-            static_assert(BitStreamable<T>);
-            m_first = popBits(value, asRange());
+            StreamRule<T>::read(value, *this);
         }
     }
 
@@ -156,6 +145,13 @@ public:
             for (auto& value: range)
                 read(value);
         }
+    }
+
+    template<typename T>
+    void operator()(T& value)
+    {
+        if (m_first < m_last)
+            read(value);
     }
 };
 

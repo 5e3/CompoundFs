@@ -29,6 +29,7 @@ constexpr bool isStdTuple = _isTuple<T>::value;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+
 template <typename T>
 concept ContainerLike = std::ranges::sized_range<T> && requires(T cont) {
     typename T::value_type;
@@ -77,7 +78,7 @@ struct StreamRule<TCont>
     template <typename TStream>
     static void write(const TCont& cont, TStream&& stream)
     {
-        auto size = cont.size();
+        typename std::remove_reference<TStream>::type::SizeType size { cont.size() };
         stream.write(size);
         stream.writeRange(cont);
     }
@@ -86,7 +87,7 @@ struct StreamRule<TCont>
     static void read(TCont& cont, TStream&& stream)
         requires canResize<TCont>
     {
-        size_t size {};
+        typename std::remove_reference<TStream>::type::SizeType size {};
         stream.read(size);
         cont.resize(size);
         stream.readRange(cont);
@@ -97,7 +98,7 @@ struct StreamRule<TCont>
         requires canInsert<TCont>
     {
         cont.clear();
-        size_t size {};
+        typename std::remove_reference<TStream>::type::SizeType size {};
         stream.read(size);
         for (size_t i = 0; i < size; ++i)
         {
@@ -109,11 +110,14 @@ struct StreamRule<TCont>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for TypeLike (std::pair, std::tuple and std::array)
+// StreamRule for TupleLike (std::pair, std::tuple and std::array)
 template <TupleLike T>
 struct StreamRule<T>
 {
     static constexpr bool Versioned = isStdTuple<T>;
+
+    template<typename T>
+    static T& ccast(const T& val) { return const_cast<T&>(val);} 
 
     template <typename TStream>
     static void write(const T& val, TStream&& stream)
@@ -124,7 +128,7 @@ struct StreamRule<T>
     template <typename TStream>
     static void read(T& val, TStream&& stream)
     {
-        std::apply([&stream](auto&... telem) { ((stream.read(telem)), ...); }, val);
+        std::apply([&stream](auto&... telem) { ((stream.read(ccast(telem))), ...); }, val);
     }
 };
 

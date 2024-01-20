@@ -11,7 +11,7 @@ namespace Rfx
 {
 
 template <typename T>
-struct ForEachMember;
+struct StreamRule;
 
 constexpr int compressedSize(size_t value)
 {
@@ -27,10 +27,11 @@ template <>
 struct CompressedInteger<size_t>
 {
     size_t m_value;
+    operator size_t() const { return m_value; }
 };
 
 template<>
-struct ForEachMember<CompressedInteger<size_t>>
+struct StreamRule<CompressedInteger<size_t>>
 {
 
     template <typename TStream>

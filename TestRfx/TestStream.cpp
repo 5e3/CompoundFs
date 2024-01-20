@@ -38,35 +38,7 @@ void forEachMember(EmptyType& value, TVisitor&& visitor)
 
 using namespace StreamTest;
 
-namespace Rfx
-{
-template<typename T>
-struct ForEachMember<std::vector<T>> 
-{
-    template<typename TStream>
-    static void write(const std::vector<T>& vec, TStream& stream)
-    {
-        stream.write(CompressedInteger<size_t>(vec.size()));
-        stream.writeRange(vec);
-    }
 
-    template<typename TStream>
-    static void read(std::vector<T>& vec, TStream& stream)
-    {
-        CompressedInteger<size_t> size {};
-        stream.read(size);
-        vec.resize(size.m_value);
-        stream.readRange(vec);
-    }
-    };
-
-}
-
-static_assert(!VersionedStructure<std::vector<int>>);
-static_assert(FixedStructure<std::vector<int>>);
-
-static_assert(VersionedStructure<VersionedType>);
-static_assert(!FixedStructure<VersionedType>);
 
 TEST(StreamOut, streamBitSimple)
 {
@@ -131,10 +103,19 @@ TEST(StreamInOut, vectorOfEmptyObjs)
 
 TEST(StreamInOut, vectorOfVersionedObjs)
 {
-    std::vector<VersionedType> vec(100, VersionedType{});
+    std::vector<VersionedType> vec(100, VersionedType {});
     int i = 0;
     for (auto& e: vec)
         e.m_i = i++;
 
     testStreamOutStreamIn(vec);
+}
+TEST(StreamInOut, mapOfInts)
+{
+    std::map<int, int> m = { { 1, 1 }, { 2, 2 }};
+    //int i = 0;
+    //for (auto& e: vec)
+    //    e.m_i = i++;
+
+    testStreamOutStreamIn(m);
 }

@@ -65,7 +65,7 @@ template <typename TIter>
 struct FixupTable::CompressedWriter
 {
     TIter m_iter;
-    void write(size_t value) { ForEachMember<CompressedInteger<size_t>>::write({ value }, *this); }
+    void write(size_t value) { StreamRule<CompressedInteger<size_t>>::write({ value }, *this); }
     void write(std::byte value)
     {
         *m_iter = value;
@@ -82,7 +82,7 @@ struct FixupTable::CompressedReader
     void read(size_t& value)
     {
         CompressedInteger<size_t> ci {};
-        ForEachMember<CompressedInteger<size_t>>::read(ci, *this);
+        StreamRule<CompressedInteger<size_t>>::read(ci, *this);
         value = ci.m_value;
     }
     void read(std::byte& value)
