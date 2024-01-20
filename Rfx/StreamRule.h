@@ -116,8 +116,8 @@ struct StreamRule<T>
 {
     static constexpr bool Versioned = isStdTuple<T>;
 
-    template<typename T>
-    static T& ccast(const T& val) { return const_cast<T&>(val);} 
+    template<typename U>
+    static U& ccast(const U& val) { return const_cast<U&>(val);} 
 
     template <typename TStream>
     static void write(const T& val, TStream&& stream)

@@ -11,9 +11,6 @@
 #include <forward_list>
 #include <array>
 
-
-
-
 using namespace Rfx;
 
 namespace
