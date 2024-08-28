@@ -9,8 +9,10 @@ set (Sources
 	TestBlob.cpp
 	TestFixupTable.cpp
 	TestPushBits.cpp
+	TestRandomGen.cpp
 	TestStream.cpp
 	TestStreamRule.cpp
+	TestVersionedStructs.cpp
 	)
 	
 if(WIN32)
@@ -22,6 +24,8 @@ set (PlatformSources
 endif()
 
 set (Headers
+	RandomGen.h
+	VersionedStructs.h
 	)
 	
 

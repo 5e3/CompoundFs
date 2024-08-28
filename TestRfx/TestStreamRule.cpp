@@ -53,6 +53,7 @@ static_assert(hasStreamRule<std::map<std::string, int>>);
 static_assert(hasStreamRule<std::tuple<std::string, int>>);
 static_assert(hasStreamRule<std::pair<std::string, int>>);
 static_assert(hasStreamRule<std::array<std::string, 5>>);
+static_assert(hasStreamRule<std::variant<std::string, int>>);
 
 static_assert(!hasStreamRule<MyOtherStruct>);
 static_assert(!hasStreamRule<std::forward_list<int>>);

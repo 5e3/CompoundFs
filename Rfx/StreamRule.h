@@ -1,7 +1,10 @@
 
+#pragma once
 
 #include <ranges>
 #include <tuple>
+#include <variant>
+#include <array>
 
 
 namespace Rfx
@@ -129,6 +132,34 @@ struct StreamRule<T>
     static void read(T& val, TStream&& stream)
     {
         std::apply([&stream](auto&... telem) { ((stream.read(ccast(telem))), ...); }, val);
+    }
+};
+
+template<typename... Ts>
+struct StreamRule<std::variant<Ts...>>
+{
+    static std::variant<Ts...> defaultCreateVariantByIndex(size_t index)
+    {
+            static constexpr std::array<std::variant<Ts...>(*)(), sizeof...(Ts)> defaultCreator
+                = { []() -> std::variant<Ts...> { return Ts {}; }...};
+            return defaultCreator.at(index)();
+    }
+
+    template<typename TStream>
+    static void write(const std::variant<Ts...>& var, TStream&& stream)
+    {
+        typename std::remove_reference<TStream>::type::SizeType index { var.index() };
+        stream.write(index);
+        std::visit([&stream ](const auto& value) { stream.write(value); }, var);
+    }
+
+    template<typename TStream>
+    static void read(std::variant<Ts...>& var, TStream&& stream)
+    {
+        typename std::remove_reference<TStream>::type::SizeType index {};
+        stream.read(index);
+        var = defaultCreateVariantByIndex(index);
+        std::visit([&stream ](auto& value) { stream.read(value); }, var);
     }
 };
 
