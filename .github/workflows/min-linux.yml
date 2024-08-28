@@ -13,11 +13,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        Compiler: [gcc, clang]
+        Compiler: [gcc-12, gcc-11]
 
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
@@ -30,14 +30,14 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       env:
-        CC: clang
-        CXX: clang++
+        CC: clang-15
+        CXX: clang++-15
         BUILD_TYPE: Debug
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake $GITHUB_WORKSPACE
-      if: ${{ matrix.Compiler == 'clang' }}
+      if: ${{ matrix.Compiler == 'clang-15' }}
 
     - name: Configure CMake gcc
       # Use a bash shell so we can use the same syntax for environment variable
@@ -45,14 +45,29 @@ jobs:
       shell: bash
       working-directory: ${{runner.workspace}}/build
       env:
-        CC: ${{ steps.install_cc.outputs.cc }}
-        CXX: ${{ steps.install_cc.outputs.cxx }}
+        CC: gcc-12
+        CXX: g++-12
         BUILD_TYPE: Release
       # Note the current convention is to use the -S and -B options here to specify source 
       # and build directories, but this is only available with CMake 3.13 and higher.  
       # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
       run: cmake $GITHUB_WORKSPACE
-      if: ${{ matrix.Compiler == 'gcc' }}
+      if: ${{ matrix.Compiler == 'gcc-12' }}
+
+    - name: Configure CMake gcc
+      # Use a bash shell so we can use the same syntax for environment variable
+      # access regardless of the host operating system
+      shell: bash
+      working-directory: ${{runner.workspace}}/build
+      env:
+        CC: gcc-11
+        CXX: g++-11
+        BUILD_TYPE: Debug
+      # Note the current convention is to use the -S and -B options here to specify source 
+      # and build directories, but this is only available with CMake 3.13 and higher.  
+      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+      run: cmake $GITHUB_WORKSPACE
+      if: ${{ matrix.Compiler == 'gcc-11' }}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
