@@ -45,6 +45,6 @@ TEST(VersionedStructs, canCallForEachMember)
 
     StreamIn in(blob);
     in.read(c2);
-    c == c2;
+    ASSERT_TRUE(c == c2);
     ASSERT_EQ(c, c2);
 }

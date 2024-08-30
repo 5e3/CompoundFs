@@ -559,6 +559,9 @@ constexpr void encryptTeaCfb(std::array<char, size> plainText, std::array<uint64
 
 }
 
+#ifdef WIN32
+
+
 #include <format>
 
 template <typename TIter>
@@ -660,3 +663,11 @@ int main()
     std::cout << std::format("{:x}", res);
     //    std::cout << encryptTea(0, fnv_128_hash(__TIME__)) << "\n";
 }
+
+#else
+int main()
+{
+
+}
+
+#endif

@@ -104,16 +104,6 @@ void pushBits(const TRange& range, Blob& blob)
     copyBits(range.begin(), range.end(), it);
 }
 
-template <std::ranges::range TRange>
-void pushBits(const TRange& range, Blob& blob)
-    requires(BitStreamable<std::ranges::range_value_t<TRange>> && !std::ranges::sized_range<TRange>)
-{
-    for (const auto& el: range)
-    {
-        auto pos = blob.grow(sizeof(std::ranges::range_value_t<TRange>));
-        copyBits(el, pos);
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -149,16 +139,6 @@ auto popBits(TRange& valueRange, BlobRange blobRange)
     return copyBits(blobRange.begin(), valueRange.begin(), valueRange.end());
 }
 
-/// for ranges of BitStreamables of unkown size (like std::ranges::subrange<std::list<double>::iterator>)
-template <std::ranges::range TRange>
-auto popBits(TRange& valueRange, BlobRange blobRange)
-    requires(BitStreamable<std::ranges::range_value_t<TRange>> && !std::ranges::sized_range<TRange>)
-{
-    Blob::const_iterator it = blobRange.begin();
-    for (auto& value: valueRange)
-        it = popBits(value, BlobRange(it, blobRange.end()));
-    return it;
-}
 
 
 

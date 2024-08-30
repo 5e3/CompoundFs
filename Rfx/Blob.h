@@ -14,6 +14,9 @@
 namespace Rfx
 {
 
+///////////////////////////////////////////////////////////////////////////////
+/// Binary large object with a more agressively allocating grow() function and allocation
+/// that avoids the usual value initialization (see std::make_unique_for_overwrite())
 class Blob
 {
     std::unique_ptr<std::byte[]> m_storage;
@@ -38,8 +41,6 @@ public:
     const_reverse_iterator rend() const noexcept { return std::make_reverse_iterator(begin()); }
     const_reverse_iterator crbegin() const noexcept { return rbegin(); }
     const_reverse_iterator crend() const noexcept { return rend(); }
-
-
 
 public:
     Blob() = default;
@@ -67,6 +68,8 @@ public:
     void push_back(std::byte val) { *grow(1) = val; }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+
 inline Blob::Blob(size_t size)
     : Blob()
 {
@@ -87,7 +90,6 @@ inline Blob::Blob(TString&& str)
     std::string_view sv(std::forward<TString>(str));
     for (auto ch: sv)
         push_back((std::byte) ch );
-
 }
 
 inline Blob::Blob(const Blob& other)
