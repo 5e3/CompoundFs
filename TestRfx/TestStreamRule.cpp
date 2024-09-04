@@ -1,6 +1,8 @@
 
 #include <gtest/gtest.h>
 #include "Rfx/StreamRule.h"
+#include "Rfx/Stream.h"
+#include "Rfx/Blob.h"
 
 #include <string>
 #include <list>
@@ -10,6 +12,7 @@
 #include <unordered_map>
 #include <forward_list>
 #include <array>
+#include <optional>
 
 using namespace Rfx;
 
@@ -54,6 +57,7 @@ static_assert(hasStreamRule<std::tuple<std::string, int>>);
 static_assert(hasStreamRule<std::pair<std::string, int>>);
 static_assert(hasStreamRule<std::array<std::string, 5>>);
 static_assert(hasStreamRule<std::variant<std::string, int>>);
+static_assert(hasStreamRule<std::optional<std::string>>);
 
 static_assert(!hasStreamRule<MyOtherStruct>);
 static_assert(!hasStreamRule<std::forward_list<int>>);
@@ -63,6 +67,7 @@ static_assert(!isStdTuple<std::pair<int, int>>);
 
 static_assert(isVersioned<MyStruct>);
 static_assert(isVersioned<std::tuple<int, int>>);
+static_assert(isVersioned<std::variant<int, double>>);
 
 static_assert(!isVersioned<std::pair<int, int>>);
 static_assert(!isVersioned<std::string>);
@@ -73,4 +78,51 @@ void test()
     //std::pair<int, int> pii { 1, 2 };
     //std::pair<const int, int> cpii { 1, 2 };
     //cpii = pii;
+}
+
+TEST(StreamRule, DefaultCreatesFirstVariantTypeOnUnkownVersion)
+{
+    StreamOut out;
+    std::variant<double, int, std::string> var = "test variant";
+    out.write(var);
+
+    auto blob = out.swapBlob();
+    StreamIn in(blob);
+    using OldVariant = std::variant<double, int>;
+    OldVariant varIn = 123.4;
+    in.read(varIn);
+    ASSERT_EQ(varIn, OldVariant());
+}
+
+TEST(StreamRule, BuiltinArray)
+{
+    StreamOut out;
+    int arr[] = { 1, 2, 3 };
+    out.write(arr);
+
+    auto blob = out.swapBlob();
+    StreamIn in(blob);
+    int arrIn[3];
+    in.read(arrIn);
+
+    ASSERT_TRUE(std::equal(std::begin(arr), std::end(arr), std::begin(arrIn)));
+}
+
+TEST(StreamRule, stdOptional)
+{
+    StreamOut out;
+    std::optional<int> opt;
+    std::optional<int> opt2 = 1;
+    out.write(opt);
+    out.write(opt2);
+
+    auto blob = out.swapBlob();
+    StreamIn in(blob);
+    std::optional<int> optIn = 2;
+    std::optional<int> optIn2 = 3;
+    in.read(optIn);
+    in.read(optIn2);
+
+    ASSERT_EQ(opt, optIn);
+    ASSERT_EQ(opt2, optIn2);
 }

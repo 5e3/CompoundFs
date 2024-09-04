@@ -4,6 +4,7 @@
 #include <ranges>
 #include <tuple>
 #include <variant>
+#include <optional>
 #include <array>
 
 
@@ -53,7 +54,8 @@ struct StreamRule;
 
 ///////////////////////////////////////////////////////////////////////////////
 // restricted StreamRule for user defined types. They require a freestanding function
-// called forEachMember(MyType& val, TVisitor&& visitor);
+// called 
+// template<typename TVisitor> void forEachMember(MyType& val, TVisitor&& visitor);
 template <typename T>
     requires hasForEachMember<T>
 struct StreamRule<T>
@@ -114,6 +116,7 @@ struct StreamRule<TCont>
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for TupleLike (std::pair, std::tuple and std::array)
+// Note that a std::tuple<> is versioned but a std::pair<> is not.
 template <TupleLike T>
 struct StreamRule<T>
 {
@@ -135,9 +138,14 @@ struct StreamRule<T>
     }
 };
 
-template<typename... Ts>
+
+///////////////////////////////////////////////////////////////////////////////
+// StreamRule for std::variant<>
+template <typename... Ts>
 struct StreamRule<std::variant<Ts...>>
 {
+    static constexpr bool Versioned = true;
+
     static std::variant<Ts...> defaultCreateVariantByIndex(size_t index)
     {
             static constexpr std::array<std::variant<Ts...>(*)(), sizeof...(Ts)> defaultCreator
@@ -158,8 +166,62 @@ struct StreamRule<std::variant<Ts...>>
     {
         typename std::remove_reference<TStream>::type::SizeType index {};
         stream.read(index);
-        var = defaultCreateVariantByIndex(index);
-        std::visit([&stream ](auto& value) { stream.read(value); }, var);
+        if (index < sizeof...(Ts))
+        {
+            var = defaultCreateVariantByIndex(index);
+            std::visit([&stream](auto& value) { stream.read(value); }, var);
+        }
+        else
+            var = defaultCreateVariantByIndex(0);
+    }
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// StreamRule for builtin arrays.
+template <typename T, size_t N>
+struct StreamRule<T[N]>
+{
+    using Array = T[N];
+
+    template <typename TStream>
+    static void write(const Array& val, TStream&& stream)
+    {
+        stream.writeRange(std::ranges::subrange(val));
+    }
+
+    template <typename TStream>
+    static void read(Array& val, TStream&& stream)
+    {
+        auto r = std::ranges::subrange(val);
+        stream.readRange(r);
+    }
+};
+///////////////////////////////////////////////////////////////////////////////
+// StreamRule for std::optional<>.
+template <typename T>
+struct StreamRule<std::optional<T>>
+{
+    template <typename TStream>
+    static void write(const std::optional<T>& val, TStream&& stream)
+    {
+        stream.write(val.has_value());
+        if (val)
+            stream.write(*val);
+    }
+
+    template <typename TStream>
+    static void read(std::optional<T>& val, TStream&& stream)
+    {
+        bool hasValue;
+        stream.read(hasValue);
+        if (hasValue)
+        {
+            T v;
+            stream.read(v);
+            val = std::move(v);
+        }
+        else
+            val = std::nullopt;
     }
 };
 
@@ -172,11 +234,6 @@ constexpr bool isVersioned = []() {
     else
         return false;
 }();
-
-
-
-
-
 
 
 }

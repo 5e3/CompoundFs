@@ -1,8 +1,8 @@
 
 
 #include <gtest/gtest.h>
-#include "../Rfx/StreamRule.h"
-#include "../Rfx/Stream.h"
+#include "Rfx/StreamRule.h"
+#include "Rfx/Stream.h"
 #include "VersionedStructs.h"
 #include "RandomGen.h"
 
