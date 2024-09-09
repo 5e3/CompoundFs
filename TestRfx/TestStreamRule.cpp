@@ -4,6 +4,14 @@
 #include "Rfx/Stream.h"
 #include "Rfx/Blob.h"
 
+
+#include <ranges>
+#include <tuple>
+#include <variant>
+#include <optional>
+#include <array>
+
+
 #include <string>
 #include <list>
 #include <set>
@@ -73,11 +81,17 @@ static_assert(!isVersioned<std::pair<int, int>>);
 static_assert(!isVersioned<std::string>);
 
 
-void test()
+template<typename T>
+void streamInOut(const T& val)
 {
-    //std::pair<int, int> pii { 1, 2 };
-    //std::pair<const int, int> cpii { 1, 2 };
-    //cpii = pii;
+    StreamOut out;
+    out.write(val);
+
+    auto blob = out.swapBlob();
+    StreamIn in(blob);
+    T valIn;
+    in.read(valIn);
+    ASSERT_EQ(val, valIn);
 }
 
 TEST(StreamRule, DefaultCreatesFirstVariantTypeOnUnkownVersion)
@@ -125,4 +139,23 @@ TEST(StreamRule, stdOptional)
 
     ASSERT_EQ(opt, optIn);
     ASSERT_EQ(opt2, optIn2);
+}
+
+TEST(StreamRule, tupleIsVersionedPairIsNot)
+{
+    auto tup = std::make_tuple(5, 6);
+    StreamOut out1;
+    out1.write(tup);
+
+    auto pa = std::make_pair(5, 6);
+    StreamOut out2;
+    out2.write(pa);
+
+    ASSERT_NE(out1.swapBlob(), out2.swapBlob());
+}
+
+TEST(StreamRule, map)
+{
+    std::map<int, std::string> outVal = { { 2, "Test" }, { 5, "Nochntest" } };
+    streamInOut(outVal);
 }

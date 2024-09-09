@@ -3,6 +3,9 @@
 #include <gtest/gtest.h>
 #include "Rfx/StreamRule.h"
 #include "Rfx/Stream.h"
+
+#include <array>
+
 #include "VersionedStructs.h"
 #include "RandomGen.h"
 
