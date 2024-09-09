@@ -2,6 +2,7 @@
 
 
 #include <gtest/gtest.h>
+#include <ranges>
 #include "RandomGen.h"
 #include "Rfx/StreamRule.h"
 
