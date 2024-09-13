@@ -159,3 +159,9 @@ TEST(StreamRule, map)
     std::map<int, std::string> outVal = { { 2, "Test" }, { 5, "Nochntest" } };
     streamInOut(outVal);
 }
+
+TEST(StreamRule, array)
+{
+    std::array<int, 256> outVal {};
+    streamInOut(outVal);
+}
