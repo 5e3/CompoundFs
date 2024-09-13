@@ -38,7 +38,7 @@ struct MyStruct
 template <typename TVisitor>
 void forEachMember(MyStruct& ms, TVisitor&& visitor)
 {
-    visit(ms.m_int);
+    visitor(ms.m_int);
 }
 
 struct MyOtherStruct {};
