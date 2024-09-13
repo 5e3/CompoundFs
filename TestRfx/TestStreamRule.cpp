@@ -70,9 +70,6 @@ static_assert(hasStreamRule<std::optional<std::string>>);
 static_assert(!hasStreamRule<MyOtherStruct>);
 static_assert(!hasStreamRule<std::forward_list<int>>);
 
-static_assert(isStdTuple<std::tuple<int, int, int>>);
-static_assert(!isStdTuple<std::pair<int, int>>);
-
 static_assert(isVersioned<MyStruct>);
 static_assert(isVersioned<std::tuple<int, int>>);
 static_assert(isVersioned<std::variant<int, double>>);

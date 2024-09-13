@@ -12,6 +12,7 @@ set (Sources
 	TestRandomGen.cpp
 	TestStream.cpp
 	TestStreamRule.cpp
+	TestTypeUtils.cpp
 	TestVersionedStructs.cpp
 	)
 	

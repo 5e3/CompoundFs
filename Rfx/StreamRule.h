@@ -2,6 +2,7 @@
 #pragma once
 
 #include <ranges>
+#include "TypeUtils.h"
 //#include <tuple>
 //#include <variant>
 //#include <optional>
@@ -11,40 +12,6 @@
 namespace Rfx
 {
 
-
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-constexpr bool canInsert = requires(T cont) { cont.insert(typename T::value_type {}); };
-
-template <typename T>
-constexpr bool canResize = requires(T cont) { cont.resize(size_t {}); };
-
-template <typename T>
-constexpr bool hasForEachMember = requires(T val) { forEachMember(val, [](T) {}); };
-
-template <typename T>
-struct _isTuple : std::false_type {};
-template <typename... Ts>
-struct _isTuple<std::tuple<Ts...>> : std::true_type {};
-
-template <typename T>
-constexpr bool isStdTuple = _isTuple<T>::value;
-
-///////////////////////////////////////////////////////////////////////////////
-
-
-template <typename T>
-concept ContainerLike = std::ranges::sized_range<T> && requires(T cont) {
-    typename T::value_type;
-    cont.clear();
-} && (canInsert<T> || canResize<T>);
-
-template <typename T>
-concept TupleLike = requires(T val) {
-    std::tuple_size<T>::value;
-    std::get<0>(val);
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule defines read()/write() methods to for certain types. 
@@ -57,7 +24,7 @@ struct StreamRule;
 // called 
 // template<typename TVisitor> void forEachMember(MyType& val, TVisitor&& visitor);
 template <typename T>
-    requires hasForEachMember<T>
+    requires TUtils::HasForEachMember_v<T>
 struct StreamRule<T>
 {
     static constexpr bool Versioned = true;
@@ -77,7 +44,7 @@ struct StreamRule<T>
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for STL-like containers.
-template <ContainerLike TCont>
+template <TUtils::ContainerLike TCont>
 struct StreamRule<TCont>
 {
     template <typename TStream>
@@ -90,7 +57,7 @@ struct StreamRule<TCont>
 
     template <typename TStream>
     static void read(TCont& cont, TStream&& stream)
-        requires canResize<TCont>
+        requires TUtils::CanResize_v<TCont>
     {
         typename std::remove_reference<TStream>::type::SizeType size {};
         stream.read(size);
@@ -100,7 +67,7 @@ struct StreamRule<TCont>
 
     template <typename TStream>
     static void read(TCont& cont, TStream&& stream)
-        requires canInsert<TCont>
+        requires TUtils::CanInsert_v<TCont>
     {
         cont.clear();
         typename std::remove_reference<TStream>::type::SizeType size {};
@@ -117,10 +84,10 @@ struct StreamRule<TCont>
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for TupleLike (std::pair, std::tuple and std::array)
 // Note that a std::tuple<> is versioned but a std::pair<> is not.
-template <TupleLike T>
+template <TUtils::TupleLike T>
 struct StreamRule<T>
 {
-    static constexpr bool Versioned = isStdTuple<T>;
+    static constexpr bool Versioned = TUtils::IsSpecialization_v<T, std::tuple>;
 
     template<typename U>
     static U& ccast(const U& val) { return const_cast<U&>(val);} 
@@ -177,20 +144,19 @@ struct StreamRule<std::variant<Ts...>>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for builtin arrays.
-template <typename T, size_t N>
-struct StreamRule<T[N]>
+// StreamRule for fixed sized arrays.
+template <TUtils::FixedSizeArray T>
+struct StreamRule<T>
 {
-    using Array = T[N];
-
+    
     template <typename TStream>
-    static void write(const Array& val, TStream&& stream)
+    static void write(const T& val, TStream&& stream)
     {
         stream.writeRange(std::ranges::subrange(val));
     }
 
     template <typename TStream>
-    static void read(Array& val, TStream&& stream)
+    static void read(T& val, TStream&& stream)
     {
         auto r = std::ranges::subrange(val);
         stream.readRange(r);
