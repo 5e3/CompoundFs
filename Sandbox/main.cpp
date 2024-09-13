@@ -508,166 +508,236 @@
 //
 //
 
-#include <cstdint>
-#include <ranges>
-#include <functional>
-#include <string>
-#include <string_view>
+//#include <cstdint>
+//#include <ranges>
+//#include <functional>
+//#include <string>
+//#include <string_view>
+//#include <array>
+//#include <bit>
+//
+//template <typename... Ts>
+//constexpr uint64_t fnv(Ts&&... vals)
+//{
+//    uint64_t hash = 14695981039346656037ULL;
+//    auto f = [&hash](auto&& v) {
+//        for (auto ch: v)
+//        {
+//            hash ^= ch;
+//            hash = hash * 1099511628211ULL;
+//        }
+//    };
+//
+//    (f(vals), ...);
+//    return hash;
+//}
+//
+//
+//constexpr uint64_t encryptTea(uint64_t val, std::array<uint64_t,2> key)
+//{
+//    uint32_t v0 = val & 0xffffffff, v1 = val >> 32, sum = 0;
+//    uint32_t delta = 0x9e3779b9;
+//    uint32_t k0 = key[0] & 0xffffffff, k1 = key[0] >> 32, k2 = key[1] & 0xffffffff, k3 = key[1]>>32;
+//    for (int i = 0; i < 32; i++)
+//    {
+//        sum += delta;
+//        v0 += ((v1 << 4) + k0) ^ (v1 + sum) ^ ((v1 >> 5) + k1);
+//        v1 += ((v0 << 4) + k2) ^ (v0 + sum) ^ ((v0 >> 5) + k3);
+//    }
+//    uint64_t res = v0 + (uint64_t(v1) << 32ULL);
+//    return res;
+//}
+//
+//template<size_t size>
+//constexpr void encryptTeaCfb(std::array<char, size> plainText, std::array<uint64_t, 2> key)
+//{
+//    uint64_t next = encryptTea(1, key);
+//    std::array<uint64_t, 2> ekey = { encryptTea(2, key), encryptTea(3, key) };
+//    next = encryptTea(next, ekey);
+//
+//
+//
+//}
+//
+//#ifdef WIN32
+//
+//
+//#include <format>
+//
+//template <typename TIter>
+//TIter copy(uint64_t val, TIter it)
+//{
+//    for (int i = 0; i < 8; i++)
+//    {
+//        val = std::rotl(val, 8);
+//        *it++ = val & 0xff;
+//    }
+//    return it;
+//}
+//
+//template <typename TIter>
+//TIter copy(TIter it, uint64_t& val)
+//{
+//    val = 0;
+//    for (int i = 0; i < 8; i++)
+//        val = (val << 8) | *it++;
+//    return it;
+//}
+//
+//template <typename TIn, typename TOut>
+//void finalXor(uint64_t val, TIn in, TOut first, TOut last)
+//{
+//    for (; first != last; ++first)
+//    {
+//        val = std::rotl(val, 8);
+//        *first = *in++ ^ (val & 0xff);
+//    }
+//}
+//
+//template <size_t N, auto Key>
+//struct EncryptedString
+//{
+//    std::array<char, N + 8> m_cipherText {};
+//    constexpr EncryptedString(const char (&plain)[N])
+//    {
+//        uint64_t next = encryptTea(1, Key);
+//        auto cit = copy(next, std::begin(m_cipherText));
+//        std::array<uint64_t, 2> ekey = { encryptTea(2, Key), encryptTea(3, Key) };
+//        uint64_t val;
+//        auto pit = std::begin(plain);
+//
+//        for (int i = 0; i < N / 8; i++)
+//        {
+//            next = encryptTea(next, ekey);
+//            pit = copy(pit, val);
+//            next ^= val;
+//            cit = copy(next, cit);    
+//        }
+//
+//        if (cit != std::end(m_cipherText))
+//        {
+//            next = encryptTea(next, ekey);
+//            finalXor(next, pit, cit, std::end(m_cipherText));
+//        }
+//    }
+//
+//
+//
+//    
+//
+//    friend std::ostream& operator<<(std::ostream& out, const EncryptedString& es) 
+//    { 
+//        out << '{';
+//        for (int i = 0; i < es.m_cipherText.size(); i++)
+//            out << std::format(" {:x} ", (unsigned char) es.m_cipherText[i]);
+//        out << '}';
+//        return out;
+//    }
+//};
+//
+//#pragma optimize("", off)
+//template<typename T>
+//__forceinline constexpr T xor1(T a, T b)
+//{
+//    return ((a | b) & ~(a & b));
+//}
+//#pragma optimize("", on)
+//
+//static_assert((3 ^ 5) == xor1(3, 5));
+//
+//int main()
+//{
+//    EncryptedString < 14, std::array<uint64_t,2>{ fnv(__TIME__), fnv(__TIME__ "est") }> es("0123456789012");
+//    std::cout << es << "\n";
+//
+//    std::cout << fnv("t") << "\n";
+//    std::cout << fnv("te") << "\n";
+//    std::cout << fnv("tes") << "\n";
+//    std::cout << fnv("test") << "\n";
+//
+//
+//    std::cout << fnv(__TIME__ __FILE__) << "\n";
+//
+//    constexpr auto key = fnv(__TIME__);
+//    constexpr auto res = encryptTea(0ULL, { fnv(__TIME__), fnv(__TIME__ "test") });
+//    std::cout << std::format("{:x}", res);
+//    //    std::cout << encryptTea(0, fnv_128_hash(__TIME__)) << "\n";
+//}
+//
+//#else
+//int main()
+//{
+//
+//}
+//
+//#endif
+
+#include <type_traits>
+
+#include <vector>
+#include <tuple>
 #include <array>
-#include <bit>
+#include <variant>
+#include <utility>
 
-template <typename... Ts>
-constexpr uint64_t fnv(Ts&&... vals)
-{
-    uint64_t hash = 14695981039346656037ULL;
-    auto f = [&hash](auto&& v) {
-        for (auto ch: v)
-        {
-            hash ^= ch;
-            hash = hash * 1099511628211ULL;
-        }
-    };
+template<typename T, template<typename ...> class Template>
+struct IsSpecialization : std::false_type {};
 
-    (f(vals), ...);
-    return hash;
-}
+template <typename T, template <typename...> class Template>
+inline constexpr bool IsSpecialization_v = IsSpecialization<T, Template>::value;
+
+template <template <typename...> class Template, typename... TArgs>
+struct IsSpecialization<Template<TArgs...>, Template> : std::true_type
+{};
 
 
-constexpr uint64_t encryptTea(uint64_t val, std::array<uint64_t,2> key)
-{
-    uint32_t v0 = val & 0xffffffff, v1 = val >> 32, sum = 0;
-    uint32_t delta = 0x9e3779b9;
-    uint32_t k0 = key[0] & 0xffffffff, k1 = key[0] >> 32, k2 = key[1] & 0xffffffff, k3 = key[1]>>32;
-    for (int i = 0; i < 32; i++)
-    {
-        sum += delta;
-        v0 += ((v1 << 4) + k0) ^ (v1 + sum) ^ ((v1 >> 5) + k1);
-        v1 += ((v0 << 4) + k2) ^ (v0 + sum) ^ ((v0 >> 5) + k3);
-    }
-    uint64_t res = v0 + (uint64_t(v1) << 32ULL);
-    return res;
-}
-
-template<size_t size>
-constexpr void encryptTeaCfb(std::array<char, size> plainText, std::array<uint64_t, 2> key)
-{
-    uint64_t next = encryptTea(1, key);
-    std::array<uint64_t, 2> ekey = { encryptTea(2, key), encryptTea(3, key) };
-    next = encryptTea(next, ekey);
+static_assert(IsSpecialization_v<std::variant<int, double>, std::variant>);
 
 
-
-}
-
-#ifdef WIN32
-
-
-#include <format>
-
-template <typename TIter>
-TIter copy(uint64_t val, TIter it)
-{
-    for (int i = 0; i < 8; i++)
-    {
-        val = std::rotl(val, 8);
-        *it++ = val & 0xff;
-    }
-    return it;
-}
-
-template <typename TIter>
-TIter copy(TIter it, uint64_t& val)
-{
-    val = 0;
-    for (int i = 0; i < 8; i++)
-        val = (val << 8) | *it++;
-    return it;
-}
-
-template <typename TIn, typename TOut>
-void finalXor(uint64_t val, TIn in, TOut first, TOut last)
-{
-    for (; first != last; ++first)
-    {
-        val = std::rotl(val, 8);
-        *first = *in++ ^ (val & 0xff);
-    }
-}
-
-template <size_t N, auto Key>
-struct EncryptedString
-{
-    std::array<char, N + 8> m_cipherText {};
-    constexpr EncryptedString(const char (&plain)[N])
-    {
-        uint64_t next = encryptTea(1, Key);
-        auto cit = copy(next, std::begin(m_cipherText));
-        std::array<uint64_t, 2> ekey = { encryptTea(2, Key), encryptTea(3, Key) };
-        uint64_t val;
-        auto pit = std::begin(plain);
-
-        for (int i = 0; i < N / 8; i++)
-        {
-            next = encryptTea(next, ekey);
-            pit = copy(pit, val);
-            next ^= val;
-            cit = copy(next, cit);    
-        }
-
-        if (cit != std::end(m_cipherText))
-        {
-            next = encryptTea(next, ekey);
-            finalXor(next, pit, cit, std::end(m_cipherText));
-        }
-    }
-
-
-
-    
-
-    friend std::ostream& operator<<(std::ostream& out, const EncryptedString& es) 
-    { 
-        out << '{';
-        for (int i = 0; i < es.m_cipherText.size(); i++)
-            out << std::format(" {:x} ", (unsigned char) es.m_cipherText[i]);
-        out << '}';
-        return out;
-    }
+template <typename T>
+concept FixedSizeContainer = requires 
+{ 
+    { std::bool_constant<(T {}.size() == T {}.max_size())>() } -> std::same_as<std::true_type>;
 };
 
-#pragma optimize("", off)
+template <typename T>
+concept FixedSizeArray = std::is_bounded_array_v<T> 
+|| (FixedSizeContainer<T> && requires (T val) { val[0]; });
+
+
+static_assert(FixedSizeArray<int[3]>);
+static_assert(FixedSizeArray<std::array<int, 3>>);
+
+static_assert(!FixedSizeArray<int[]>);
+static_assert(!FixedSizeArray<int*>);
+static_assert(!FixedSizeArray<int>);
+static_assert(!FixedSizeArray<std::vector<int>>);
+static_assert(!FixedSizeArray<std::vector<int>::iterator>);
+static_assert(!FixedSizeArray<std::tuple<int>>);
+static_assert(!FixedSizeArray<std::variant<int, double>>);
+
 template<typename T>
-__forceinline constexpr T xor1(T a, T b)
-{
-    return ((a | b) & ~(a & b));
-}
-#pragma optimize("", on)
+concept TupleLike = requires(T val) { std::tuple_size<T>::value;} && (!FixedSizeContainer<T>);
 
-static_assert((3 ^ 5) == xor1(3, 5));
+static_assert(TupleLike<std::tuple<int>>);
+static_assert(TupleLike<std::pair<int, double>>);
+
+static_assert(!TupleLike<std::array<int, 3>>);
+static_assert(!TupleLike<std::vector<int>>);
+static_assert(!TupleLike<std::variant<int, double>>);
+static_assert(!TupleLike<int[3]>);
+
 
 int main()
 {
-    EncryptedString < 14, std::array<uint64_t,2>{ fnv(__TIME__), fnv(__TIME__ "est") }> es("0123456789012");
-    std::cout << es << "\n";
-
-    std::cout << fnv("t") << "\n";
-    std::cout << fnv("te") << "\n";
-    std::cout << fnv("tes") << "\n";
-    std::cout << fnv("test") << "\n";
-
-
-    std::cout << fnv(__TIME__ __FILE__) << "\n";
-
-    constexpr auto key = fnv(__TIME__);
-    constexpr auto res = encryptTea(0ULL, { fnv(__TIME__), fnv(__TIME__ "test") });
-    std::cout << std::format("{:x}", res);
-    //    std::cout << encryptTea(0, fnv_128_hash(__TIME__)) << "\n";
-}
-
-#else
-int main()
-{
+    std::tuple<int, double> t {};
+    auto v = std::get<0>(t);
 
 }
 
-#endif
+
+
+
+
+
+
