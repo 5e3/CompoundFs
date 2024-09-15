@@ -9,7 +9,7 @@
 #include <list>
 #include <forward_list>
 
-using namespace Rfx::TUtils;
+using namespace Rfx;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// IsSpecialization_v<>

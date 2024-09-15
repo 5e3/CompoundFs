@@ -24,7 +24,7 @@ struct StreamRule;
 // called 
 // template<typename TVisitor> void forEachMember(MyType& val, TVisitor&& visitor);
 template <typename T>
-    requires TUtils::HasForEachMember_v<T>
+    requires HasForEachMember_v<T>
 struct StreamRule<T>
 {
     static constexpr bool Versioned = true;
@@ -44,7 +44,7 @@ struct StreamRule<T>
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for STL-like containers.
-template <TUtils::ContainerLike TCont>
+template <ContainerLike TCont>
 struct StreamRule<TCont>
 {
     template <typename TStream>
@@ -57,7 +57,7 @@ struct StreamRule<TCont>
 
     template <typename TStream>
     static void read(TCont& cont, TStream&& stream)
-        requires TUtils::CanResize_v<TCont>
+        requires CanResize_v<TCont>
     {
         typename std::remove_reference<TStream>::type::SizeType size {};
         stream.read(size);
@@ -67,7 +67,7 @@ struct StreamRule<TCont>
 
     template <typename TStream>
     static void read(TCont& cont, TStream&& stream)
-        requires TUtils::CanInsert_v<TCont>
+        requires CanInsert_v<TCont>
     {
         cont.clear();
         typename std::remove_reference<TStream>::type::SizeType size {};
@@ -84,10 +84,10 @@ struct StreamRule<TCont>
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for TupleLike (std::pair, std::tuple and std::array)
 // Note that a std::tuple<> is versioned but a std::pair<> is not.
-template <TUtils::TupleLike T>
+template <TupleLike T>
 struct StreamRule<T>
 {
-    static constexpr bool Versioned = TUtils::IsSpecialization_v<T, std::tuple>;
+    static constexpr bool Versioned = IsSpecialization_v<T, std::tuple>;
 
     template<typename U>
     static U& ccast(const U& val) { return const_cast<U&>(val);} 
@@ -145,7 +145,7 @@ struct StreamRule<std::variant<Ts...>>
 
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule for fixed sized arrays.
-template <TUtils::FixedSizeArray T>
+template <FixedSizeArray T>
 struct StreamRule<T>
 {
     

@@ -8,8 +8,6 @@
 
 namespace Rfx
 {
-namespace TUtils
-{
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Test for concrete Template
@@ -68,5 +66,6 @@ concept ContainerLike = std::ranges::sized_range<T>
         cont.clear();
     } 
     && (CanInsert_v<T> || CanResize_v<T>);
-}
-}
+
+}//namespace Rfx
+
