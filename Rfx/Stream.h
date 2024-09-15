@@ -12,7 +12,8 @@
 
 namespace Rfx
 {
-
+///////////////////////////////////////////////////////////////////////////////
+/// Stream into Blob with versioning.
 class StreamOut
 {
     Blob m_blob;
@@ -78,8 +79,9 @@ private:
     }
 };
 
-
-class StreamIn 
+///////////////////////////////////////////////////////////////////////////////
+/// Stream from Blob with versioning.
+class StreamIn
 {
     Blob::const_iterator m_first;
     Blob::const_iterator m_last;

@@ -3,10 +3,10 @@
 
 #include <ranges>
 #include "TypeUtils.h"
-//#include <tuple>
-//#include <variant>
-//#include <optional>
-//#include <array>
+#include <tuple>
+#include <variant>
+#include <optional>
+#include <array>
 
 
 namespace Rfx
@@ -14,7 +14,7 @@ namespace Rfx
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule defines read()/write() methods to for certain types. 
+// StreamRule defines read()/write() methods for certain types. 
 // primery template is left undefined
 template <typename T>
 struct StreamRule;
@@ -43,14 +43,14 @@ struct StreamRule<T>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for STL-like containers.
-template <ContainerLike TCont>
+// StreamRule for STL-like containers (std::vector<>, std::map<> but not std::array[]).
+template <DynamicContainer TCont>
 struct StreamRule<TCont>
 {
     template <typename TStream>
     static void write(const TCont& cont, TStream&& stream)
     {
-        typename std::remove_reference<TStream>::type::SizeType size { cont.size() };
+        SizeType_t<TStream> size { cont.size() };
         stream.write(size);
         stream.writeRange(cont);
     }
@@ -59,7 +59,7 @@ struct StreamRule<TCont>
     static void read(TCont& cont, TStream&& stream)
         requires CanResize_v<TCont>
     {
-        typename std::remove_reference<TStream>::type::SizeType size {};
+        SizeType_t<TStream> size {};
         stream.read(size);
         cont.resize(size);
         stream.readRange(cont);
@@ -70,7 +70,7 @@ struct StreamRule<TCont>
         requires CanInsert_v<TCont>
     {
         cont.clear();
-        typename std::remove_reference<TStream>::type::SizeType size {};
+        SizeType_t<TStream> size {};
         stream.read(size);
         for (size_t i = 0; i < size; ++i)
         {
@@ -107,7 +107,6 @@ struct StreamRule<T>
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for std::variant<>
 template <typename... Ts>
 struct StreamRule<std::variant<Ts...>>
 {
@@ -123,7 +122,7 @@ struct StreamRule<std::variant<Ts...>>
     template<typename TStream>
     static void write(const std::variant<Ts...>& var, TStream&& stream)
     {
-        typename std::remove_reference<TStream>::type::SizeType index { var.index() };
+        SizeType_t<TStream> index { var.index() };
         stream.write(index);
         std::visit([&stream ](const auto& value) { stream.write(value); }, var);
     }
@@ -131,7 +130,7 @@ struct StreamRule<std::variant<Ts...>>
     template<typename TStream>
     static void read(std::variant<Ts...>& var, TStream&& stream)
     {
-        typename std::remove_reference<TStream>::type::SizeType index {};
+        SizeType_t<TStream> index {};
         stream.read(index);
         if (index < sizeof...(Ts))
         {
@@ -139,16 +138,15 @@ struct StreamRule<std::variant<Ts...>>
             std::visit([&stream](auto& value) { stream.read(value); }, var);
         }
         else
-            var = defaultCreateVariantByIndex(0);
+            var = std::variant<Ts...> {};
     }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for fixed sized arrays.
+// StreamRule for fixed sized arrays (T[N] or std::array<T,N>).
 template <FixedSizeArray T>
 struct StreamRule<T>
-{
-    
+{   
     template <typename TStream>
     static void write(const T& val, TStream&& stream)
     {
@@ -162,8 +160,8 @@ struct StreamRule<T>
         stream.readRange(r);
     }
 };
+
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for std::optional<>.
 template <typename T>
 struct StreamRule<std::optional<T>>
 {

@@ -82,13 +82,22 @@ static_assert(!TupleLike<std::variant<int, double>>);
 
 
 ///////////////////////////////////////////////////////////////////////////////
-static_assert(ContainerLike<std::vector<int>>);
-static_assert(ContainerLike<std::list<int>>);
-static_assert(ContainerLike<std::set<int>>);
+static_assert(DynamicContainer<std::vector<int>>);
+static_assert(DynamicContainer<std::list<int>>);
+static_assert(DynamicContainer<std::set<int>>);
 
-static_assert(!ContainerLike<std::array<int, 5>>);      // not dynamic
-static_assert(!ContainerLike<std::forward_list<int>>);  // size() is not amortized constant time
-static_assert(!ContainerLike<std::variant<int, double>>);
-static_assert(!ContainerLike<std::tuple<int>>);
-static_assert(!ContainerLike<std::vector<int>::iterator>);
+static_assert(!DynamicContainer<std::array<int, 5>>);      // not dynamic
+static_assert(!DynamicContainer<std::forward_list<int>>);  // size() is not amortized constant time
+static_assert(!DynamicContainer<std::variant<int, double>>);
+static_assert(!DynamicContainer<std::tuple<int>>);
+static_assert(!DynamicContainer<std::vector<int>::iterator>);
 
+///////////////////////////////////////////////////////////////////////////////
+namespace
+{
+struct StructWithSizeType{ using SizeType = char;};
+}
+
+static_assert(std::is_same_v<SizeType_t<double>, size_t>);
+static_assert(std::is_same_v<SizeType_t<StructWithSizeType>, char>);
+static_assert(std::is_same_v<SizeType_t<const StructWithSizeType&>, char>);

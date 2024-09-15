@@ -127,8 +127,6 @@ T popBits(BlobRange& blobRange)
     return value;
 }
 
-
-
 /// for containers of BitStreamable (like std::list<double>)
 template <std::ranges::sized_range TRange>
 auto popBits(TRange& valueRange, BlobRange blobRange)

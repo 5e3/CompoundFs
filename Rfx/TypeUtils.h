@@ -59,13 +59,33 @@ concept TupleLike = requires { std::tuple_size<T>::value; } && (!FixedSizeContai
 ///////////////////////////////////////////////////////////////////////////////
 /// 
 template<typename T>
-concept ContainerLike = std::ranges::sized_range<T> 
+concept DynamicContainer = std::ranges::sized_range<T> 
     && requires(T cont) 
     {
         typename T::value_type;
         cont.clear();
     } 
     && (CanInsert_v<T> || CanResize_v<T>);
+
+///////////////////////////////////////////////////////////////////////////////
+template <typename T>
+inline constexpr bool HasSizeType_v = requires { typename std::remove_cvref_t<T>::SizeType; };
+
+template <typename T>
+struct SizeType
+{
+    using type = size_t;
+};
+
+template <typename T>
+using SizeType_t = SizeType<T>::type;
+
+template <typename T>
+    requires HasSizeType_v<T>
+struct SizeType<T>
+{
+    using type = std::remove_cvref_t<T>::SizeType;
+};
 
 }//namespace Rfx
 

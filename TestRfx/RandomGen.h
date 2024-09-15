@@ -9,7 +9,7 @@ namespace Rfx
 {
     template <typename> struct StreamRule;
 
-    struct SizeType
+    struct MySizeType
     {
         size_t m_value;
         operator size_t() const noexcept { return m_value; }
@@ -17,7 +17,7 @@ namespace Rfx
 
 struct RandomGen
 {
-    using SizeType = Rfx::SizeType;
+    using MySizeType = Rfx::MySizeType;
 
     std::mt19937 m_gen = std::mt19937 { 42 };
     std::uniform_int_distribution<size_t> m_distr = std::uniform_int_distribution<size_t>{ 0, 1000 };
@@ -36,11 +36,11 @@ struct RandomGen
     }
     void read(std::string& value)
     { 
-        SizeType size {};
+        MySizeType size {};
         read(size);
         value = std::string(size.m_value, char(size.m_value +'A'));
     }
-    void read(SizeType& value) 
+    void read(MySizeType& value) 
     { 
         value = { m_distr(m_gen, std::uniform_int_distribution<size_t>::param_type(0, 10)) };
     }

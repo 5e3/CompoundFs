@@ -159,6 +159,6 @@ TEST(StreamRule, map)
 
 TEST(StreamRule, array)
 {
-    std::array<int, 256> outVal {};
+    std::array<int, 10000> outVal {};
     streamInOut(outVal);
 }
