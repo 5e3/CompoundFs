@@ -146,7 +146,9 @@ struct StreamRule<std::variant<Ts...>>
 // StreamRule for fixed sized arrays (T[N] or std::array<T,N>).
 template <FixedSizeArray T>
 struct StreamRule<T>
-{   
+{
+    static constexpr bool Versioned = FixedSizeContainer<T>;
+
     template <typename TStream>
     static void write(const T& val, TStream&& stream)
     {
@@ -190,14 +192,12 @@ struct StreamRule<std::optional<T>>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-
 template <typename T>
-constexpr bool isVersioned = []() {
+inline constexpr bool IsVersioned_v = []() {
     if constexpr (requires { StreamRule<T>::Versioned; })
         return StreamRule<T>::Versioned;
     else
         return false;
 }();
 
-
-}
+}//namespace Rfx

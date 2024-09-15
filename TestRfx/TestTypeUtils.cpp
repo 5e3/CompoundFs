@@ -30,24 +30,24 @@ static_assert(!CanResize_v<std::set<int>>);
 namespace
 {
 
-struct MyStruct
+struct SupportsStreaming
 {
     int m_int;
 };
 
 template <typename TVisitor>
-void forEachMember(MyStruct& ms, TVisitor&& visitor)
+void forEachMember(SupportsStreaming& ms, TVisitor&& visitor)
 {
     visitor(ms.m_int);
 }
 
-struct MyOtherStruct {};
+struct StructWithoutStreamingSupport {};
 
 }// namespace 
 
-static_assert(HasForEachMember_v<MyStruct>);
+static_assert(HasForEachMember_v<SupportsStreaming>);
 
-static_assert(!HasForEachMember_v<MyOtherStruct>); // missing forEachMember()
+static_assert(!HasForEachMember_v<StructWithoutStreamingSupport>); // missing forEachMember()
 
 ///////////////////////////////////////////////////////////////////////////////
 static_assert(FixedSizeContainer<std::array<int, 5>>);

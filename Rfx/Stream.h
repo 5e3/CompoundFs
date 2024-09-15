@@ -28,7 +28,7 @@ public:
     {
         if constexpr (BitStreamable<T>)
             pushBits(value, m_blob);
-        else if constexpr (isVersioned<T>)
+        else if constexpr (IsVersioned_v<T>)
         {
             size_t topIndex = m_fixups.size();
             auto fixup = m_fixups.nextFixup(m_blob.size());
@@ -116,7 +116,7 @@ public:
         {
             m_first = popBits(value, asRange());
         }
-        else if constexpr (isVersioned<T>)
+        else if constexpr (IsVersioned_v<T>)
         {
             auto last = m_last;
             auto currentFixup = m_currentFixup;

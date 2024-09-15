@@ -27,59 +27,32 @@ using namespace Rfx;
 namespace
 {
 
+///////////////////////////////////////////////////////////////////////////////
 template <typename T>
-constexpr bool hasStreamRule = requires(T val) {
+inline constexpr bool HasStreamRule_v = requires(T val) {
     StreamRule<T>::read(val, [](T) {});
     StreamRule<T>::write(val, [](T) {});
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////
-
-struct MyStruct
+struct SupportsStreaming
 {
     int m_i = 42;
 };
 
 template <typename TVisitor>
-void forEachMember(MyStruct& ms, TVisitor&& visitor)
+void forEachMember(SupportsStreaming& ms, TVisitor&& visitor)
 {
     visitor(ms.m_i);
 }
 
-struct MyOtherStruct
+///////////////////////////////////////////////////////////////////////////////
+struct StructWithoutStreamingSupport
 {};
 
-
-}
-
-
-static_assert(hasStreamRule<MyStruct>);
-static_assert(hasStreamRule<std::string>);
-static_assert(hasStreamRule<std::vector<int>>);
-static_assert(hasStreamRule<std::list<int>>);
-static_assert(hasStreamRule<std::deque<int>>);
-static_assert(hasStreamRule<std::set<int>>);
-static_assert(hasStreamRule<std::map<std::string, int>>);
-static_assert(hasStreamRule<std::tuple<std::string, int>>);
-static_assert(hasStreamRule<std::pair<std::string, int>>);
-static_assert(hasStreamRule<std::array<std::string, 5>>);
-static_assert(hasStreamRule<std::variant<std::string, int>>);
-static_assert(hasStreamRule<std::optional<std::string>>);
-
-static_assert(!hasStreamRule<MyOtherStruct>);
-static_assert(!hasStreamRule<std::forward_list<int>>);
-
-static_assert(isVersioned<MyStruct>);
-static_assert(isVersioned<std::tuple<int, int>>);
-static_assert(isVersioned<std::variant<int, double>>);
-
-static_assert(!isVersioned<std::pair<int, int>>);
-static_assert(!isVersioned<std::string>);
-
-
-template<typename T>
-void streamInOut(const T& val)
+///////////////////////////////////////////////////////////////////////////////
+template <typename T>
+inline void streamedInComparesEqualTo(const T& val)
 {
     StreamOut out;
     out.write(val);
@@ -90,6 +63,38 @@ void streamInOut(const T& val)
     in.read(valIn);
     ASSERT_EQ(val, valIn);
 }
+
+}// namespace
+
+///////////////////////////////////////////////////////////////////////////////
+/// check that there is a StreamRule<> defined for these types
+static_assert(HasStreamRule_v<SupportsStreaming>);
+static_assert(HasStreamRule_v<std::string>);
+static_assert(HasStreamRule_v<std::vector<int>>);
+static_assert(HasStreamRule_v<std::list<int>>);
+static_assert(HasStreamRule_v<std::deque<int>>);
+static_assert(HasStreamRule_v<std::set<int>>);
+static_assert(HasStreamRule_v<std::map<std::string, int>>);
+static_assert(HasStreamRule_v<std::unordered_map<std::string, int>>);
+static_assert(HasStreamRule_v<std::tuple<std::string, int>>);
+static_assert(HasStreamRule_v<std::pair<std::string, int>>);
+static_assert(HasStreamRule_v<std::array<std::string, 5>>);
+static_assert(HasStreamRule_v<std::variant<std::string, int>>);
+static_assert(HasStreamRule_v<std::optional<std::string>>);
+
+static_assert(!HasStreamRule_v<StructWithoutStreamingSupport>);
+static_assert(!HasStreamRule_v<std::forward_list<int>>); // size() is O(n) => not supported for now
+
+static_assert(IsVersioned_v<SupportsStreaming>);
+static_assert(IsVersioned_v<std::tuple<int, int>>);
+static_assert(IsVersioned_v<std::variant<int, double>>);
+static_assert(IsVersioned_v<std::array<double,3>>);
+
+static_assert(!IsVersioned_v<std::pair<int, int>>);
+static_assert(!IsVersioned_v<std::string>);
+static_assert(!IsVersioned_v<std::vector<std::string>>);
+static_assert(!IsVersioned_v<double[3]>);
+
 
 TEST(StreamRule, DefaultCreatesFirstVariantTypeOnUnkownVersion)
 {
@@ -154,11 +159,11 @@ TEST(StreamRule, tupleIsVersionedPairIsNot)
 TEST(StreamRule, map)
 {
     std::map<int, std::string> outVal = { { 2, "Test" }, { 5, "Nochntest" } };
-    streamInOut(outVal);
+    streamedInComparesEqualTo(outVal);
 }
 
 TEST(StreamRule, array)
 {
     std::array<int, 10000> outVal {};
-    streamInOut(outVal);
+    streamedInComparesEqualTo(outVal);
 }
