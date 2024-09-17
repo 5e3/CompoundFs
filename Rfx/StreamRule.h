@@ -12,7 +12,6 @@
 namespace Rfx
 {
 
-
 ///////////////////////////////////////////////////////////////////////////////
 // StreamRule defines read()/write() methods for certain types. 
 // primery template is left undefined
@@ -21,8 +20,8 @@ struct StreamRule;
 
 ///////////////////////////////////////////////////////////////////////////////
 // restricted StreamRule for user defined types. They require a freestanding function
-// called 
-// template<typename TVisitor> void forEachMember(MyType& val, TVisitor&& visitor);
+// forEachMember(MyType& val, TVisitor&& visitor) which inspects every member of
+// MyType.
 template <typename T>
     requires HasForEachMember_v<T>
 struct StreamRule<T>
@@ -43,7 +42,8 @@ struct StreamRule<T>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for STL-like containers (std::vector<>, std::map<> but not std::array[]).
+// StreamRule for STL-like dynamic containers (std::vector<>, std::map<> but 
+// not std::array<>).
 template <DynamicContainer TCont>
 struct StreamRule<TCont>
 {
@@ -82,7 +82,7 @@ struct StreamRule<TCont>
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-// StreamRule for TupleLike (std::pair, std::tuple and std::array)
+// StreamRule for TupleLike (std::pair, std::tuple but not std::array)
 // Note that a std::tuple<> is versioned but a std::pair<> is not.
 template <TupleLike T>
 struct StreamRule<T>
@@ -101,7 +101,7 @@ struct StreamRule<T>
     template <typename TStream>
     static void read(T& val, TStream&& stream)
     {
-        std::apply([&stream](auto&... telem) { ((stream.read(ccast(telem))), ...); }, val);
+        std::apply([&stream](auto&... telem) { ((stream(ccast(telem))), ...); }, val);
     }
 };
 

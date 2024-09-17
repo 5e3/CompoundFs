@@ -152,9 +152,11 @@ public:
     template<typename T>
     void operator()(T& value)
     {
-        if (m_first < m_last)
+        if (!empty())
             read(value);
     }
+
+    bool empty() const { return m_first == m_last; }
 };
 
 }
