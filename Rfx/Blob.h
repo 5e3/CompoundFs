@@ -139,6 +139,8 @@ inline auto Blob::operator<=>(const Blob& rhs) const noexcept
 
 inline bool Blob::operator==(const Blob& rhs) const noexcept
 {
+    if (m_size != rhs.m_size)
+        return false;
     return (*this <=> rhs) == 0;
 }
 
