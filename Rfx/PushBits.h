@@ -12,6 +12,13 @@
 
 namespace Rfx
 {
+
+#ifdef _DEBUG
+constexpr bool debug_mode = true;
+#else
+constexpr bool debug_mode = false;
+#endif
+
 template<typename T>
 concept BitStreamable = (std::is_arithmetic_v<T> || std::is_enum_v<T>);
 
@@ -37,6 +44,9 @@ TIter copyBits(TRange first, TRange last, TIter pos)
     requires(BitStreamable<std::iter_value_t<TRange>> && std::same_as<std::iter_value_t<TIter>, std::byte>)
 {
     size_t size = last - first;
+    if (debug_mode && size == 0)
+        return pos;
+
     const std::byte* ptr = reinterpret_cast<const std::byte*>(&(*first));
     return std::copy(ptr, ptr + (sizeof(std::iter_value_t<TRange>) * size), pos);
 }
@@ -67,6 +77,9 @@ TIter copyBits(TIter pos, TRange first, TRange last)
     requires(BitStreamable<std::iter_value_t<TRange>> && std::same_as<std::iter_value_t<TIter>, std::byte>)
 {
     size_t size = last - first;
+    if (debug_mode && size == 0)
+        return pos;
+
     std::byte* ptr = reinterpret_cast<std::byte*>(&(*first));
     auto endPos = pos + (sizeof(std::iter_value_t<TRange>) * size);
     std::copy(pos, endPos, ptr);
@@ -91,16 +104,6 @@ void pushBits(const TRange& range, Blob& blob)
     copyBits(range.begin(), range.end(), it);
 }
 
-template <std::ranges::range TRange>
-void pushBits(const TRange& range, Blob& blob)
-    requires(BitStreamable<std::ranges::range_value_t<TRange>> && !std::ranges::sized_range<TRange>)
-{
-    for (auto it = range.begin(); it != range.end(); ++it)
-    {
-        auto pos = blob.grow(sizeof(std::ranges::range_value_t<TRange>));
-        copyBits(*it, pos);
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -124,8 +127,6 @@ T popBits(BlobRange& blobRange)
     return value;
 }
 
-
-
 /// for containers of BitStreamable (like std::list<double>)
 template <std::ranges::sized_range TRange>
 auto popBits(TRange& valueRange, BlobRange blobRange)
@@ -136,16 +137,6 @@ auto popBits(TRange& valueRange, BlobRange blobRange)
     return copyBits(blobRange.begin(), valueRange.begin(), valueRange.end());
 }
 
-/// for ranges of BitStreamables of unkown size (like std::ranges::subrange<std::list<double>::iterator>)
-template <std::ranges::range TRange>
-auto popBits(TRange& valueRange, BlobRange blobRange)
-    requires(BitStreamable<std::ranges::range_value_t<TRange>> && !std::ranges::sized_range<TRange>)
-{
-    Blob::const_iterator it = blobRange.begin();
-    for (auto& value: valueRange)
-        it = popBits(value, BlobRange(it, blobRange.end()));
-    return it;
-}
 
 
 

@@ -109,14 +109,14 @@ namespace
 {
 // not a std::sized_range if used with a e.g. std::list
 template <typename T>
-struct SimpleRange 
+struct SimpleRange
 {
     T m_range;
 
     auto begin() { return m_range.begin(); }
     auto end() { return m_range.end(); }
-    auto begin()const { return m_range.begin(); }
-    auto end()const { return m_range.end(); }
+    auto begin() const { return m_range.begin(); }
+    auto end() const { return m_range.end(); }
 
     SimpleRange() = default;
     SimpleRange(T range)
@@ -126,33 +126,8 @@ struct SimpleRange
     void resize(size_t size) { m_range.resize(size); }
     bool operator==(const SimpleRange& rhs) const { return m_range == rhs.m_range; }
 };
-
-template <typename TCont>
-void testPushBits(const TCont& cont, size_t size=0)
-{
-    Blob b;
-    pushBits(cont, b);
-
-    TCont cont2;
-    if constexpr (std::ranges::sized_range<TCont>)
-        cont2.resize(std::ranges::size(cont));
-    else
-        cont2.resize(size);
-    copyBits(b.begin(), cont2.begin(), cont2.end());
-    ASSERT_EQ(cont, cont2);
 }
-}
-TEST(PushBits, pushBitsRange)
-{
-    std::deque<double> dq = { 1.111, 2.222, 3.333 };
-    testPushBits(dq);
 
-    std::vector<double> vec = { 1.111, 2.222, 3.333 };
-    testPushBits(vec);
- 
-    SimpleRange<std::list<double>> sr = std::list<double>{ 1.111, 2.222, 3.333 };
-    testPushBits(sr, sr.m_range.size());
-}
 
 TEST(PushBits, pushBitsValue)
 {
@@ -161,7 +136,7 @@ TEST(PushBits, pushBitsValue)
     pushBits(5, b);
     pushBits('a', b);
 
-    auto it = b.cbegin();
+    //auto it = b.cbegin();
     BlobRange br = b;
     ASSERT_EQ(1.1, popBits<double>(br));
     ASSERT_EQ(5, popBits<int>(br));

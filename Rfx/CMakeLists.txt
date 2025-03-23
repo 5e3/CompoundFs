@@ -25,6 +25,7 @@ set (Headers
 	StreamRule.h
 	PushBits.h
 	Rfx.natvis
+	TypeUtils.h
 	)
 	
 if(WIN32)

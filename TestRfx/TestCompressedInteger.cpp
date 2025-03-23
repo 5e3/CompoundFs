@@ -68,7 +68,7 @@ TEST(CompressedInteger, readWrite)
     testReadWrite(12345678);
 }
 
-TEST(CompressedInteger, readThrowsOnIlegalInput)
+TEST(CompressedInteger, readThrowsOnIllegalInput)
 {
     // create vec with 10x 0xff - thats definitly not a legal compressed integer
     std::vector<std::byte> vec(compressedSize(std::numeric_limits<size_t>::max()));

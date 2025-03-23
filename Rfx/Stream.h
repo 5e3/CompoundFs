@@ -12,7 +12,8 @@
 
 namespace Rfx
 {
-
+///////////////////////////////////////////////////////////////////////////////
+/// Stream into Blob with versioning.
 class StreamOut
 {
     Blob m_blob;
@@ -27,7 +28,7 @@ public:
     {
         if constexpr (BitStreamable<T>)
             pushBits(value, m_blob);
-        else if constexpr (isVersioned<T>)
+        else if constexpr (IsVersioned_v<T>)
         {
             size_t topIndex = m_fixups.size();
             auto fixup = m_fixups.nextFixup(m_blob.size());
@@ -78,8 +79,9 @@ private:
     }
 };
 
-
-class StreamIn 
+///////////////////////////////////////////////////////////////////////////////
+/// Stream from Blob with versioning.
+class StreamIn
 {
     Blob::const_iterator m_first;
     Blob::const_iterator m_last;
@@ -114,7 +116,7 @@ public:
         {
             m_first = popBits(value, asRange());
         }
-        else if constexpr (isVersioned<T>)
+        else if constexpr (IsVersioned_v<T>)
         {
             auto last = m_last;
             auto currentFixup = m_currentFixup;
@@ -150,9 +152,11 @@ public:
     template<typename T>
     void operator()(T& value)
     {
-        if (m_first < m_last)
+        if (!empty())
             read(value);
     }
+
+    bool empty() const { return m_first == m_last; }
 };
 
 }
