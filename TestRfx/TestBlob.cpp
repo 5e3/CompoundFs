@@ -31,6 +31,37 @@ TEST(Blob, initialize_list)
     ASSERT_EQ(ar[3], std::byte { 't' });
 }
 
+TEST(Blob, CopyCtor)
+{
+    Blob b1 = "dasisntest";
+    auto b2 = b1;
+    ASSERT_EQ(b1.size(), b2.size());
+    ASSERT_TRUE(std::equal(b1.begin(), b1.end(), b2.begin()));
+    ASSERT_NE(b1.begin(), b2.begin());
+}
+
+TEST(Blob, Assignment)
+{
+    Blob b1 = "dasisntest";
+    Blob b2;
+    b2 = b1;
+    ASSERT_EQ(b1.size(), b2.size());
+    ASSERT_TRUE(std::equal(b1.begin(), b1.end(), b2.begin()));
+    ASSERT_NE(b1.begin(), b2.begin());
+
+    Blob b3 = "test";
+    auto it = b3.begin();
+    b3 = b1;
+    ASSERT_EQ(b1.size(), b3.size());
+    ASSERT_TRUE(std::equal(b1.begin(), b1.end(), b3.begin()));
+    ASSERT_EQ(it, b3.begin());
+
+    Blob b4 = b1;
+    b4 = b4;
+    ASSERT_EQ(b1.size(), b4.size());
+    ASSERT_TRUE(std::equal(b1.begin(), b1.end(), b4.begin()));
+}
+
 TEST(Blob, comparison)
 {
     Blob b1 = "testlang";
@@ -51,7 +82,30 @@ TEST(Blob, comparison)
     ASSERT_NE(b4.capacity(), b2.capacity());
 }
 
-TEST(Blob, Ctors)
+TEST(Blob, moveCtorAssignment)
+{
+    Blob b1 = "dasisntest";
+    {
+        auto b2 = b1;
+        auto it = b2.begin();
+        auto b3 = std::move(b2);
+        ASSERT_EQ(b3, b1);
+        ASSERT_EQ(it, b3.begin());
+    } // call moved-from d'tor
+
+    auto b2 = b1;
+    auto b3 = std::move(b2);
+    auto it = b1.begin();
+    b2 = std::move(b1); // move assign to a moved-from object
+    ASSERT_EQ(b2, b3);
+    ASSERT_EQ(it, b2.begin());
+
+    b1 = b2; // assign to moved-from object
+    ASSERT_EQ(b1, b2);
+    ASSERT_NE(b1.begin(), b2.begin());
+}
+
+TEST(Blob, OtherCtorVariants)
 {
     std::vector<std::byte> bv = { std::byte { 1 }, std::byte { 2 }, std::byte { 3 } };
     Blob b1(bv.begin(), bv.end());
@@ -60,17 +114,16 @@ TEST(Blob, Ctors)
     std::ranges::reverse(b1);
     ASSERT_EQ(b1, b2);
 
-    auto it = b2.begin();
-    auto b3 = std::move(b2);
-    ASSERT_EQ(it, b3.begin());
-    ASSERT_TRUE(b2.empty());
-    ASSERT_TRUE(b2.capacity() == 0);
+    auto b3 = b2;
+    b2.push_back(std::byte { 4 });
+    ASSERT_NE(b2, b3);
+}
 
-    b2 = b1;
-    ASSERT_EQ(b2.size(), 3);
-
-    b2 = std::move(b3);
-    b3 = b1;
+TEST(Blob, clearResultsInZeroSize)
+{
+    Blob b = "DasIsnTest";
+    b.clear();
+    ASSERT_EQ(b.size(), 0);
 }
 
 TEST(Blob, capacityGrowsWhenNeeded)
@@ -96,10 +149,14 @@ TEST(Blob, clearDoesntChangeCapacity)
     ASSERT_EQ(oldCapacity, b.capacity());
 }
 
-TEST(Blob, reserveDoesntChangeContents)
+TEST(Blob, reserveDoesntChangeContentsButChangesBuffer)
 {
     Blob b = "test";
     Blob b2 = b;
+    auto it = b.begin();
     b.reserve(5000);
     ASSERT_EQ(b, b2);
+    ASSERT_NE(it, b.begin());
 }
+
+
